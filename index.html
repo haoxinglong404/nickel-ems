@@ -1416,16 +1416,36 @@ function switchModule(name) {
   document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
   const t = document.querySelector(`.module[data-module="${name}"]`);
   if (t) t.classList.add('active');
+
+  // 底部导航激活：workorder-detail / workorder-create 时激活 "工单"
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const ni = document.querySelector(`.nav-item[data-nav="${name}"]`);
-  if (ni) ni.classList.add('active');
+  let navKey = name;
+  if (name === 'workorder-detail' || name === 'workorder-create') navKey = 'workorder';
+  if (name === 'equipment-detail' || name === 'equipment-edit') navKey = 'equipment';
+  const navItem = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
+  if (navItem) navItem.classList.add('active');
+
   // 顶栏切换
-  const isDetail = name==='equipment-detail';
-  const isEdit = name==='equipment-edit';
-  document.getElementById('topbar-main').style.display = (isDetail||isEdit)?'none':'';
-  document.getElementById('topbar-detail').style.display = isDetail?'flex':'none';
-  document.getElementById('topbar-edit').style.display = isEdit?'flex':'none';
-  document.getElementById('bottom-nav').style.display = (isDetail||isEdit)?'none':'';
+  const isEqDetail = name==='equipment-detail';
+  const isEqEdit = name==='equipment-edit';
+  const isWoDetail = name==='workorder-detail';
+  const isWoCreate = name==='workorder-create';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate;
+
+  document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
+  document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
+  document.getElementById('topbar-edit').style.display = isEqEdit ? 'flex' : 'none';
+  const wodet = document.getElementById('topbar-wo-detail');
+  if (wodet) wodet.style.display = isWoDetail ? 'flex' : 'none';
+  const woedit = document.getElementById('topbar-wo-edit');
+  if (woedit) woedit.style.display = isWoCreate ? 'flex' : 'none';
+  document.getElementById('bottom-nav').style.display = hideMain ? 'none' : '';
+
+  // 工单列表进入时渲染
+  if (name === 'workorder' && typeof renderWorkOrderList === 'function') {
+    renderWorkOrderList();
+  }
+
   document.querySelector('.content').scrollTop = 0;
   updateFab();
 }
