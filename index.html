@@ -1253,6 +1253,58 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
   .parts-act-twin .wo-act-btn { flex: 1; }
 
+
+  /* ════════ 出入库历史 · 撤销/删除按钮 ════════ */
+
+  .parts-hist-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .parts-hist-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+  }
+  .parts-hist-btn:active { background: var(--surface); }
+  .parts-hist-btn.revert { color: var(--g-forest); border-color: var(--g-primary); }
+  .parts-hist-btn.revert:active { background: var(--g-mist); }
+  .parts-hist-btn.delete { color: #B85C5C; border-color: #E8B5B5; }
+  .parts-hist-btn.delete:active { background: #FCEBEB; }
+
+  .parts-hist-item.reverted {
+    opacity: 0.55;
+    background: var(--line-soft);
+  }
+  .parts-hist-reverted-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    background: var(--line);
+    color: var(--subtle);
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .parts-hist-counter-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    background: #FAEEDA;
+    color: #854F0B;
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+
 </style>
 </head>
 <body>
@@ -2598,14 +2650,11 @@ function showSheet(type, arg) {
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        <strong style="color:var(--ink);">✓ 设备 + 工单 + 润滑 + 备件</strong><br>
-        5 大模块齐备 · 361 台设备 + 511 润滑点 + 1777 备件 · 云端同步。<br><br>
+        <strong style="color:var(--ink);">✓ 设备 + 工单 + 润滑 + 备件（含撤销/删除）</strong><br>
+        5 大模块齐备 · 云端同步 · 完整审计追踪。<br><br>
         <strong style="color:var(--ink);">开发路线：</strong><br>
-        · <strong style="color:#3A5424;">阶段 2：工单流程 ✓</strong><br>
-        · <strong style="color:#3A5424;">阶段 3：Firebase 云数据库 ✓</strong><br>
-        · <strong style="color:#3A5424;">阶段 4：GitHub Pages ✓</strong><br>
-        · <strong style="color:#3A5424;">阶段 5-1：润滑管理 ✓</strong><br>
-        · <strong style="color:#3A5424;">阶段 5-2：备件管理 ✓</strong><br>
+        · <strong style="color:#3A5424;">阶段 2-5：5 大模块 ✓</strong><br>
+        · <strong style="color:#3A5424;">备件撤销/硬删除 ✓</strong> · <em>双轨制：员工撤销 + 管理员删除</em><br>
         · 阶段 5-3：数据导出、图片上传<br>
         · 阶段 6：消息通知、数据看板<br>
         · 阶段 7：PWA、宽屏适配
@@ -4346,17 +4395,37 @@ function renderPartDetail(sp) {
       const d = new Date(h.createdAt);
       const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       const sign = h.type === 'in' ? '+' : '-';
+      // 按钮权限判断
+      const isMine = user && h.operatorId === user.empno;
+      const isAdmin = user && user.role === 'admin';
+      const isReverted = h.reverted;            // 已被撤销（不能再撤销，但还能硬删）
+      const isCounterEntry = h.isCounter;       // 它本身就是某条的反向记录（不能再撤销它）
+      const canRevert = (isMine || isAdmin) && !isReverted && !isCounterEntry;
+      const canDelete = isAdmin;                // 管理员可以硬删任何记录
+
+      // 标签区
+      let tagsHtml = '';
+      if (isReverted)      tagsHtml += '<span class="parts-hist-reverted-tag">已撤销</span>';
+      if (isCounterEntry)  tagsHtml += '<span class="parts-hist-counter-tag">撤销记录</span>';
+
+      // 按钮区
+      let actionsHtml = '';
+      if (canRevert) actionsHtml += `<button class="parts-hist-btn revert" onclick="event.stopPropagation(); revertSparePartHistory('${h.id}')">撤销</button>`;
+      if (canDelete) actionsHtml += `<button class="parts-hist-btn delete" onclick="event.stopPropagation(); hardDeletePartHistory('${h.id}')">删除</button>`;
+
       return `
-        <div class="parts-hist-item">
+        <div class="parts-hist-item${isReverted ? ' reverted' : ''}">
           <div class="parts-hist-top">
             <span class="parts-hist-type ${h.type}">${h.type === 'in' ? '入库' : '领用'}</span>
             <span class="parts-hist-qty ${h.type}">${sign}${h.quantity}</span>
+            ${tagsHtml}
             <span class="parts-hist-date">${dateStr}</span>
           </div>
           <div class="parts-hist-meta">
             ${h.type === 'in' ? '来源' : '用途'}：<strong>${escapeHtml(h.reason || '—')}</strong>
             · 经办 ${escapeHtml(h.operatorName || '—')}
           </div>
+          ${actionsHtml ? `<div class="parts-hist-actions">${actionsHtml}</div>` : ''}
         </div>`;
     }).join('');
 
@@ -4542,6 +4611,135 @@ function cancelPartsTxn() {
   else switchModule('parts');
 }
 
+
+/* ------ 撤销（反向记录）------ */
+
+async function revertSparePartHistory(historyId) {
+  const h = sparePartsHistoryCache.find(x => x.id === historyId);
+  if (!h) { showToast('记录不存在'); return; }
+  if (h.reverted) { showToast('此记录已被撤销'); return; }
+  if (h.isCounter) { showToast('撤销记录不能再撤销'); return; }
+
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+
+  // 权限：本人 或 管理员
+  if (h.operatorId !== user.empno && user.role !== 'admin') {
+    showToast('只能撤销自己的记录');
+    return;
+  }
+
+  const sp = sparePartsCache.find(p => p.id === h.sparePartId);
+  if (!sp) { showToast('备件不存在'); return; }
+
+  const currentQty = sp.quantity || 0;
+  // 反向：原本 out（领用） → 反向是 in（入库加回）
+  // 原本 in（入库） → 反向是 out（减回）
+  const reverseType = h.type === 'out' ? 'in' : 'out';
+  const newQty = reverseType === 'in' ? currentQty + h.quantity : currentQty - h.quantity;
+
+  if (newQty < 0) {
+    showToast('撤销失败：当前库存不足以撤销这笔入库（可能已被领用）');
+    return;
+  }
+
+  const actionName = h.type === 'out' ? '领用' : '入库';
+  if (!confirm(`撤销 ${h.quantity} 件的"${actionName}"？\n\n库存将从 ${currentQty} 变为 ${newQty}`)) {
+    return;
+  }
+
+  try {
+    // 1. 标记原记录为已撤销
+    const revertedOriginal = { ...h, reverted: true, revertedAt: Date.now(), revertedBy: user.empno };
+    await cloudSaveSparePartHistory(revertedOriginal);
+
+    // 2. 创建一条反向记录
+    const counter = {
+      id: 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      sparePartId: sp.id,
+      sparePartName: sp.name,
+      type: reverseType,
+      quantity: h.quantity,
+      reason: `撤销 ${new Date(h.createdAt).toLocaleDateString()} 的${actionName}（原经办 ${h.operatorName}）`,
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+      isCounter: true,
+      revertsHistoryId: h.id,
+    };
+    await cloudSaveSparePartHistory(counter);
+
+    // 3. 更新备件库存
+    const updated = { ...sp, quantity: newQty };
+    await cloudSaveSparePart(updated);
+
+    showToast('已撤销，库存恢复');
+  } catch (err) {
+    showToast('撤销失败：' + err.message);
+  }
+}
+
+/* ------ 硬删除（仅管理员）------ */
+
+async function hardDeletePartHistory(historyId) {
+  const h = sparePartsHistoryCache.find(x => x.id === historyId);
+  if (!h) { showToast('记录不存在'); return; }
+
+  const user = getCurrentUser();
+  if (!user || user.role !== 'admin') {
+    showToast('只有管理员可以硬删除');
+    return;
+  }
+
+  const sp = sparePartsCache.find(p => p.id === h.sparePartId);
+  if (!sp) { showToast('备件不存在'); return; }
+
+  const currentQty = sp.quantity || 0;
+
+  // 如果记录还没被撤销，删除时要反向调整库存（相当于这条从未发生过）
+  // 如果记录已被撤销（reverted=true），那库存已经通过反向记录调整过了，再删除它不用动库存
+  // 但为了安全起见，我们永远按"这条从未发生过"来计算
+  let newQty = currentQty;
+  if (!h.reverted && !h.isCounter) {
+    // 还没撤销的原始记录 → 回滚它
+    newQty = h.type === 'out' ? currentQty + h.quantity : currentQty - h.quantity;
+  } else if (h.isCounter) {
+    // 反向记录 → 相当于它没做过，需要把它的影响去掉
+    // 反向记录的影响是：in 加了库存 → 现在要减回；out 减了库存 → 现在要加回
+    newQty = h.type === 'in' ? currentQty - h.quantity : currentQty + h.quantity;
+  }
+  // reverted 原记录删除时不调整库存（因为已经被反向记录抵消了）
+  
+  if (newQty < 0) {
+    showToast(`无法删除：删除后库存会变成负数 ${newQty}。请先调整其他记录。`);
+    return;
+  }
+
+  const typeLabel = h.type === 'out' ? '领用' : '入库';
+  let msg = `⚠️ 硬删除这条"${typeLabel} ${h.quantity}"记录？\n\n`;
+  if (newQty !== currentQty) {
+    msg += `库存将从 ${currentQty} 变为 ${newQty}\n`;
+  } else {
+    msg += `库存不变（此记录影响已被其他记录抵消）\n`;
+  }
+  msg += `\n此操作无法撤销！`;
+  
+  if (!confirm(msg)) return;
+
+  try {
+    // 1. 删除记录
+    await deleteDoc(doc(db, 'spareparthistory', h.id));
+    // 2. 调整库存（若需要）
+    if (newQty !== currentQty) {
+      const updated = { ...sp, quantity: newQty };
+      await cloudSaveSparePart(updated);
+    }
+    showToast('已删除');
+  } catch (err) {
+    showToast('删除失败：' + err.message);
+  }
+}
+
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
@@ -4611,6 +4809,8 @@ window.openPartsTxn = openPartsTxn;
 window.onTxnQtyChange = onTxnQtyChange;
 window.submitPartsTxn = submitPartsTxn;
 window.cancelPartsTxn = cancelPartsTxn;
+window.revertSparePartHistory = revertSparePartHistory;
+window.hardDeletePartHistory = hardDeletePartHistory;
 
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
