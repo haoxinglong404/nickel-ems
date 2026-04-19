@@ -1305,6 +1305,106 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
 
 
+
+  /* ════════ 登录欢迎卡片 ════════ */
+  .welcome-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 42, 26, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .welcome-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .welcome-card {
+    background: var(--paper);
+    border-radius: 18px;
+    padding: 36px 32px 28px;
+    width: calc(100vw - 48px);
+    max-width: 340px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(26, 42, 26, 0.25);
+    transform: scale(0.9) translateY(10px);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .welcome-overlay.show .welcome-card { transform: scale(1) translateY(0); }
+
+  .welcome-mark {
+    font-family: var(--font-serif);
+    font-size: 56px;
+    line-height: 1;
+    color: var(--g-deep);
+    margin-bottom: 14px;
+    font-weight: 300;
+  }
+  .welcome-title {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .welcome-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    line-height: 1.55;
+    margin-bottom: 4px;
+  }
+  .welcome-sub-en {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--subtle);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .welcome-close {
+    width: 100%;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .welcome-close:active { background: var(--g-forest); }
+
+  /* 翔总专属 · 星辉装饰 */
+  .welcome-card.vip {
+    background: linear-gradient(145deg, #FAFAF7 0%, #F0F5E8 100%);
+    border: 1px solid #D4E4B8;
+  }
+  .welcome-card.vip .welcome-mark { 
+    color: #173404;
+    font-size: 44px;
+    margin-bottom: 6px;
+  }
+  .welcome-card.vip .welcome-mark::before,
+  .welcome-card.vip .welcome-mark::after {
+    content: " ✦ ";
+    font-size: 20px;
+    color: #97C459;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+  .welcome-card.vip .welcome-title { color: #173404; }
+  .welcome-card.vip .welcome-sub { color: #3A5424; }
+
+
 </style>
 </head>
 <body>
@@ -1595,6 +1695,17 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <button class="fab hidden" id="fab-add" onclick="openAdd()" title="新增设备">+</button>
   <!-- 浮动提报工单按钮（所有用户在工单列表时显示） -->
   <button class="fab wo-fab hidden" id="fab-wo" onclick="openReport()" title="提报工单">+</button>
+
+  <!-- 登录欢迎卡片 -->
+  <div class="welcome-overlay" id="welcome-overlay" onclick="closeWelcome()">
+    <div class="welcome-card" id="welcome-card" onclick="event.stopPropagation()">
+      <div class="welcome-mark" id="welcome-mark">—</div>
+      <div class="welcome-title" id="welcome-title">欢迎回来</div>
+      <div class="welcome-sub" id="welcome-sub">—</div>
+      <div class="welcome-sub-en" id="welcome-sub-en">—</div>
+      <button class="welcome-close" onclick="closeWelcome()">进入系统</button>
+    </div>
+  </div>
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
@@ -2042,6 +2153,8 @@ function enterApp(user) {
   renderMenu(user);
   renderEquipmentList();
   updateFab();
+  // 登录欢迎
+  showWelcome(user);
 }
 function renderMenu(user) {
   document.getElementById('menu-list').innerHTML = (MENU_BY_ROLE[user.role]||[]).map(item=>`
@@ -2722,6 +2835,7 @@ async function confirmSetPassword() {
   }
 }
 function logout() {
+  _welcomeShownThisSession = false;
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
@@ -4740,6 +4854,66 @@ async function hardDeletePartHistory(historyId) {
   }
 }
 
+
+/* ==========================================================
+   登录欢迎卡片
+   ========================================================== */
+
+// VIP 工号配置：只有这些工号登录才显示欢迎卡（其他用户直接进入系统）
+const VIP_WELCOMES = {
+  '6724013003': {
+    title: '翔总',
+    sub: '翔总辛苦了',
+    subEn: 'Welcome back · Xiang',
+    mark: '敬',
+  },
+};
+
+let _welcomeShownThisSession = false;  // 本次会话只弹一次
+let _welcomeAutoCloseTimer = null;
+
+function showWelcome(user) {
+  if (!user) return;
+  if (_welcomeShownThisSession) return;
+
+  const vip = VIP_WELCOMES[user.empno];
+  // 不在 VIP 列表里的用户直接进入系统，不弹欢迎卡
+  if (!vip) return;
+
+  _welcomeShownThisSession = true;
+
+  const card = document.getElementById('welcome-card');
+  const overlay = document.getElementById('welcome-overlay');
+  const markEl = document.getElementById('welcome-mark');
+  const titleEl = document.getElementById('welcome-title');
+  const subEl = document.getElementById('welcome-sub');
+  const subEnEl = document.getElementById('welcome-sub-en');
+
+  card.classList.add('vip');
+  markEl.textContent = vip.mark || '—';
+  titleEl.textContent = vip.title;
+  subEl.textContent = vip.sub;
+  subEnEl.textContent = vip.subEn;
+
+  // 显示
+  setTimeout(() => {
+    overlay.classList.add('show');
+  }, 200);
+
+  // 5 秒后自动关闭
+  if (_welcomeAutoCloseTimer) clearTimeout(_welcomeAutoCloseTimer);
+  _welcomeAutoCloseTimer = setTimeout(closeWelcome, 5000);
+}
+
+function closeWelcome() {
+  const overlay = document.getElementById('welcome-overlay');
+  if (overlay) overlay.classList.remove('show');
+  if (_welcomeAutoCloseTimer) {
+    clearTimeout(_welcomeAutoCloseTimer);
+    _welcomeAutoCloseTimer = null;
+  }
+}
+
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
@@ -4811,6 +4985,8 @@ window.submitPartsTxn = submitPartsTxn;
 window.cancelPartsTxn = cancelPartsTxn;
 window.revertSparePartHistory = revertSparePartHistory;
 window.hardDeletePartHistory = hardDeletePartHistory;
+window.showWelcome = showWelcome;
+window.closeWelcome = closeWelcome;
 
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
