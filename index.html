@@ -2059,24 +2059,24 @@ function getCurrentUser() {
 function isMyTodo(wo, user) {
   if (!user) return false;
   const role = user.role;
+  // 我提报的且未关单 → 始终是我的待办（让提报人能跟踪自己的工单）
+  if (wo.reporterId === user.empno && wo.status !== 'done' && wo.status !== 'rejected') {
+    return true;
+  }
+  // 按状态和角色匹配
   if (wo.status === 'pending-approval') {
-    // 主任需要审批的
     return role === 'approver' || role === 'admin';
   }
   if (wo.status === 'approved') {
-    // 已批准待接单：师傅可抢
     return role === 'tech' || role === 'admin';
   }
   if (wo.status === 'in-progress') {
-    // 维修中：指派的师傅需要完工
     return wo.technicianId === user.empno;
   }
   if (wo.status === 'pending-confirm') {
-    // 待确认：原提报人
     return wo.reporterId === user.empno || role === 'admin';
   }
   if (wo.status === 'reopened') {
-    // 重开：原师傅或可接单的
     return wo.technicianId === user.empno || role === 'tech' || role === 'admin';
   }
   return false;
@@ -2513,13 +2513,23 @@ async function submitWorkorder() {
   try {
     await cloudSaveWorkorder(b);
     showToast('工单已提交，等待审批');
-    // 提交后进入该工单详情页
-    currentWoId = b.id;
-    // 切到工单列表再延迟切到详情（等云端 subscribe 回显）
+
+    // 本地乐观插入（onSnapshot 很快会覆盖，但先保证 UI 有数据）
+    if (!woCache.find(w => w.id === b.id)) {
+      woCache.unshift(b);
+    }
+
+    // 回到工单列表
+    woBuffer = null;
     switchModule('workorder');
+
+    // 直接打开刚提交的工单详情
+    currentWoId = b.id;
     setTimeout(() => {
-      if (woCache.find(w => w.id === b.id)) openWoDetail(b.id);
-    }, 400);
+      const exists = woCache.find(w => w.id === b.id);
+      if (exists) openWoDetail(b.id);
+      else renderWorkOrderList();
+    }, 200);
   } catch (err) {
     showToast('提交失败：' + err.message);
   }
