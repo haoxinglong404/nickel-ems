@@ -284,6 +284,468 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .dev-card-list { list-style:none; }
 .dev-card-list li { padding:6px 0; font-size:13px; color:var(--muted); padding-left:16px; position:relative; }
 .dev-card-list li::before { content:""; position:absolute; left:0; top:14px; width:6px; height:1px; background:var(--g-deep); }
+
+  /* ════════ 工单模块 ════════ */
+
+  /* 工单列表: 状态分组标签 */
+  .wo-filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 14px;
+    margin: 0 -20px 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .wo-filter-bar::-webkit-scrollbar { display: none; }
+  .wo-filter-chip {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--paper);
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .wo-filter-chip.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    font-weight: 500;
+  }
+  .wo-filter-count {
+    font-size: 11px;
+    opacity: .7;
+    font-family: var(--font-mono);
+  }
+  .wo-filter-chip.active .wo-filter-count { opacity: .85; }
+
+  /* 工单卡片 */
+  .wo-card {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .wo-card:active { background: var(--surface); }
+  .wo-card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .wo-status-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .wo-status-tag.pending-approval { background: #FAEEDA; color: #854F0B; }
+  .wo-status-tag.approved         { background: #E6F1FB; color: #0C447C; }
+  .wo-status-tag.in-progress      { background: #F0F5E8; color: #3A5424; }
+  .wo-status-tag.pending-confirm  { background: #EEEDFE; color: #3C3489; }
+  .wo-status-tag.done             { background: #EAF3DE; color: #27500A; }
+  .wo-status-tag.rejected         { background: #FCEBEB; color: #791F1F; }
+  .wo-status-tag.reopened         { background: #FBEAF0; color: #72243E; }
+
+  .wo-urgency-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .wo-urgency-dot.normal  { background: var(--subtle); }
+  .wo-urgency-dot.urgent  { background: var(--s-repair); }
+  .wo-urgency-dot.critical { background: var(--s-scrap); }
+
+  .wo-code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--subtle);
+    letter-spacing: 0.05em;
+    margin-left: auto;
+  }
+  .wo-card-device {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .wo-card-device-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g-deep);
+    margin-right: 6px;
+  }
+  .wo-card-issue {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .wo-card-meta {
+    display: flex;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--subtle);
+    letter-spacing: 0.02em;
+  }
+  .wo-card-meta-sep { color: var(--line); }
+
+  /* 工单详情 */
+  .wo-hero {
+    padding: 20px 20px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .wo-hero-code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--g-deep);
+    margin-bottom: 8px;
+  }
+  .wo-hero-device {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .wo-hero-device-tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .wo-hero-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* 工单详情主体 */
+  .wo-body { padding: 20px 20px 80px; }
+  .wo-section { margin-bottom: 24px; }
+  .wo-section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--subtle);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .wo-section-body {
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .wo-section-empty { color: var(--subtle); font-style: italic; font-size: 13px; }
+
+  /* 故障标签 */
+  .wo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .wo-tag {
+    padding: 4px 10px;
+    background: var(--g-mist);
+    color: var(--g-forest);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* 时间线 */
+  .wo-timeline {
+    position: relative;
+    padding-left: 22px;
+  }
+  .wo-timeline::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--line);
+  }
+  .wo-tl-item {
+    position: relative;
+    padding: 4px 0 16px;
+  }
+  .wo-tl-item:last-child { padding-bottom: 0; }
+  .wo-tl-dot {
+    position: absolute;
+    left: -22px;
+    top: 6px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--g-deep);
+  }
+  .wo-tl-dot.done    { background: var(--g-deep); border-color: var(--g-deep); }
+  .wo-tl-dot.pending { background: var(--paper); border-color: var(--line); }
+  .wo-tl-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .wo-tl-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--subtle);
+    margin-bottom: 4px;
+  }
+  .wo-tl-comment {
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 4px;
+    line-height: 1.55;
+  }
+
+  /* 工单操作按钮区 */
+  .wo-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    padding: 14px 20px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0));
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+  .wo-actions.hidden { display: none; }
+  .wo-act-btn {
+    flex: 1;
+    height: 46px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    border: none;
+  }
+  .wo-act-btn.primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .wo-act-btn.primary:active { background: var(--g-forest); }
+  .wo-act-btn.success {
+    background: var(--g-deep);
+    color: var(--paper);
+  }
+  .wo-act-btn.success:active { background: var(--g-forest); }
+  .wo-act-btn.secondary {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .wo-act-btn.secondary:active { background: var(--surface); }
+  .wo-act-btn.danger {
+    background: var(--paper);
+    color: var(--s-scrap);
+    border: 1px solid var(--s-scrap);
+  }
+  .wo-act-btn.danger:active { background: #FCEBEB; }
+
+  /* 预留工单底部操作区空间 */
+  .wo-body.has-actions { padding-bottom: 100px; }
+
+  /* 紧急程度选择 */
+  .urgency-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .urg-opt {
+    padding: 12px 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .urg-opt:active { background: var(--surface); }
+  .urg-opt.selected { border-color: var(--g-deep); background: var(--g-mist); color: var(--g-forest); font-weight: 500; }
+  .urg-opt-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* 故障标签快选 */
+  .tag-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .tag-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .tag-chip:active { background: var(--surface); }
+  .tag-chip.selected {
+    background: var(--g-mist);
+    color: var(--g-forest);
+    border-color: var(--g-primary);
+    font-weight: 500;
+  }
+
+  /* 设备选择器 */
+  .eq-picker-trigger {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    text-align: left;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .eq-picker-trigger:active { background: var(--surface); }
+  .eq-picker-trigger.empty { color: var(--subtle); }
+  .eq-picker-selected {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .eq-picker-selected .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g-deep);
+    font-weight: 500;
+  }
+  .eq-picker-selected .name {
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .eq-picker-arrow { color: var(--subtle); font-weight: 300; }
+
+  /* 设备选择 Sheet 里的搜索和列表 */
+  .eq-search-in-sheet {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .eq-search-in-sheet:focus { border-color: var(--g-deep); }
+
+  .eq-picker-list {
+    max-height: 55vh;
+    overflow-y: auto;
+    margin: 0 -20px;
+    padding: 0 20px;
+  }
+  .eq-picker-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+  }
+  .eq-picker-item:active { background: var(--surface); }
+  .eq-picker-item .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g-deep);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .eq-picker-item .name {
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .eq-picker-item .meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--subtle);
+  }
+
+  /* 设备详情的相关记录 tab */
+  .device-wo-item {
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .device-wo-item:active { background: var(--line-soft); }
+  .device-wo-item-top {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .device-wo-item-code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g-deep);
+    margin-left: auto;
+  }
+  .device-wo-item-issue {
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .device-wo-item-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--subtle);
+  }
+
+  /* 提报工单按钮 FAB */
+  .fab.wo-fab { background: var(--g-deep); }
+  .fab.wo-fab:active { background: var(--g-forest); }
+
 </style>
 </head>
 <body>
@@ -291,7 +753,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 <!-- 登录页 -->
 <div id="login-screen">
   <div class="brand">
-    <div class="brand-mark"><div class="brand-logo"></div><div class="brand-meta">EMS · v0.5 · Cloud</div></div>
+    <div class="brand-mark"><div class="brand-logo"></div><div class="brand-meta">EMS · v0.6 · Work Order</div></div>
     <div class="brand-title">Nickel<br>Plant</div>
     <div class="brand-sub">湿法冶镍设备管理系统</div>
     <div class="brand-line"></div>
@@ -336,6 +798,18 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <header class="detail-back" id="topbar-edit" style="display:none;" onclick="cancelEdit()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     <span class="detail-back-text" id="edit-title">编辑设备</span>
+  </header>
+
+  <!-- 工单详情顶栏 -->
+  <header class="detail-back" id="topbar-wo-detail" style="display:none;" onclick="backToWoList()">
+    <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="detail-back-text">返回工单列表</span>
+  </header>
+
+  <!-- 工单创建顶栏 -->
+  <header class="detail-back" id="topbar-wo-edit" style="display:none;" onclick="cancelWoEdit()">
+    <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="detail-back-text" id="wo-edit-title">提报工单</span>
   </header>
 
   <main class="content" id="main-content">
@@ -411,8 +885,29 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     </section>
 
     <section class="module" data-module="workorder">
-      <div class="section-header"><div class="section-label">Work Order · 维修工单</div><h1 class="section-title">Active orders</h1><div class="section-sub">提报 · 审批 · 接单 · 完工 · 确认</div></div>
-      <div class="empty"><div class="empty-mark">—</div><div class="empty-title">暂无工单</div><div class="empty-hint">coming in phase 2</div></div>
+      <div class="section-header">
+        <div class="section-label">Work Order · 维修工单</div>
+        <h1 class="section-title">Active orders</h1>
+        <div class="section-sub" id="wo-section-sub">提报 · 审批 · 接单 · 完工 · 确认</div>
+      </div>
+      <div class="wo-filter-bar" id="wo-filter-bar"></div>
+      <div id="wo-list-container"></div>
+    </section>
+
+    <!-- 工单详情 -->
+    <section class="module" data-module="workorder-detail">
+      <div class="wo-hero" id="wo-detail-hero"></div>
+      <div class="wo-body" id="wo-detail-body"></div>
+      <div class="wo-actions hidden" id="wo-actions"></div>
+    </section>
+
+    <!-- 工单创建/编辑 -->
+    <section class="module" data-module="workorder-create">
+      <div class="edit-form" id="wo-form-body"></div>
+      <div class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" onclick="cancelWoEdit()">取消</button>
+        <button class="edit-btn edit-btn-save" onclick="submitWorkorder()">提交</button>
+      </div>
     </section>
 
     <section class="module" data-module="parts">
@@ -454,6 +949,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
   <!-- 浮动新增按钮（仅管理员在设备列表时显示） -->
   <button class="fab hidden" id="fab-add" onclick="openAdd()" title="新增设备">+</button>
+  <!-- 浮动提报工单按钮（所有用户在工单列表时显示） -->
+  <button class="fab wo-fab hidden" id="fab-wo" onclick="openReport()" title="提报工单">+</button>
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
@@ -524,7 +1021,7 @@ window.addEventListener('offline', () => setCloudStatus('offline', '离线（本
 const SEED_EQUIPMENTS = [{"tag":"201-PE-AG-001A","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201-PE-AG-001B","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201-PE-AG-001C","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201D-PE-AG-002A","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201D-PE-AG-002B","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201D-PE-AG-002C","name":"原矿浓密机给料槽搅拌","type":"搅拌器","spec":"HWY6200","area":"201","status":"idle","responsible":"郝行龙","motor":"电机:皖南/上电YE3-132KW-4/IEC/IP55/F/WF1","gearPump":"减速机:南高齿MH3S150VB80B+C/18.5rpmI设备规格","specDetail":"Ø18000x20000\n搅拌桨叶直径6200mm\n搅拌上轴Ø560*16*9600，搅拌下轴Ø480*16*9000\n转速18.5转/分\n转向顺时针方向，叶端线速度6.00m/s","supplier":"","remark":""},{"tag":"201-PE-AG-003","name":"污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"201","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机\n电机：2.2kW/PC","gearPump":"减速机 ：TRF88-ZP4-4P-13.33-M4-G-X 设备规格","specDetail":"，2000×2000×2000\n搅拌桨叶直径Ø800mm，\n搅拌轴Ø55*1650\n转速108转/分\n转向顺时针方向，叶端线速度4.52m/s","supplier":"","remark":""},{"tag":"201-PE-PP-001A","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201-PE-PP-001B","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201-PE-PP-001C","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201-PE-PP-001D","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201-PE-PP-001E","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201-PE-PP-003","name":"污水泵","type":"地坑泵","spec":"40ZJLX-A35（33）","area":"201","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：40ZJLX-A35（33）流量Q=30m3/h，扬程H=35m泵出口直径Ø40","specDetail":"","supplier":"","remark":""},{"tag":"201-PE-TK-001A","name":"原矿浓密机给料槽","type":"贮槽","spec":"φ18000*20000 Q345R","area":"201","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000×20000 重量：160768 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"201-PE-TK-001B","name":"原矿浓密机给料槽","type":"贮槽","spec":"φ18000*20000 Q345R","area":"201","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000×20000 重量：160768 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"201-PE-TK-001C","name":"原矿浓密机给料槽","type":"贮槽","spec":"φ18000*20000 Q345R","area":"201","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000×20000 重量：160768 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"201B-PE-PP-002A","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201B-PE-PP-002B","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201B-PE-PP-002C","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"201B-PE-PP-002D","name":"原矿浆输送泵","type":"离心泵","spec":"300ZJ-1-A56","area":"201","status":"idle","responsible":"郝行龙","motor":"电机参数：BPY-355L2-6/250KW/380V/IP55/F","gearPump":"泵型号：300ZJ-1-A56\n集装式机械密封","specDetail":"流量：1200m³/h\n扬程：35m\n泵进口直径Ø350mm,出口直径Ø300mm","supplier":"","remark":""},{"tag":"202-PE-AG-001A","name":"低温预热器给料槽搅拌","type":"搅拌器","spec":"GMR20000-19E","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"型号：Y200kW-4P/B3功率：200kW，电源：380V/50Hz/4P规格φ18000*20000，二层搅拌器：FZCX6000-457T5（三叶），FZCX5000-457T5（三叶）\n搅拌轴：SAE580*25/457*22-17800T5\n转速19转/分\n转向顺时针方向，叶端线速度5.97m/s","supplier":"","remark":""},{"tag":"202-PE-AG-001B","name":"低温预热器给料槽搅拌","type":"搅拌器","spec":"GMR20000-19E","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"型号：Y200kW-4P/B3功率：200kW，电源：380V/50Hz/4P规格φ18000*20000，二层搅拌器：FZCX6000-457T5（三叶），FZCX5000-457T5（三叶）\n搅拌轴：SAE580*25/457*22-17800T5\n转速19转/分\n转向顺时针方向，叶端线速度5.97m/s","supplier":"","remark":""},{"tag":"202-PE-AG-001C","name":"低温预热器给料槽搅拌","type":"搅拌器","spec":"GMR20000-19E","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"型号：Y200kW-4P/B3功率：200kW，电源：380V/50Hz/4P规格φ18000*20000，二层搅拌器：FZCX6000-457T5（三叶），FZCX5000-457T5（三叶）\n搅拌轴：SAE580*25/457*22-17800T5\n转速19转/分\n转向顺时针方向，叶端线速度5.97m/s","supplier":"","remark":""},{"tag":"202-PE-AG-002A","name":"202污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机 设备规格","gearPump":"","specDetail":"，2000×2000×2000\n搅拌器YCK750-50T5\n搅拌轴SA55-1650T5\n转速119转/分\n转向顺时针方向，叶端线速度4.67m/s","supplier":"","remark":""},{"tag":"202-PE-AG-002B","name":"202污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机 设备规格","gearPump":"","specDetail":"，2000×2000×2000\n搅拌器YCK750-50T5\n搅拌轴SA55-1650T5\n转速119转/分\n转向顺时针方向，叶端线速度4.67m/s","supplier":"","remark":""},{"tag":"202-PE-AG-002C","name":"202污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机 设备规格","gearPump":"","specDetail":"，2000×2000×2000\n搅拌器YCK750-50T5\n搅拌轴SA55-1650T5\n转速119转/分\n转向顺时针方向，叶端线速度4.67m/s","supplier":"","remark":""},{"tag":"202-PE-AG-002D","name":"202污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机 设备规格","gearPump":"","specDetail":"，2000×2000×2000\n搅拌器YCK750-50T5\n搅拌轴SA55-1650T5\n转速119转/分\n转向顺时针方向，叶端线速度4.67m/s","supplier":"","remark":""},{"tag":"202-PE-OT-101","name":"原矿浓密静态混合器","type":"非标静设备","spec":"DN250","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-OT-201","name":"原矿浓密静态混合器","type":"非标静设备","spec":"DN250","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-OT-301","name":"原矿浓密静态混合器","type":"非标静设备","spec":"DN250","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-005","name":"高压水泵","type":"离心泵","spec":"SLGE10-19","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-160M-11kW-2皖南，额度转速2900r/min 泵型号：SLGF10-19，流量Q=10m3/h","gearPump":"密封形式：机械密封","specDetail":"扬程H=150m\n泵进口DN40，出口DN40","supplier":"","remark":""},{"tag":"202-PE-PP-006A","name":"污水泵","type":"地坑泵","spec":"65ZJLX-A40(35)","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3 225S-4/37KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX-A40(35)","specDetail":"流量Q=100m3/h，扬程H=35m\n转速1480r/min，进口直径DN100,出口直径DN65，","supplier":"","remark":""},{"tag":"202-PE-PP-006B","name":"污水泵","type":"地坑泵","spec":"65ZJLX-A40(35)","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3 225S-4/37KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX-A40(35)","specDetail":"流量Q=100m3/h，扬程H=35m\n转速1480r/min，进口直径DN100,出口直径DN65，","supplier":"","remark":""},{"tag":"202-PE-PP-006C","name":"污水泵","type":"地坑泵","spec":"65ZJLX-A40(35)","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3 225S-4/37KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX-A40(35)","specDetail":"流量Q=100m3/h，扬程H=35m\n转速1480r/min，进口直径DN100,出口直径DN65，","supplier":"","remark":""},{"tag":"202-PE-PP-006D","name":"污水泵","type":"地坑泵","spec":"65ZJLX-A40(35)","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3 225S-4/37KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX-A40(35)","specDetail":"流量Q=100m3/h，扬程H=35m\n转速1480r/min，进口直径DN100,出口直径DN65，","supplier":"","remark":""},{"tag":"202-PE-PP-101A","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-101B","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-102A","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-102B","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-103A","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-103B","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-104A","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-104B","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-201A","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-201B","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-202A","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-202B","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-203A","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-203B","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-204A","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-204B","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-301A","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-301B","name":"剪切泵","type":"离心泵","spec":"ZGF350-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY315L2-6/132KW","gearPump":"泵型号：ZGF350-600+皮带，流量Q=1230m3 /h，扬程H=12m","specDetail":"额度转速985r/min\n泵进口DN450，出口DN350\n密封形式：副叶轮+填料，填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-302A","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-302B","name":"底流泵","type":"离心泵","spec":"ZGF250-600","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号BPY355L4-6/280KW-380V，额度转速990r/min","gearPump":"泵型号：ZGF250-600，流量Q=860m³/h，扬程H=30m","specDetail":"泵进口DN350，出口DN250\n密封形式：副叶轮+填料填料聚四氟乙烯浸石墨","supplier":"","remark":""},{"tag":"202-PE-PP-303A","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-303B","name":"絮凝剂二次稀释泵","type":"离心泵","spec":"150FUH-42S-160/35-C3","area":"202","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-225S-4-37kw-380V上海电机 泵型号：150FUH-42S-160/35-C3，流量Q=160m3/h","gearPump":"机械密封","specDetail":"扬程H=35m\n进出口直径150*125mm","supplier":"","remark":""},{"tag":"202-PE-PP-304A","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-PP-304B","name":"低温预热器给料泵","type":"离心泵","spec":"ZGF200-700","area":"202","status":"idle","responsible":"郝行龙","motor":"电机参数：电机型号BPY-3553-6-6WE1TH，355KW，380V，667A，50HzIP56，绝缘等级CLASS F，3390N/M，,额度转速990r/min","gearPump":"泵型号：ZGF200-700,流量Q=660m³/h，扬程H=50m 泵进口DN400，出口DN200\n机械密封，材质2205/SIC","specDetail":"","supplier":"","remark":""},{"tag":"202-PE-TH-101","name":"褐铁矿浓密机","type":"浓密机","spec":"SGN-38","area":"202","status":"idle","responsible":"郝行龙","motor":"自稀释泵能力600m3/h/台：液压站电机110KW","gearPump":"","specDetail":"SGN-38 ∅38000x8000(TT)\n进料矿浆量2550~3150m3/h/台进料浓度8~15%(w/w)\n矿浆密度1.07~1.10t/m3\n底流浓度≥38%(w/w)","supplier":"","remark":""},{"tag":"202-PE-TH-201","name":"褐铁矿浓密机","type":"浓密机","spec":"SGN-38","area":"202","status":"idle","responsible":"郝行龙","motor":"自稀释泵能力600m3/h/台：液压站电机110KW","gearPump":"","specDetail":"SGN-38 ∅38000x8000(TT)\n进料矿浆量2550~3150m3/h/台进料浓度8~15%(w/w)\n矿浆密度1.07~1.10t/m3\n底流浓度≥38%(w/w)","supplier":"","remark":""},{"tag":"202-PE-TH-301","name":"褐铁矿浓密机","type":"浓密机","spec":"SGN-38","area":"202","status":"idle","responsible":"郝行龙","motor":"自稀释泵能力600m3/h/台：液压站电机110KW","gearPump":"","specDetail":"SGN-38 ∅38000x8000(TT)\n进料矿浆量2550~3150m3/h/台进料浓度8~15%(w/w)\n矿浆密度1.07~1.10t/m3\n底流浓度≥38%(w/w)","supplier":"","remark":""},{"tag":"202-PE-TK-001A","name":"低温预热器给料槽","type":"贮槽","spec":"φ18000*20000  Q345R","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000*20000 重量：160547.5 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"202-PE-TK-001B","name":"低温预热器给料槽","type":"贮槽","spec":"φ18000*20000  Q345R","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000*20000 重量：160547.5 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"202-PE-TK-001C","name":"低温预热器给料槽","type":"贮槽","spec":"φ18000*20000  Q345R","area":"202","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"Φ18000*20000 重量：160547.5 材质：筒体：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"203-PE-AG-101A","name":"高压釜1隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101B","name":"高压釜2隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101C","name":"高压釜3隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101D","name":"高压釜4隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101E","name":"高压釜5隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101F","name":"高压釜6隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-101G","name":"高压釜7隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-102","name":"闪蒸密封槽搅拌器","type":"搅拌器","spec":"GMC1500-400E","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"单端面机封GW204-90S15-BK02M1K6","specDetail":"电源：380V/50Hz/4P，型号：Y15kW-4P/V1\n功率：15kW Φ5000×5500mm 型号GMC1500-44E\n搅拌器ZCK1900-85S15（3叶）\n搅拌轴SA90-5240S15\n旋转方向：顺时针方向\n输出44r/min\n叶轮线速度4.38m/s","supplier":"","remark":""},{"tag":"203-PE-AG-103","name":"预热器区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-104A","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-104B","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-105","name":"高压釜区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-201A","name":"高压釜1隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201B","name":"高压釜2隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201C","name":"高压釜3隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201D","name":"高压釜4隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201E","name":"高压釜5隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201F","name":"高压釜6隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-201G","name":"高压釜7隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-202","name":"闪蒸密封槽搅拌器","type":"搅拌器","spec":"GMC1500-400E","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"单端面机封GW204-90S15-BK02M1K6","specDetail":"电源：380V/50Hz/4P，型号：Y15kW-4P/V1\n功率：15kW Φ5000×5500mm 型号GMC1500-44E\n搅拌器ZCK1900-85S15（3叶）\n搅拌轴SA90-5240S15\n旋转方向：顺时针方向\n输出44r/min\n叶轮线速度4.38m/s","supplier":"","remark":""},{"tag":"203-PE-AG-203","name":"预热器区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-204A","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-204B","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-205","name":"高压釜区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-301A","name":"高压釜1隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301B","name":"高压釜2隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315M-4WF2，132KW，380V，241A，50Hz，IP56，F，840.4N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301C","name":"高压釜3隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301D","name":"高压釜4隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301E","name":"高压釜5隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301F","name":"高压釜6隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-301G","name":"高压釜7隔室搅拌","type":"搅拌器","spec":"HWL2160NV","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数（上海电机）：型号BPY-315S-4WF2，110KW，380V，201A，50Hz，IP56，F，700.3N。m，1480r/min:型号：HWL 2160NV搅拌轴直径Ø160mm（上段）Ø150mm（下段）","gearPump":"","specDetail":"搅拌轴长度5200mm\n旋转方向，顺时针方向\n搅拌器直径Ø2100mm","supplier":"","remark":""},{"tag":"203-PE-AG-302","name":"闪蒸密封槽搅拌器","type":"搅拌器","spec":"GMC1500-400E","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"单端面机封GW204-90S15-BK02M1K6","specDetail":"电源：380V/50Hz/4P，型号：Y15kW-4P/V1\n功率：15kW Φ5000×5500mm 型号GMC1500-44E\n搅拌器ZCK1900-85S15（3叶）\n搅拌轴SA90-5240S15\n旋转方向：顺时针方向\n输出44r/min\n叶轮线速度4.38m/s","supplier":"","remark":""},{"tag":"203-PE-AG-303","name":"预热器区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-304A","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-304B","name":"高压釜给料泵区污水坑搅拌","type":"搅拌器","spec":"GMC400-119E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AG-305","name":"高压釜区污水坑搅拌","type":"搅拌器","spec":"GMC400-110E","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y4kW-4P-IE3-V1/IP55/WTHF2上海电机","gearPump":"减速机：TRF88-ZP4-4P-13.33-M4-G-X 搅拌器ZCK850-50S14（4叶）","specDetail":"搅拌轴SA55-1850S14\n旋转方向：顺时针方向\n输出108r/min\n叶轮线速度4.81m/s 预热器区2200×2200×2200\n高压釜给料区1500×1700×2200\n高压釜区2200×2200×2200","supplier":"","remark":""},{"tag":"203-PE-AU-101","name":"高压釜","type":"压力容器","spec":"Ø5900x38100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-AU-201","name":"高压釜","type":"压力容器","spec":"Ø5900x38100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-AU-301","name":"高压釜","type":"压力容器","spec":"Ø5900x38100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-CM-102","name":"高压釜给料泵用空压机","type":"空压机","spec":"WP4431","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"型号：WP4331（Sauer 品牌），功率：18.5KW。Q=0.67Nm3/min,出口压力\n30MPa，风冷","supplier":"","remark":""},{"tag":"203-PE-CM-201","name":"吹扫用高压空气压缩机","type":"空压机","spec":"HG2-350W","area":"203","status":"idle","responsible":"郝行龙","motor":"主电机参数：YX3-225M-2，45KW×2P×380V×50HZ×3 相\n润滑油泵电机参数：45KW，380V，3 相，50HZ，IP55","gearPump":"","specDetail":"空压机型号： HG2-350W、流量 120Nm³/Hr、排气压力 35Mpa\n完整高压空气压缩机主体设备 2 台（包括空气过滤器、一级压缩段、二级压缩段、三级压缩段、四级压缩段、及其他部件等），油过滤器 2 套，压缩空气储罐 1 套：16个×68L，40MPa，减压阀组 2 组，总控制柜\n水冷\n注油量18L*2","supplier":"","remark":""},{"tag":"203-PE-CM-302","name":"高压釜给料泵用空压机","type":"空压机","spec":"WP4431","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"型号：WP4331（Sauer 品牌），功率：18.5KW。Q=0.67Nm3/min,出口压力\n30MPa，风冷","supplier":"","remark":""},{"tag":"203-PE-CR-101","name":"电动单梁起重机","type":"空压机","spec":"LX5t-5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：ZDY 112-4，4KW，380V，1380r/min\n葫芦行走电机参数：ZDY1 41-4，0.8KW：葫芦起身电机参数：ZD1 41-4，7.5KW，","gearPump":"","specDetail":"LX型\n起重量Gn=5t, 横梁跨度Lk=5m,起升高度 H=6m\n电葫芦型号CD1\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-102","name":"电动单梁桥式起重机","type":"空压机","spec":"LD10t-9.5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：YDE 90L-4，1.5KW，380V，50HZ，S4-40%，F，IP55，Y，2-10N。m，7.5A，1500r/min\n葫芦行走电机参数：ZDY1 21-4，0.8KW，380V，2.4A，1380r/min，S4-40%，78dB（A），50Hz，F，IP55：葫芦起身电机参数：ZD1 51-4，13KW，380V，50Hz，1400r/min，30A，F，90dB（A），147N。m，S4-40%，","gearPump":"","specDetail":"LD型\n起重量Gn=10t, 横梁跨度S=9.5m,起升高度 H=19m\n起重机运行机构YDE90L-4\n运行速度30m/min\n起升机构电动葫芦形式CD1型\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-103A","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-103B","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-104","name":"旋转吊臂","type":"起重设备","spec":"BZD5T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD41-4/7.5KW IP55\n旋转电机ZDY21-4/0.75KW IP55","gearPump":"","specDetail":"型号：BZD5T\n, 起重量5吨\n起升高度H=40m, 回转半径8m\n起升速度8m/min\n旋转速度0.45r/min\n回转角度360度\n总功率9.05KW","supplier":"","remark":""},{"tag":"203-PE-CR-201","name":"电动单梁起重机","type":"空压机","spec":"LX5t-5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：ZDY 112-4，4KW，380V，1380r/min\n葫芦行走电机参数：ZDY1 41-4，0.8KW：葫芦起身电机参数：ZD1 41-4，7.5KW，","gearPump":"","specDetail":"LX型\n起重量Gn=5t, 横梁跨度Lk=5m,起升高度 H=6m\n电葫芦型号CD1\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-202","name":"电动单梁桥式起重机","type":"空压机","spec":"LD10t-9.5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：YDE 90L-4，1.5KW，380V，50HZ，S4-40%，F，IP55，Y，2-10N。m，7.5A，1500r/min\n葫芦行走电机参数：ZDY1 21-4，0.8KW，380V，2.4A，1380r/min，S4-40%，78dB（A），50Hz，F，IP55：葫芦起身电机参数：ZD1 51-4，13KW，380V，50Hz，1400r/min，30A，F，90dB（A），147N。m，S4-40%，","gearPump":"","specDetail":"LD型\n起重量Gn=10t, 横梁跨度S=9.5m,起升高度 H=19m\n起重机运行机构YDE90L-4\n运行速度30m/min\n起升机构电动葫芦形式CD1型\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-203A","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-203B","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-204","name":"旋转吊臂","type":"起重设备","spec":"BZD5T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD41-4/7.5KW IP55\n旋转电机ZDY21-4/0.75KW IP55","gearPump":"","specDetail":"型号：BZD5T\n, 起重量5吨\n起升高度H=40m, 回转半径8m\n起升速度8m/min\n旋转速度0.45r/min\n回转角度360度\n总功率9.05KW","supplier":"","remark":""},{"tag":"203-PE-CR-301","name":"电动单梁起重机","type":"空压机","spec":"LX5t-5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：ZDY 112-4，4KW，380V，1380r/min\n葫芦行走电机参数：ZDY1 41-4，0.8KW：葫芦起身电机参数：ZD1 41-4，7.5KW，","gearPump":"","specDetail":"LX型\n起重量Gn=5t, 横梁跨度Lk=5m,起升高度 H=6m\n电葫芦型号CD1\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-302","name":"电动单梁桥式起重机","type":"空压机","spec":"LD10t-9.5m","area":"203","status":"idle","responsible":"郝行龙","motor":"大车行走电机（南京特种电机厂）参数：YDE 90L-4，1.5KW，380V，50HZ，S4-40%，F，IP55，Y，2-10N。m，7.5A，1500r/min\n葫芦行走电机参数：ZDY1 21-4，0.8KW，380V，2.4A，1380r/min，S4-40%，78dB（A），50Hz，F，IP55：葫芦起身电机参数：ZD1 51-4，13KW，380V，50Hz，1400r/min，30A，F，90dB（A），147N。m，S4-40%，","gearPump":"","specDetail":"LD型\n起重量Gn=10t, 横梁跨度S=9.5m,起升高度 H=19m\n起重机运行机构YDE90L-4\n运行速度30m/min\n起升机构电动葫芦形式CD1型\n起升速度8m/min","supplier":"","remark":""},{"tag":"203-PE-CR-303A","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-303B","name":"泵用旋转吊臂","type":"起重设备","spec":"BZD2T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD31-4/3KW IP55\n旋转电机ZDY21-4/0.75KW IP55\n运行电机ZDY12-4/0.4KW IP55 型号：BZD2T","gearPump":"","specDetail":", 起重量2吨\n起升高度H=5.5m, 回转半径6m\n起升速度8m/min\n旋转速度0.5r/min\n回转角度360度\n总功率4.15KW","supplier":"","remark":""},{"tag":"203-PE-CR-304","name":"旋转吊臂","type":"起重设备","spec":"BZD5T","area":"203","status":"idle","responsible":"郝行龙","motor":"起升电机ZD41-4/7.5KW IP55\n旋转电机ZDY21-4/0.75KW IP55","gearPump":"","specDetail":"型号：BZD5T\n, 起重量5吨\n起升高度H=40m, 回转半径8m\n起升速度8m/min\n旋转速度0.45r/min\n回转角度360度\n总功率9.05KW","supplier":"","remark":""},{"tag":"203-PE-EP-101","name":"高压釜搅拌冲洗水槽","type":"贮槽","spec":"V=200L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-102A","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"SPN3M0001-00","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-102B","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"CMXT-F54","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-103","name":"阀门用油压站","type":"液压设备","spec":"Z102-0084","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-104A","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-104B","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-104C","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-104D","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105A","name":"高温预热器给料泵密封液系统","type":"液压设备","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105B","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105C","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105D","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105E","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-105F","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-201","name":"高压釜搅拌冲洗水槽","type":"贮槽","spec":"V=200L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-202A","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"SPN3M0001-00","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-202B","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"CMXT-F54","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-203","name":"阀门用油压站","type":"液压设备","spec":"Z102-0084","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-204A","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-204B","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-204C","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-204D","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205A","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205B","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205C","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205D","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205E","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-205F","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-301","name":"高压釜搅拌冲洗水槽","type":"贮槽","spec":"V=200L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-302A","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"SPN3M0001-00","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-302B","name":"预热器给料泵密封液补液站","type":"密封系统","spec":"CMXT-F54","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-303","name":"阀门用油压站","type":"液压设备","spec":"Z102-0084","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-304A","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-304B","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"SYS-09864","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-304C","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-304D","name":"中温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305A","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305B","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305C","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"SYS09863","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305D","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305E","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-EP-305F","name":"高温预热器给料泵密封液系统","type":"密封系统","spec":"CMG3-53B","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-101A","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-101B","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-201A","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-201B","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-301A","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FR-301B","name":"高压釜入口过滤筛","type":"非标静设备","spec":"DN350","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-101","name":"高压闪蒸槽","type":"压力容器","spec":"Ø4500x8750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-102","name":"中压闪蒸槽","type":"压力容器","spec":"Ø6000x8100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-103","name":"低压闪蒸槽","type":"压力容器","spec":"Ø7000x7100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-201","name":"高压闪蒸槽","type":"压力容器","spec":"Ø4500x8750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-202","name":"中压闪蒸槽","type":"压力容器","spec":"Ø6000x8100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-203","name":"低压闪蒸槽","type":"压力容器","spec":"Ø7000x7100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-301","name":"高压闪蒸槽","type":"压力容器","spec":"Ø4500x8750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-302","name":"中压闪蒸槽","type":"压力容器","spec":"Ø6000x8100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-FV-303","name":"低压闪蒸槽","type":"压力容器","spec":"Ø7000x7100(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-101","name":"低温矿浆预热器","type":"压力容器","spec":"Ø3600x13550(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-102","name":"中温矿浆预热器","type":"压力容器","spec":"Ø3600x11400(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-103","name":"高温矿浆预热器","type":"压力容器","spec":"Ø3500x11750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-201","name":"低温矿浆预热器","type":"压力容器","spec":"Ø3600x13550(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-202","name":"中温矿浆预热器","type":"压力容器","spec":"Ø3600x11400(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-203","name":"高温矿浆预热器","type":"压力容器","spec":"Ø3500x11750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-301","name":"低温矿浆预热器","type":"压力容器","spec":"Ø3600x13550(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-302","name":"中温矿浆预热器","type":"压力容器","spec":"Ø3600x11400(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PH-303","name":"高温矿浆预热器","type":"压力容器","spec":"Ø3500x11750(TT)","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-101A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-101B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-102A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-103A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-103B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-104A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-104B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-105A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-105B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-106A","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-106B","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-107A","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-107B","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-108A","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-108B","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-109A","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-109B","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-110A","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-110B","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-111A","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-111B","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-112A","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-112B","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-113A","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-113B","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-114","name":"高压釜搅拌冲洗水事故泵","type":"变容积泵","spec":"G10XRSGSFEMB","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-115A","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-115B","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-115C","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-115D","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-116","name":"冲洗水泵","type":"离心泵","spec":"40D-A40","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-117","name":"预热器区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-118A","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-118B","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-119","name":"高压釜区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-120","name":"浓硫酸区污水泵","type":"地坑泵","spec":"65FYUC-50-50/30-U5-1500","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-200L -4-30kw","gearPump":"泵型号：65FYUC-50-50/3 0-1500","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65\n过流件材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-121A","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-121B","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-121C","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-121D","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-121E","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-121F","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-201A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-201B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-201B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-202A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-202B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-203A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-203B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-204A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-204B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-205A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-205B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-206A","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-206B","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-207A","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-207B","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-208A","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-208B","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-209A","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-209B","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-210A","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-210B","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-211A","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-211B","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-212A","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-212B","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-213A","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-213B","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-214","name":"高压釜搅拌冲洗水事故泵","type":"变容积泵","spec":"G10XRSGSFEMB","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-215A","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-215B","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-215C","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-215D","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-216","name":"冲洗水泵","type":"离心泵","spec":"40D-A40","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-217","name":"预热器区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-218A","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-218B","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-219","name":"高压釜区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-220","name":"浓硫酸区污水泵","type":"地坑泵","spec":"65FYUC-50-50/30-U5-1500","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-200L -4-30kw","gearPump":"泵型号：65FYUC-50-50/3 0-1500","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65\n过流件材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-221A","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-221B","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-221C","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-221D","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-221E","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-221F","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-301A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-301B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-302A","name":"中温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AH","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6xAESV3 280kW","gearPump":"机械密封，材料 A53铬合金","specDetail":"8/6SYFC-AHX\n流量Q=270~720m³/h，扬程H=60m\n叶轮直径550mm\n材料A52铬合金\n泵进口法兰DN203，出口法兰DN152\n泵壳材料A53铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-302B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-303A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-303B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-304A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-304B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-305A","name":"高温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZGG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：9xAESV3 350kW 8/6SYFC-AHPP","gearPump":"高压双端面机械密封，材料 A48铬合金","specDetail":"流量Q=320~850m³/h，扬程H=65m\n叶轮直径550mm\n材料A49铬合金\n泵进口法兰DN203，出口法兰DN152\n蜗壳A48铬合金\n转速1188rpm\n叶轮线速度34m/s","supplier":"","remark":""},{"tag":"203-PE-PP-305B","name":"高温矿浆预热器给料泵 warman","type":"离心泵","spec":"8/6 SYFC AHPP","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/355KW，皖南/上海","gearPump":"泵型号：ZGG250-650+皮带\n双端面机械密封，材质42铬钼合金","specDetail":"流量Q=320~850m³/h，扬程H=65m泵转速1050转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":""},{"tag":"203-PE-PP-306A","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-306B","name":"高压釜给料泵","type":"变容积泵","spec":"TZPM 2000HB","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：M3BP 450LB4 690V 920KW\n电机转速：390.9-1563.4转/分","gearPump":"泵型号：TZPM2000HB 流量Q=550m³/h，出口压P=5.2~5.6MPa","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-307A","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-307B","name":"闪蒸后液输送泵","type":"离心泵","spec":"200ZJ51-I-A65","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-355L2-6/250KW-380V IP55/F皖南、上海","gearPump":"泵型号：200ZJ51-I-A65","specDetail":"流量Q=750m3/h,扬程 H=45m\n进口法兰DN250\n出口法兰DN200","supplier":"","remark":""},{"tag":"203-PE-PP-308A","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-308B","name":"洗水输送泵","type":"离心泵","spec":"200FUH-40-350/40-C3","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：Y280M-4\n功率90kw-380V上海电机，","gearPump":"泵型号：200FUH-40-350/40-C3，流量Q=350m3/h,扬程 H=40m\n机械密封，泵壳材料：工程塑料","specDetail":"进口法兰DN200\n出口法兰DN150\n叶轮材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-309A","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-309B","name":"洗液输送泵","type":"离心泵","spec":"150ZJ51-I-C42","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：BPY-315S-4/110KW-380V /IP55/F","gearPump":"皖南、上海 泵型号：150ZJ51-I-C42\n机械密封","specDetail":"流量Q=400m3/h, 扬程H=50m\n进口法兰DN200\n出口法兰DN150","supplier":"","remark":""},{"tag":"203-PE-PP-310A","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-310B","name":"浓硫酸输送泵","type":"离心泵","spec":"KNCH100-80-160","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YBX3-200L1-2 380v 30KW， 泵型号：KNCH100-80-160 流量 Q=80m3/h, 扬程H=25m","gearPump":"","specDetail":"转速2900r/min\n进口法兰DN100\n出口法兰DN80","supplier":"","remark":""},{"tag":"203-PE-PP-311A","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-311B","name":"第一隔室浓硫酸给料泵","type":"变容积泵","spec":"3D7MF50/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 110KW IP55","gearPump":"泵型号：3D7MF50/6.0-BY-VD","specDetail":"流量 Q=50m3/h\n排出压力P=6.0Mpa\n泵转速74r/min\n过流部分材质2507\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-312A","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-312A","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-312B","name":"第二隔室浓硫酸给料泵","type":"变容积泵","spec":"3D6.5MF25/6.0-BY-VD","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-312B","name":"高压釜搅拌冲洗水泵","type":"变容积泵","spec":"G03EKSGHFECA","area":"203","status":"idle","responsible":"郝行龙","motor":"电机参数：380V 55KW IP55","gearPump":"泵型号：3D6.5MF25/6.0-BY-VD 流量Q=25m3/h","specDetail":"出口压力P=6.0Mpa\n过流部分材质2507\n泵转速75r/min\n泵入口DN150\n泵出口DN100","supplier":"","remark":""},{"tag":"203-PE-PP-314","name":"高压釜搅拌冲洗水事故泵","type":"变容积泵","spec":"G10XRSGSFEMB","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-315A","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-315B","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"FC1","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-315C","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-315D","name":"预热器给料泵密封液给料泵","type":"变容积泵","spec":"DPWA22/3.8-II","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-316","name":"冲洗水泵","type":"离心泵","spec":"40D-A40","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-317","name":"预热器区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-318A","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-318B","name":"高压釜给料泵区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-319","name":"高压釜区污水泵","type":"地坑泵","spec":"65ZJLX51-A30(29)","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-4-18.5KW/380V/IP55/V1/WTHF1","gearPump":"泵型号：65ZJLX51-A30（29）","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65","supplier":"","remark":""},{"tag":"203-PE-PP-320","name":"浓硫酸区污水泵","type":"地坑泵","spec":"65FYUC-50-50/30-U5-1500","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：YE3-200L -4-30kw","gearPump":"泵型号：65FYUC-50-50/3 0-1500","specDetail":"流量Q=50m3/h\n扬程H=30m\n泵出口DN65\n过流件材料：工程塑料","supplier":"","remark":""},{"tag":"203-PE-PP-321A","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-321B","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-321C","name":"密封液循环泵","type":"变容积泵","spec":"SPU5000-D0","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-321D","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-321E","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PP-321F","name":"密封液循环泵","type":"变容积泵","spec":"TOE/LCY2251-5mpa","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PT-101","name":"多功能选择性尾气净化装置","type":"非标静设备","spec":"316L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PT-201","name":"多功能选择性尾气净化装置","type":"非标静设备","spec":"316L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-PT-301","name":"多功能选择性尾气净化装置","type":"非标静设备","spec":"316L","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-TK-101","name":"闪蒸密封槽","type":"贮槽","spec":"Ø5000x5500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ5000*5500 重量：11167.1 材质：筒体：Q345R\n罐底：Q345R\n罐顶：S22053","supplier":"","remark":""},{"tag":"203-PE-TK-102","name":"洗水贮槽","type":"贮槽","spec":"Ø5000×700","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ5000*7000 重量：11905.3 材质：筒体：Q345R\n罐顶：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"203-PE-TK-103","name":"浓硫酸给料槽","type":"贮槽","spec":"Ø8500X9000","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ8500*9000 重量：33997.4 材质：筒体：Q345R\n罐顶：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"203-PE-TK-104","name":"浓硫酸高位槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：2418.3 材质：筒体：S31603\n罐顶：S31603\n罐底：S31603","supplier":"","remark":""},{"tag":"203-PE-TK-105","name":"密封液贮槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：1928 材质：筒体：S30408\n罐顶：S30408\n罐底：S30408","supplier":"","remark":""},{"tag":"203-PE-TK-201","name":"闪蒸密封槽","type":"贮槽","spec":"Ø5000x5500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ5000*5500 重量：11167.1 材质：筒体：Q345R\n罐底：Q345R\n罐顶：S22053","supplier":"","remark":""},{"tag":"203-PE-TK-202","name":"洗水贮槽","type":"贮槽","spec":"Ø5000×700","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-TK-203","name":"浓硫酸给料槽","type":"贮槽","spec":"Ø8500X9000","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ8500*9000 重量：33997.4 材质：筒体：Q345R\n罐顶：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"203-PE-TK-204","name":"浓硫酸高位槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：2418.3 材质：筒体：S31603\n罐顶：S31603\n罐底：S31603","supplier":"","remark":""},{"tag":"203-PE-TK-205","name":"密封液贮槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：1928 材质：筒体：S30408\n罐顶：S30408\n罐底：S30408","supplier":"","remark":""},{"tag":"203-PE-TK-301","name":"闪蒸密封槽","type":"贮槽","spec":"Ø5000x5500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ5000*5500 重量：11167.1 材质：筒体：Q345R\n罐底：Q345R\n罐顶：S22053","supplier":"","remark":""},{"tag":"203-PE-TK-302","name":"洗水贮槽","type":"贮槽","spec":"Ø5000×700","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-TK-303","name":"浓硫酸给料槽","type":"贮槽","spec":"Ø8500X9000","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ8500*9000 重量：33997.4 材质：筒体：Q345R\n罐顶：Q345R\n罐底：Q345R","supplier":"","remark":""},{"tag":"203-PE-TK-304","name":"浓硫酸高位槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：2418.3 材质：筒体：S31603\n罐顶：S31603\n罐底：S31603","supplier":"","remark":""},{"tag":"203-PE-TK-305","name":"密封液贮槽","type":"贮槽","spec":"Ø2500X2500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"φ2500*2500 重量：1928 材质：筒体：S30408\n罐顶：S30408\n罐底：S30408","supplier":"","remark":""},{"tag":"203-PE-VE-101","name":"高压蒸汽接受罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-102","name":"高压空气接收罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-103A","name":"阀门用空气罐","type":"压力容器","spec":"/","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-104","name":"仪表储气罐","type":"压力容器","spec":"V=10m3","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-201","name":"高压蒸汽接受罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-202","name":"高压空气接收罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-204","name":"仪表储气罐","type":"压力容器","spec":"V=10m3","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-301","name":"高压蒸汽接受罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-302","name":"高压空气接收罐","type":"压力容器","spec":"Ø1500x1500","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"203-PE-VE-304","name":"仪表储气罐","type":"压力容器","spec":"V=10m3","area":"203","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE CR-001","name":"絮凝剂制备起重机","type":"起重设备","spec":"LD3-14.5 A4","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE EP-002","name":"混合罐用循环搅拌泵组","type":"螺杆泵","spec":"1W 148 WMSR","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE EP-003","name":"熟化罐用循环搅拌泵组","type":"螺杆泵","spec":"1W 148 WMSR","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE PP-002","name":"污水泵","type":"地坑泵","spec":"80FYUC-35-30/35-1500+300","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE TK-001","name":"70m³混合槽","type":"贮槽","spec":"70m³","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE TK-002","name":"70m³S熟化槽","type":"贮槽","spec":"70m³","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE TK-003","name":"200m³S溶液储槽","type":"贮槽","spec":"200m³","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":""},{"tag":"316-1-PE-EP-001","name":"絮凝剂制备系统","type":"成套设备","spec":"WW-PF70A","area":"316-1","status":"idle","responsible":"郝行龙","motor":"罐体：Φ2500×4，H=6600mm,操作平台：1290×2640mm,支承框架：3650×2640mm,爬梯：3160×1000mm,电机电压：380V.总功率：23kW\n微型三相振动电机参数：型号 MVE41N-MICRO，功率 0.07KW/相数 3ph，激振力 40/58kgf，电压 380-460V，频率 50/60HZ，电流 0.25A，转速 2850/3360r/min，标准编号 IEC60034，工作制 S1，绝缘等级 F/防护等级 IP66，202405075，绍兴欧力-卧龙振动机械有限公司","gearPump":"","specDetail":"WW-PF70B","supplier":"","remark":""},{"tag":"316-1-PE-PP-001A","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001B","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001C","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001D","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001E","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001F","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001G","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""},{"tag":"316-1-PE-PP-001H","name":"原矿絮凝剂外送泵","type":"螺杆泵","spec":"NM076BY02S12B","area":"316-1","status":"idle","responsible":"郝行龙","motor":"电机型号：DRN132L4/VS(变频）\n电机功率：9.2KW","gearPump":"泵型号：NM076BY02S12B\n密封形式：单端面机械密封","specDetail":"防护等级：IP55\n绝缘等级：F\n电压：380V\nQ=25m3/h, H=70m\n泵进出口：DN125\n泵转数：283r/min","supplier":"","remark":""}];
 
 /* ========== 数据层 ========== */
-const SESSION_KEY = 'ems_session_v05';
+const SESSION_KEY = 'ems_session_v06';
 
 /* ==========================================================
    云端数据层：Firestore Collections
@@ -635,6 +1132,108 @@ function subscribeEquipments() {
     }
   }, (err) => {
     console.error('[Firebase] 订阅设备失败', err);
+    setCloudStatus('error', '连接失败');
+  });
+}
+
+
+/* ==========================================================
+   工单 (Work Order) 数据层
+   ========================================================== */
+
+let woCache = [];
+let woUnsub = null;
+
+function loadWorkorders() { return woCache; }
+
+const WO_STATUS_MAP = {
+  'pending-approval': { label: '待审批',   color: 'var(--s-repair)' },
+  'approved':         { label: '已批准',   color: '#2B8AD9' },
+  'rejected':         { label: '已驳回',   color: 'var(--s-scrap)' },
+  'in-progress':      { label: '维修中',   color: 'var(--g-deep)' },
+  'pending-confirm':  { label: '待确认',   color: '#7565E9' },
+  'done':             { label: '已完成',   color: 'var(--s-running)' },
+  'reopened':         { label: '已重开',   color: '#C13B76' },
+};
+
+const URGENCY_MAP = {
+  normal:   { label: '一般', color: 'var(--subtle)' },
+  urgent:   { label: '紧急', color: 'var(--s-repair)' },
+  critical: { label: '特急', color: 'var(--s-scrap)' },
+};
+
+// 常见故障标签（基于您飞书数据的分析）
+const COMMON_ISSUE_TAGS = [
+  '盘车不顺', '异响', '漏液', '发热', '震动大',
+  '不启动', '跳闸', '皮带磨损', '密封泄漏', '压力异常'
+];
+
+// 生成工单号：WO + YYYYMMDD + 三位序号
+function generateWoCode() {
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  // 统计今日已有工单数量
+  const todayCount = woCache.filter(w => w.code && w.code.startsWith('WO' + ymd)).length;
+  const seq = String(todayCount + 1).padStart(3, '0');
+  return 'WO' + ymd + seq;
+}
+
+async function cloudSaveWorkorder(wo) {
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'workorders', wo.id), {
+      ...wo,
+      updatedAt: Date.now(),
+    });
+    setCloudStatus('online', '已同步');
+  } catch (err) {
+    console.error('[Firebase] 保存工单失败', err);
+    setCloudStatus('error', '同步失败：' + err.message);
+    throw err;
+  }
+}
+
+async function cloudDeleteWorkorder(id) {
+  setCloudStatus('syncing', '删除中...');
+  try {
+    await deleteDoc(doc(db, 'workorders', id));
+    setCloudStatus('online', '已同步');
+  } catch (err) {
+    console.error('[Firebase] 删除工单失败', err);
+    setCloudStatus('error', '删除失败：' + err.message);
+    throw err;
+  }
+}
+
+function subscribeWorkorders() {
+  if (woUnsub) woUnsub();
+  woUnsub = onSnapshot(collection(db, 'workorders'), (snap) => {
+    woCache = snap.docs.map(d => d.data());
+    // 按创建时间倒序
+    woCache.sort((a, b) => (b.reportedAt || 0) - (a.reportedAt || 0));
+    // 自动刷新工单列表
+    const woModule = document.querySelector('.module[data-module="workorder"]');
+    if (woModule && woModule.classList.contains('active')) {
+      renderWorkOrderList();
+    }
+    // 工单详情页刷新
+    if (currentWoId) {
+      const woDetailModule = document.querySelector('.module[data-module="workorder-detail"]');
+      if (woDetailModule && woDetailModule.classList.contains('active')) {
+        const wo = woCache.find(w => w.id === currentWoId);
+        if (wo) renderWoDetail(wo);
+      }
+    }
+    // 设备详情的维修记录 tab 刷新
+    const eqDetailModule = document.querySelector('.module[data-module="equipment-detail"]');
+    if (currentEqId && eqDetailModule && eqDetailModule.classList.contains('active')) {
+      const activeTab = document.querySelector('.detail-tab.active');
+      if (activeTab && activeTab.dataset.tab === 'records') {
+        renderDeviceRecords(currentEqId);
+      }
+    }
+  }, (err) => {
+    console.error('[Firebase] 订阅工单失败', err);
     setCloudStatus('error', '连接失败');
   });
 }
@@ -1254,11 +1853,19 @@ async function deleteCurrent() {
 /* ========== FAB 显示控制 ========== */
 function updateFab() {
   const fab = document.getElementById('fab-add');
+  const woFab = document.getElementById('fab-wo');
   const user = findUser(localStorage.getItem(SESSION_KEY));
   const activeModule = document.querySelector('.module.active');
-  const inEquipment = activeModule && activeModule.dataset.module === 'equipment';
+  const moduleName = activeModule ? activeModule.dataset.module : '';
+
+  // 设备列表：只有管理员看到 + 新增
+  const inEquipment = moduleName === 'equipment';
   const isAdmin = user && user.role === 'admin';
   fab.classList.toggle('hidden', !(inEquipment && isAdmin));
+
+  // 工单列表：任何登录用户都看到 + 提报
+  const inWorkOrder = moduleName === 'workorder';
+  if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && user));
 }
 
 /* ========== 用户管理（继承 v0.3） ========== */
@@ -1319,17 +1926,42 @@ function showSheet(type, arg) {
       <div class="sheet-form-group"><div class="sheet-form-label">确认新密码</div><input class="sheet-input" id="confirm-pw" type="password" placeholder="再输一遍"></div>
       <button class="sheet-btn primary" onclick="confirmSetPassword()">${hasPwd?'修改':'设置'}密码</button>
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+  } else if (type==='pickEquipment') {
+    // 选择设备 sheet
+    const list = loadEquipments().slice(0, 50);
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择故障设备</div><div class="sheet-sub">共 ${loadEquipments().length} 台</div>
+      <input class="eq-search-in-sheet" id="eq-picker-search" placeholder="搜索位号或名称…" oninput="filterEqPickerList(this.value)">
+      <div class="eq-picker-list" id="eq-picker-list"></div>
+      <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
+    // 初始渲染
+    setTimeout(() => renderEqPickerList(''), 10);
+  } else if (type==='assignTech') {
+    // 指派师傅 sheet
+    const techs = loadUsers().filter(u => u.role === 'tech');
+    if (techs.length === 0) {
+      content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">指派师傅</div>
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">暂无维修师傅账号<br>请管理员先添加师傅账号</div>
+        <button class="sheet-btn" onclick="hideSheet()">关闭</button>`;
+    } else {
+      content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">指派师傅</div><div class="sheet-sub">选择一位师傅接单</div>
+        ${techs.map(t => `
+          <button class="sheet-btn" onclick="doAssignTech('${t.empno}')">
+            ${escapeHtml(t.name)} <span style="font-family:var(--font-mono);font-size:11px;color:var(--subtle);margin-left:6px;">${t.empno}</span>
+          </button>`).join('')}
+        <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+    }
   } else if (type==='about') {
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.5</div>
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        <strong style="color:var(--ink);">✓ 已接入 Firebase 云数据库</strong><br>
-        团队成员数据实时同步，任何人的修改在 1 秒内自动更新。<br><br>
+        <strong style="color:var(--ink);">✓ 云端实时同步 + 工单流程</strong><br>
+        团队成员的修改在 1 秒内同步。<br><br>
         <strong style="color:var(--ink);">开发路线：</strong><br>
-        · 阶段 2：工单流程（待开发）<br>
+        · <strong style="color:#3A5424;">阶段 2：工单流程 ✓</strong><br>
         · <strong style="color:#3A5424;">阶段 3：Firebase 云数据库 ✓</strong><br>
-        · 阶段 4：部署 GitHub Pages<br>
+        · <strong style="color:#3A5424;">阶段 4：GitHub Pages ✓</strong><br>
         · 阶段 5：备件、润滑、图片上传<br>
-        · 阶段 7：升级 PWA
+        · 阶段 6：消息通知、数据看板<br>
+        · 阶段 7：PWA、宽屏适配
       </div>
       <button class="sheet-btn" onclick="hideSheet()">关闭</button>`;
   }
@@ -1408,6 +2040,738 @@ function showToast(msg) {
   toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
+
+/* ==========================================================
+   工单 UI 层
+   ========================================================== */
+
+let currentWoId = null;
+let woBuffer = null;    // 创建/编辑时的临时数据
+let woFilter = 'todo';  // 当前筛选：todo / pending-approval / in-progress / done / all / mine
+
+/* ------ 工单列表 ------ */
+
+function getCurrentUser() {
+  return findUser(localStorage.getItem(SESSION_KEY));
+}
+
+// 计算"我的待办"：根据角色不同含义不同
+function isMyTodo(wo, user) {
+  if (!user) return false;
+  const role = user.role;
+  if (wo.status === 'pending-approval') {
+    // 主任需要审批的
+    return role === 'approver' || role === 'admin';
+  }
+  if (wo.status === 'approved') {
+    // 已批准待接单：师傅可抢
+    return role === 'tech' || role === 'admin';
+  }
+  if (wo.status === 'in-progress') {
+    // 维修中：指派的师傅需要完工
+    return wo.technicianId === user.empno;
+  }
+  if (wo.status === 'pending-confirm') {
+    // 待确认：原提报人
+    return wo.reporterId === user.empno || role === 'admin';
+  }
+  if (wo.status === 'reopened') {
+    // 重开：原师傅或可接单的
+    return wo.technicianId === user.empno || role === 'tech' || role === 'admin';
+  }
+  return false;
+}
+
+function setWoFilter(f) {
+  woFilter = f;
+  renderWorkOrderList();
+}
+
+function renderWoFilterBar() {
+  const user = getCurrentUser();
+  const all = woCache;
+  const todoCount = user ? all.filter(w => isMyTodo(w, user)).length : 0;
+  const pendingCount = all.filter(w => w.status === 'pending-approval').length;
+  const progressCount = all.filter(w => w.status === 'in-progress' || w.status === 'approved' || w.status === 'pending-confirm' || w.status === 'reopened').length;
+  const doneCount = all.filter(w => w.status === 'done').length;
+
+  const filters = [
+    { key: 'todo', label: '我的待办', count: todoCount },
+    { key: 'pending-approval', label: '待审批', count: pendingCount },
+    { key: 'in-progress', label: '进行中', count: progressCount },
+    { key: 'done', label: '已完成', count: doneCount },
+    { key: 'all', label: '全部', count: all.length },
+  ];
+
+  document.getElementById('wo-filter-bar').innerHTML = filters.map(f =>
+    `<button class="wo-filter-chip${f.key === woFilter ? ' active' : ''}" onclick="setWoFilter('${f.key}')">
+      ${f.label}<span class="wo-filter-count">${f.count}</span>
+    </button>`
+  ).join('');
+}
+
+function filterWorkorders() {
+  const user = getCurrentUser();
+  if (!user) return [];
+  const all = woCache;
+  if (woFilter === 'todo')  return all.filter(w => isMyTodo(w, user));
+  if (woFilter === 'pending-approval') return all.filter(w => w.status === 'pending-approval');
+  if (woFilter === 'in-progress')      return all.filter(w => ['approved','in-progress','pending-confirm','reopened'].includes(w.status));
+  if (woFilter === 'done')             return all.filter(w => w.status === 'done');
+  return all;
+}
+
+function renderWorkOrderList() {
+  renderWoFilterBar();
+  const list = filterWorkorders();
+  const container = document.getElementById('wo-list-container');
+  const sub = document.getElementById('wo-section-sub');
+  if (sub) sub.textContent = list.length + ' 张工单';
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="empty" style="padding:60px 20px 40px;">
+        <div class="empty-mark">—</div>
+        <div class="empty-title">${woFilter === 'todo' ? '暂无待办' : '暂无工单'}</div>
+        <div class="empty-hint">${woFilter === 'todo' ? 'nothing to do right now' : 'no work orders'}</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(wo => renderWoCard(wo)).join('');
+}
+
+function renderWoCard(wo) {
+  const st = WO_STATUS_MAP[wo.status] || { label: wo.status, color: 'var(--subtle)' };
+  const urg = URGENCY_MAP[wo.urgency] || URGENCY_MAP.normal;
+  const reporterName = wo.reporterName || '—';
+  const issueText = wo.issueDesc || (wo.issueTags || []).join('、') || '（无描述）';
+  const timeStr = wo.reportedAt ? formatShortTime(wo.reportedAt) : '';
+  return `
+    <div class="wo-card" onclick="openWoDetail('${wo.id}')">
+      <div class="wo-card-top">
+        <span class="wo-urgency-dot ${wo.urgency}" title="${urg.label}"></span>
+        <span class="wo-status-tag ${wo.status}">${st.label}</span>
+        <span class="wo-code">${wo.code || ''}</span>
+      </div>
+      <div class="wo-card-device"><span class="wo-card-device-tag">${wo.equipmentTag || ''}</span>${wo.equipmentName || '—'}</div>
+      <div class="wo-card-issue">${escapeHtml(issueText)}</div>
+      <div class="wo-card-meta">
+        <span>报修 ${escapeHtml(reporterName)}</span>
+        ${timeStr ? `<span class="wo-card-meta-sep">·</span><span>${timeStr}</span>` : ''}
+        ${wo.technicianName ? `<span class="wo-card-meta-sep">·</span><span>维修 ${escapeHtml(wo.technicianName)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function formatShortTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) {
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+  return `${d.getMonth()+1}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function formatFullTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+/* ------ 工单详情 ------ */
+
+function backToWoList() {
+  currentWoId = null;
+  switchModule('workorder');
+}
+
+function openWoDetail(id) {
+  const wo = woCache.find(w => w.id === id);
+  if (!wo) { showToast('工单不存在'); return; }
+  currentWoId = id;
+  renderWoDetail(wo);
+  switchModule('workorder-detail');
+}
+
+function renderWoDetail(wo) {
+  const user = getCurrentUser();
+  const st = WO_STATUS_MAP[wo.status] || { label: wo.status, color: 'var(--subtle)' };
+  const urg = URGENCY_MAP[wo.urgency] || URGENCY_MAP.normal;
+
+  // Hero
+  document.getElementById('wo-detail-hero').innerHTML = `
+    <div class="wo-hero-code">${wo.code || ''}</div>
+    <h2 class="wo-hero-device">${escapeHtml(wo.equipmentName || '—')}</h2>
+    <div class="wo-hero-device-tag">${wo.equipmentTag || ''}</div>
+    <div class="wo-hero-bottom">
+      <span class="wo-status-tag ${wo.status}">${st.label}</span>
+      <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+        <span class="wo-urgency-dot ${wo.urgency}"></span>${urg.label}
+      </span>
+    </div>
+  `;
+
+  // Body: 故障描述 + 故障标签 + 时间线
+  const tagsHtml = (wo.issueTags && wo.issueTags.length)
+    ? `<div class="wo-tags">${wo.issueTags.map(t => `<span class="wo-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+  const issueDescHtml = wo.issueDesc
+    ? `<div class="wo-section-body">${escapeHtml(wo.issueDesc)}</div>`
+    : (tagsHtml ? '' : '<div class="wo-section-empty">未填写</div>');
+
+  let timelineHtml = '<div class="wo-timeline">';
+  // 1. 提报
+  timelineHtml += `
+    <div class="wo-tl-item">
+      <span class="wo-tl-dot done"></span>
+      <div class="wo-tl-title">① 提报故障</div>
+      <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} · ${formatFullTime(wo.reportedAt)}</div>
+    </div>`;
+  // 2. 审批
+  if (wo.status === 'rejected') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot" style="border-color:var(--s-scrap);background:var(--s-scrap);"></span>
+        <div class="wo-tl-title">② 已驳回</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
+        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
+      </div>`;
+  } else if (wo.approvedAt) {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot done"></span>
+        <div class="wo-tl-title">② 审批通过</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
+        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
+      </div>`;
+  } else {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot pending"></span>
+        <div class="wo-tl-title">② 等待审批</div>
+        <div class="wo-tl-meta">待李主任或王主任审批</div>
+      </div>`;
+  }
+  // 3. 接单
+  if (wo.status !== 'pending-approval' && wo.status !== 'rejected') {
+    if (wo.technicianId) {
+      timelineHtml += `
+        <div class="wo-tl-item">
+          <span class="wo-tl-dot done"></span>
+          <div class="wo-tl-title">③ 已接单</div>
+          <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.claimedAt)}</div>
+        </div>`;
+    } else if (wo.status === 'approved') {
+      timelineHtml += `
+        <div class="wo-tl-item">
+          <span class="wo-tl-dot pending"></span>
+          <div class="wo-tl-title">③ 等待接单</div>
+          <div class="wo-tl-meta">维修师傅可点击"接单"</div>
+        </div>`;
+    }
+  }
+  // 4. 完工
+  if (wo.completedAt) {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot done"></span>
+        <div class="wo-tl-title">④ 维修完工</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.completedAt)}</div>
+        ${wo.repairDetail ? `<div class="wo-tl-comment">${escapeHtml(wo.repairDetail)}</div>` : ''}
+      </div>`;
+  } else if (wo.status === 'in-progress') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot pending"></span>
+        <div class="wo-tl-title">④ 维修中</div>
+        <div class="wo-tl-meta">等待师傅完工</div>
+      </div>`;
+  }
+  // 5. 确认
+  if (wo.status === 'done') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot done"></span>
+        <div class="wo-tl-title">⑤ 已确认关单</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || wo.reporterName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
+      </div>`;
+  } else if (wo.status === 'pending-confirm') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot pending"></span>
+        <div class="wo-tl-title">⑤ 等待确认</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} 需确认维修效果</div>
+      </div>`;
+  } else if (wo.status === 'reopened') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot" style="border-color:#C13B76;background:#C13B76;"></span>
+        <div class="wo-tl-title">⑤ 已重开（需重新维修）</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
+      </div>`;
+  }
+  timelineHtml += '</div>';
+
+  document.getElementById('wo-detail-body').innerHTML = `
+    <div class="wo-section">
+      <div class="wo-section-label">故障描述</div>
+      ${tagsHtml}
+      ${issueDescHtml}
+    </div>
+    <div class="wo-section">
+      <div class="wo-section-label">流程时间线</div>
+      ${timelineHtml}
+    </div>
+  `;
+
+  // 操作按钮
+  renderWoActions(wo, user);
+}
+
+function renderWoActions(wo, user) {
+  const actionsEl = document.getElementById('wo-actions');
+  const bodyEl = document.getElementById('wo-detail-body');
+  if (!user) {
+    actionsEl.classList.add('hidden');
+    bodyEl.classList.remove('has-actions');
+    return;
+  }
+  const role = user.role;
+  let buttons = '';
+
+  if (wo.status === 'pending-approval' && (role === 'approver' || role === 'admin')) {
+    buttons = `
+      <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
+      <button class="wo-act-btn success" onclick="approveWorkorder()">批准</button>`;
+  } else if (wo.status === 'approved') {
+    if (role === 'tech') {
+      buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">接单</button>`;
+    } else if (role === 'admin' || role === 'approver') {
+      buttons = `<button class="wo-act-btn primary" onclick="assignWorkorder()">指派师傅</button>`;
+    }
+  } else if (wo.status === 'in-progress' && wo.technicianId === user.empno) {
+    buttons = `<button class="wo-act-btn success" onclick="completeWorkorder()">完工</button>`;
+  } else if (wo.status === 'in-progress' && role === 'admin') {
+    // 管理员可代师傅填完工
+    buttons = `<button class="wo-act-btn primary" onclick="completeWorkorder()">代填完工</button>`;
+  } else if (wo.status === 'pending-confirm' && (wo.reporterId === user.empno || role === 'admin')) {
+    buttons = `
+      <button class="wo-act-btn danger" onclick="reopenWorkorder()">退回重修</button>
+      <button class="wo-act-btn success" onclick="confirmWorkorder()">确认关单</button>`;
+  } else if (wo.status === 'reopened' && (role === 'tech' || role === 'admin')) {
+    buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">重新接单</button>`;
+  }
+
+  if (buttons) {
+    actionsEl.innerHTML = buttons;
+    actionsEl.classList.remove('hidden');
+    bodyEl.classList.add('has-actions');
+  } else {
+    actionsEl.classList.add('hidden');
+    bodyEl.classList.remove('has-actions');
+  }
+}
+
+/* ------ 提报工单 ------ */
+
+function openReport() {
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+
+  woBuffer = {
+    id: 'wo_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    code: generateWoCode(),
+    equipmentId: '',
+    equipmentTag: '',
+    equipmentName: '',
+    urgency: 'normal',
+    issueTags: [],
+    issueDesc: '',
+    status: 'pending-approval',
+    reporterId: user.empno,
+    reporterName: user.name,
+    reportedAt: Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  document.getElementById('wo-edit-title').textContent = '提报工单';
+  renderWoForm();
+  switchModule('workorder-create');
+}
+
+function renderWoForm() {
+  const b = woBuffer;
+  const urgencyOptions = Object.entries(URGENCY_MAP).map(([k, v]) =>
+    `<div class="urg-opt${b.urgency === k ? ' selected' : ''}" onclick="pickUrgency('${k}')">
+      <span class="urg-opt-dot" style="background:${v.color};"></span>${v.label}
+    </div>`
+  ).join('');
+
+  const tagChips = COMMON_ISSUE_TAGS.map(t =>
+    `<span class="tag-chip${b.issueTags.includes(t) ? ' selected' : ''}" onclick="toggleIssueTag('${t}')">${t}</span>`
+  ).join('');
+
+  const deviceTrigger = b.equipmentId
+    ? `<button class="eq-picker-trigger" onclick="showSheet('pickEquipment')">
+        <div class="eq-picker-selected">
+          <span class="tag">${b.equipmentTag}</span>
+          <span class="name">${escapeHtml(b.equipmentName)}</span>
+        </div>
+        <span class="eq-picker-arrow">›</span>
+      </button>`
+    : `<button class="eq-picker-trigger empty" onclick="showSheet('pickEquipment')">
+        选择设备…
+        <span class="eq-picker-arrow">›</span>
+      </button>`;
+
+  document.getElementById('wo-form-body').innerHTML = `
+    <div class="edit-group-label">① 选择设备</div>
+    <div class="edit-field">
+      <div class="edit-field-label required">故障设备</div>
+      ${deviceTrigger}
+    </div>
+
+    <div class="edit-group-label">② 故障描述</div>
+    <div class="edit-field">
+      <div class="edit-field-label">常见故障（可多选）</div>
+      <div class="tag-chips" id="issue-tags-chips">${tagChips}</div>
+    </div>
+    <div class="edit-field">
+      <div class="edit-field-label">详细描述（选填但推荐）</div>
+      <textarea class="edit-textarea" id="f-issue-desc" placeholder="例如：盘车不流畅；风机叶片开裂" oninput="woBuffer.issueDesc = this.value">${escapeHtml(b.issueDesc)}</textarea>
+    </div>
+
+    <div class="edit-group-label">③ 紧急程度</div>
+    <div class="edit-field">
+      <div class="urgency-picker" id="urgency-picker">${urgencyOptions}</div>
+    </div>
+
+    <div style="padding:20px 0 0;color:var(--muted);font-size:12px;line-height:1.6;">
+      💡 提交后会进入审批流程：<br>
+      待李主任/王主任审批 → 师傅接单 → 完工 → 您确认关单
+    </div>
+  `;
+}
+
+function pickUrgency(u) {
+  woBuffer.urgency = u;
+  document.querySelectorAll('#urgency-picker .urg-opt').forEach(el => {
+    el.classList.remove('selected');
+  });
+  // 找对应的按钮
+  const items = document.querySelectorAll('#urgency-picker .urg-opt');
+  const keys = Object.keys(URGENCY_MAP);
+  const idx = keys.indexOf(u);
+  if (items[idx]) items[idx].classList.add('selected');
+}
+
+function toggleIssueTag(tag) {
+  if (!woBuffer.issueTags) woBuffer.issueTags = [];
+  const idx = woBuffer.issueTags.indexOf(tag);
+  if (idx >= 0) woBuffer.issueTags.splice(idx, 1);
+  else woBuffer.issueTags.push(tag);
+  // 只更新标签区域，保留用户正在输入的内容
+  const chipsEl = document.getElementById('issue-tags-chips');
+  if (chipsEl) {
+    chipsEl.innerHTML = COMMON_ISSUE_TAGS.map(t =>
+      `<span class="tag-chip${woBuffer.issueTags.includes(t) ? ' selected' : ''}" onclick="toggleIssueTag('${t}')">${t}</span>`
+    ).join('');
+  }
+}
+
+function pickEquipment(id) {
+  const eq = loadEquipments().find(e => e.id === id);
+  if (!eq) return;
+  woBuffer.equipmentId = eq.id;
+  woBuffer.equipmentTag = eq.tag;
+  woBuffer.equipmentName = eq.name;
+  hideSheet();
+  // 只更新触发按钮，保留已输入的内容
+  // 查找当前的 eq-picker-trigger（只会有一个）
+  const trigger = document.querySelector('.eq-picker-trigger');
+  if (trigger) {
+    trigger.classList.remove('empty');
+    trigger.innerHTML = `
+      <div class="eq-picker-selected">
+        <span class="tag">${eq.tag}</span>
+        <span class="name">${escapeHtml(eq.name)}</span>
+      </div>
+      <span class="eq-picker-arrow">›</span>
+    `;
+  }
+}
+
+async function submitWorkorder() {
+  const b = woBuffer;
+  if (!b.equipmentId) { showToast('请选择故障设备'); return; }
+  if (!b.issueDesc && (!b.issueTags || b.issueTags.length === 0)) {
+    showToast('请填写故障描述或选择故障标签');
+    return;
+  }
+  try {
+    await cloudSaveWorkorder(b);
+    showToast('工单已提交，等待审批');
+    // 提交后进入该工单详情页
+    currentWoId = b.id;
+    // 切到工单列表再延迟切到详情（等云端 subscribe 回显）
+    switchModule('workorder');
+    setTimeout(() => {
+      if (woCache.find(w => w.id === b.id)) openWoDetail(b.id);
+    }, 400);
+  } catch (err) {
+    showToast('提交失败：' + err.message);
+  }
+}
+
+function cancelWoEdit() {
+  woBuffer = null;
+  switchModule('workorder');
+}
+
+/* ------ 审批 ------ */
+
+async function approveWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const user = getCurrentUser();
+  const comment = prompt('批准意见（选填）：');
+  if (comment === null) return; // 取消
+  const updated = {
+    ...wo,
+    status: 'approved',
+    approverId: user.empno,
+    approverName: user.name,
+    approvedAt: Date.now(),
+    approvalComment: comment || '',
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('已批准，等待师傅接单');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+async function rejectWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const user = getCurrentUser();
+  const comment = prompt('驳回原因（必填）：');
+  if (comment === null) return;
+  if (!comment.trim()) { showToast('请填写驳回原因'); return; }
+  const updated = {
+    ...wo,
+    status: 'rejected',
+    approverId: user.empno,
+    approverName: user.name,
+    approvedAt: Date.now(),
+    approvalComment: comment,
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('已驳回');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+/* ------ 接单 ------ */
+
+async function claimWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const user = getCurrentUser();
+  if (!confirm(`确认接单 ${wo.code}？`)) return;
+  const updated = {
+    ...wo,
+    status: 'in-progress',
+    technicianId: user.empno,
+    technicianName: user.name,
+    claimedAt: Date.now(),
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('已接单，开始维修');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+async function assignWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  showSheet('assignTech');
+}
+
+async function doAssignTech(techEmpno) {
+  const wo = woCache.find(w => w.id === currentWoId);
+  const tech = findUser(techEmpno);
+  if (!wo || !tech) return;
+  const updated = {
+    ...wo,
+    status: 'in-progress',
+    technicianId: tech.empno,
+    technicianName: tech.name,
+    claimedAt: Date.now(),
+    assignedBy: getCurrentUser().empno,
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    hideSheet();
+    showToast('已指派给 ' + tech.name);
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+/* ------ 完工 ------ */
+
+async function completeWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const detail = prompt('检修详情（必填，例如：更换叶轮、调整间隙）：');
+  if (detail === null) return;
+  if (!detail.trim()) { showToast('请填写检修详情'); return; }
+  const updated = {
+    ...wo,
+    status: 'pending-confirm',
+    repairDetail: detail,
+    completedAt: Date.now(),
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('已标记完工，等待确认');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+/* ------ 确认关单 ------ */
+
+async function confirmWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const user = getCurrentUser();
+  if (!confirm('确认维修效果，关闭工单？')) return;
+  const updated = {
+    ...wo,
+    status: 'done',
+    confirmerId: user.empno,
+    confirmerName: user.name,
+    confirmedAt: Date.now(),
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('工单已关闭');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+async function reopenWorkorder() {
+  const wo = woCache.find(w => w.id === currentWoId);
+  if (!wo) return;
+  const user = getCurrentUser();
+  const reason = prompt('退回原因（必填）：');
+  if (reason === null) return;
+  if (!reason.trim()) { showToast('请填写退回原因'); return; }
+  const updated = {
+    ...wo,
+    status: 'reopened',
+    confirmerId: user.empno,
+    confirmerName: user.name,
+    confirmedAt: Date.now(),
+    reopenCount: (wo.reopenCount || 0) + 1,
+    reopenReason: reason,
+    // 清空维修完工信息，以便重新走流程
+    repairDetail: '',
+    completedAt: null,
+  };
+  try {
+    await cloudSaveWorkorder(updated);
+    showToast('已退回，等待重新维修');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+/* ------ 设备详情"相关记录" Tab 联动 ------ */
+
+function renderDeviceRecords(eqId) {
+  const eq = loadEquipments().find(e => e.id === eqId);
+  if (!eq) return;
+  const related = woCache.filter(w => w.equipmentId === eqId)
+                        .sort((a, b) => (b.reportedAt || 0) - (a.reportedAt || 0));
+  const panel = document.getElementById('panel-records');
+  if (related.length === 0) {
+    panel.innerHTML = `
+      <div class="empty" style="padding:32px 20px 16px;">
+        <div class="empty-mark">—</div>
+        <div class="empty-title">暂无维修记录</div>
+        <div class="empty-hint">no maintenance records yet</div>
+      </div>`;
+    return;
+  }
+  panel.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--subtle);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">共 ${related.length} 条维修记录</div>
+    ${related.map(wo => {
+      const st = WO_STATUS_MAP[wo.status] || {};
+      return `
+        <div class="device-wo-item" onclick="openWoDetail('${wo.id}')">
+          <div class="device-wo-item-top">
+            <span class="wo-status-tag ${wo.status}">${st.label || wo.status}</span>
+            <span class="device-wo-item-code">${wo.code || ''}</span>
+          </div>
+          <div class="device-wo-item-issue">${escapeHtml(wo.issueDesc || (wo.issueTags||[]).join('、') || '（无描述）')}</div>
+          <div class="device-wo-item-meta">${escapeHtml(wo.reporterName || '—')} · ${formatShortTime(wo.reportedAt)}${wo.technicianName ? ' · 维修 ' + escapeHtml(wo.technicianName) : ''}</div>
+        </div>`;
+    }).join('')}
+  `;
+}
+
+/* ------ 修改 switchDetailTab 使相关记录 tab 能联动 ------ */
+
+const _origSwitchDetailTab = switchDetailTab;
+switchDetailTab = function(tab) {
+  _origSwitchDetailTab(tab);
+  if (tab === 'records' && currentEqId) {
+    renderDeviceRecords(currentEqId);
+  }
+};
+
+
+/* ------ 设备选择器 sheet 内的列表 ------ */
+let _eqPickerFilter = '';
+function filterEqPickerList(keyword) {
+  _eqPickerFilter = keyword.trim().toLowerCase();
+  renderEqPickerList(_eqPickerFilter);
+}
+function renderEqPickerList(keyword) {
+  let list = loadEquipments();
+  if (keyword) {
+    list = list.filter(e => {
+      const hay = (e.tag + ' ' + e.name + ' ' + (e.type||'') + ' ' + (e.area||'')).toLowerCase();
+      return hay.includes(keyword);
+    });
+  }
+  list = list.slice(0, 200);
+  const container = document.getElementById('eq-picker-list');
+  if (!container) return;
+  if (list.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--subtle);font-size:13px;">未找到匹配的设备</div>`;
+    return;
+  }
+  container.innerHTML = list.map(e => `
+    <div class="eq-picker-item" onclick="pickEquipment('${e.id}')">
+      <div class="tag">${e.tag}</div>
+      <div class="name">${escapeHtml(e.name)}</div>
+      <div class="meta">${e.type || ''} · ${e.area || ''}</div>
+    </div>
+  `).join('');
+}
+
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
@@ -1435,6 +2799,26 @@ window.confirmEditUser = confirmEditUser;
 window.confirmDeleteUser = confirmDeleteUser;
 window.confirmSetPassword = confirmSetPassword;
 window.handleMenuAction = handleMenuAction;
+// 工单相关
+window.setWoFilter = setWoFilter;
+window.openWoDetail = openWoDetail;
+window.openReport = openReport;
+window.cancelWoEdit = cancelWoEdit;
+window.submitWorkorder = submitWorkorder;
+window.pickUrgency = pickUrgency;
+window.toggleIssueTag = toggleIssueTag;
+window.pickEquipment = pickEquipment;
+window.approveWorkorder = approveWorkorder;
+window.rejectWorkorder = rejectWorkorder;
+window.claimWorkorder = claimWorkorder;
+window.assignWorkorder = assignWorkorder;
+window.doAssignTech = doAssignTech;
+window.completeWorkorder = completeWorkorder;
+window.confirmWorkorder = confirmWorkorder;
+window.reopenWorkorder = reopenWorkorder;
+window.backToWoList = backToWoList;
+window.filterEqPickerList = filterEqPickerList;
+window.renderDeviceRecords = renderDeviceRecords;
 
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -1448,9 +2832,10 @@ async function init() {
     // 首次启动：如果云端为空则上传种子数据
     await seedIfEmpty();
 
-    // 开启实时订阅（用户和设备集合）
+    // 开启实时订阅（用户、设备、工单）
     subscribeUsers();
     subscribeEquipments();
+    subscribeWorkorders();
 
     // 等首批数据到位再继续（最多等 3 秒）
     await new Promise(r => setTimeout(r, 800));
