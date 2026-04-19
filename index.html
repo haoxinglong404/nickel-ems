@@ -1405,6 +1405,42 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .welcome-card.vip .welcome-sub { color: #3A5424; }
 
 
+
+  /* 工单现场联系人 */
+  .wo-contact-box {
+    background: var(--g-mist);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--g-deep);
+  }
+  .wo-contact-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  .wo-contact-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--g-forest);
+  }
+  .wo-contact-info {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--g-forest);
+    background: rgba(255,255,255,0.6);
+    padding: 2px 8px;
+    border-radius: 6px;
+    word-break: break-all;
+  }
+  .wo-contact-hint {
+    font-size: 11px;
+    color: var(--g-forest);
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+
 </style>
 </head>
 <body>
@@ -1898,6 +1934,9 @@ function subscribeEquipments() {
 }
 
 
+/* ========== 预装导入工单（首次启动时上传）========== */
+const SEED_IMPORTED_WORKORDERS = [{"id":"wo_imp_20260417_001","code":"WO20260417001","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"218子项新增放空阀，具体位置现场交底","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420300000,"createdAt":1776420300000,"updatedAt":1776420300000,"subArea":"218","isImported":true,"equipmentId":"other","equipmentTag":"子项 218","equipmentName":"218子项新增放空阀，具体位置现场交底","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260417_002","code":"WO20260417002","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"218子项新增车间应急物资潜污泵出口短节，具体位置现场交底","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420600000,"createdAt":1776420600000,"updatedAt":1776420600000,"subArea":"203","isImported":true,"equipmentId":"other","equipmentTag":"子项 203","equipmentName":"218子项新增车间应急物资潜污泵出口短节，具体位置现场交底","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260417_003","code":"WO20260417003","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"109-201-PE-PP-001D原矿浆输送泵出口管道拆卸清理","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420900000,"createdAt":1776420900000,"updatedAt":1776420900000,"subArea":"201","isImported":true,"equipmentId":"eq_seed_0011","equipmentTag":"201-PE-PP-001D","equipmentName":"原矿浆输送泵","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_004","code":"WO20260419001","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"923生产水管道连接，（未与子项外管道连接）","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594000000,"createdAt":1776594000000,"updatedAt":1776594000000,"subArea":"923","isImported":true,"equipmentId":"other","equipmentTag":"子项 923","equipmentName":"923生产水管道连接，（未与子项外管道连接）","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_005","code":"WO20260419002","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"923跨管道楼梯太陡，需重新制作","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594300000,"createdAt":1776594300000,"updatedAt":1776594300000,"subArea":"923","isImported":true,"equipmentId":"other","equipmentTag":"子项 923","equipmentName":"923跨管道楼梯太陡，需重新制作","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_006","code":"WO20260419003","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"201-PE-PP-102A盘根漏水严重，需调整盘根","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594600000,"createdAt":1776594600000,"updatedAt":1776594600000,"subArea":"202","isImported":true,"equipmentId":"other","equipmentTag":"子项 202","equipmentName":"201-PE-PP-102A盘根漏水严重，需调整盘根","contactName":"马学斌","contactPhone":"企业微信"}];
+
 /* ==========================================================
    工单 (Work Order) 数据层
    ========================================================== */
@@ -1997,6 +2036,26 @@ function subscribeWorkorders() {
     console.error('[Firebase] 订阅工单失败', err);
     setCloudStatus('error', '连接失败');
   });
+}
+
+async function seedImportedWorkordersIfNeeded() {
+  if (!SEED_IMPORTED_WORKORDERS || SEED_IMPORTED_WORKORDERS.length === 0) return;
+  const checkId = SEED_IMPORTED_WORKORDERS[0].id;
+  try {
+    const s = await getDoc(doc(db, 'workorders', checkId));
+    if (s.exists()) return;  // 已导入过
+  } catch(e) { console.error('[Seed] 检查失败', e); return; }
+  setCloudStatus('syncing', '导入历史工单...');
+  const batch = writeBatch(db);
+  SEED_IMPORTED_WORKORDERS.forEach(wo => {
+    batch.set(doc(db, 'workorders', wo.id), wo);
+  });
+  try {
+    await batch.commit();
+    showToast('已导入 ' + SEED_IMPORTED_WORKORDERS.length + ' 条历史工单');
+  } catch(e) {
+    console.error('[Seed] 工单批量写入失败', e);
+  }
 }
 
 // 首次启动：如果云端为空，上传种子数据
@@ -2710,6 +2769,7 @@ function showSheet(type, arg) {
         <div class="role-opt" data-role="reporter" onclick="pickRole('reporter')">提报人</div>
         <div class="role-opt" data-role="approver" onclick="pickRole('approver')">审批人</div>
         <div class="role-opt" data-role="tech" onclick="pickRole('tech')">维修人</div>
+        <div class="role-opt" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
       <button class="sheet-btn primary" onclick="confirmAddUser()">创建账号</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='editUser') {
@@ -2722,6 +2782,7 @@ function showSheet(type, arg) {
         <div class="role-opt ${user.role==='reporter'?'selected':''}" data-role="reporter" onclick="pickRole('reporter')">提报人</div>
         <div class="role-opt ${user.role==='approver'?'selected':''}" data-role="approver" onclick="pickRole('approver')">审批人</div>
         <div class="role-opt ${user.role==='tech'?'selected':''}" data-role="tech" onclick="pickRole('tech')">维修人</div>
+          <div class="role-opt ${user.role==='admin'?'selected':''}" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
       <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>
       ${!isSelf?`<button class="sheet-btn danger" onclick="confirmDeleteUser('${user.empno}')">删除账号</button>`:''}`:
@@ -2738,12 +2799,13 @@ function showSheet(type, arg) {
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='pickEquipment') {
     // 选择设备 sheet
-    const list = loadEquipments().slice(0, 50);
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择故障设备</div><div class="sheet-sub">共 ${loadEquipments().length} 台</div>
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择故障设备或对象</div><div class="sheet-sub">共 ${loadEquipments().length} 台设备 · 或选"其他"（非设备工作）</div>
       <input class="eq-search-in-sheet" id="eq-picker-search" placeholder="搜索位号或名称…" oninput="filterEqPickerList(this.value)">
+      <button class="sheet-btn" style="background:var(--g-mist);color:var(--g-forest);border:1px solid var(--g-primary);margin-bottom:10px;font-weight:500;" onclick="pickEquipmentOther()">
+        ✦ 其他 / 非设备工作（管道、护栏、楼梯、阀门等）
+      </button>
       <div class="eq-picker-list" id="eq-picker-list"></div>
       <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
-    // 初始渲染
     setTimeout(() => renderEqPickerList(''), 10);
   } else if (type==='assignTech') {
     // 指派师傅 sheet
@@ -2797,7 +2859,21 @@ async function confirmAddUser() {
 }
 async function confirmEditUser(empno) {
   const user = findUser(empno);
-  if (!user || user.role==='admin') { hideSheet(); return; }
+  if (!user) { hideSheet(); return; }
+  const currentUser = getCurrentUser();
+  // 不能修改自己（编辑界面其实已阻止，这里再加一道）
+  if (currentUser && user.empno === currentUser.empno) {
+    showToast('不能修改自己的角色');
+    return;
+  }
+  // 如果把某个管理员降级，检查系统里至少还要剩一个管理员
+  if (user.role === 'admin' && selectedRole !== 'admin') {
+    const adminCount = loadUsers().filter(u => u.role === 'admin').length;
+    if (adminCount <= 1) {
+      showToast('系统至少需保留 1 个管理员');
+      return;
+    }
+  }
   try {
     await cloudSaveUser({ ...user, role: selectedRole });
     hideSheet();
@@ -2807,7 +2883,22 @@ async function confirmEditUser(empno) {
   }
 }
 async function confirmDeleteUser(empno) {
-  if (!confirm('确定删除该账号？\n该操作不可撤销。')) return;
+  const user = findUser(empno);
+  if (!user) { hideSheet(); return; }
+  const currentUser = getCurrentUser();
+  if (currentUser && user.empno === currentUser.empno) {
+    showToast('不能删除自己');
+    return;
+  }
+  // 如果删除的是管理员，确保系统里至少还剩一个
+  if (user.role === 'admin') {
+    const adminCount = loadUsers().filter(u => u.role === 'admin').length;
+    if (adminCount <= 1) {
+      showToast('系统至少需保留 1 个管理员');
+      return;
+    }
+  }
+  if (!confirm(`确认删除 ${user.name}（${user.empno}）的账号？\n\n此操作无法撤销。`)) return;
   try {
     await cloudDeleteUser(empno);
     hideSheet();
@@ -3096,6 +3187,7 @@ function renderWoCard(wo) {
       <div class="wo-card-meta">
         <span>报修 ${escapeHtml(reporterName)}</span>
         ${timeStr ? `<span class="wo-card-meta-sep">·</span><span>${timeStr}</span>` : ''}
+        ${wo.contactName ? `<span class="wo-card-meta-sep">·</span><span>📞${escapeHtml(wo.contactName)}</span>` : ''}
         ${wo.technicianName ? `<span class="wo-card-meta-sep">·</span><span>维修 ${escapeHtml(wo.technicianName)}</span>` : ''}
       </div>
     </div>`;
@@ -3251,12 +3343,26 @@ function renderWoDetail(wo) {
   }
   timelineHtml += '</div>';
 
+  // 现场联系人展示
+  const contactPhoneHtml = wo.contactPhone
+    ? `<a href="tel:${escapeHtml(wo.contactPhone)}" style="color:var(--g-forest);text-decoration:none;">${escapeHtml(wo.contactPhone)}</a>`
+    : '<span class="wo-section-empty" style="font-style:normal;">未填写</span>';
+  const contactHtml = wo.contactName ? `
+    <div class="wo-section">
+      <div class="wo-section-label">现场联系人</div>
+      <div style="background:var(--surface);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px;">👤 ${escapeHtml(wo.contactName)}</div>
+        <div style="font-size:13px;color:var(--muted);">📞 ${contactPhoneHtml}</div>
+      </div>
+    </div>` : '';
+
   document.getElementById('wo-detail-body').innerHTML = `
     <div class="wo-section">
       <div class="wo-section-label">故障描述</div>
       ${tagsHtml}
       ${issueDescHtml}
     </div>
+    ${contactHtml}
     <div class="wo-section">
       <div class="wo-section-label">流程时间线</div>
       ${timelineHtml}
@@ -3326,6 +3432,8 @@ function openReport() {
     urgency: 'normal',
     issueTags: [],
     issueDesc: '',
+    contactName: (function(){ try { return localStorage.getItem('last_contact_name') || user.name; } catch(e) { return user.name; } })(),
+    contactPhone: (function(){ try { return localStorage.getItem('last_contact_phone') || ''; } catch(e) { return ''; } })(),
     status: 'pending-approval',
     reporterId: user.empno,
     reporterName: user.name,
@@ -3385,9 +3493,20 @@ function renderWoForm() {
       <div class="urgency-picker" id="urgency-picker">${urgencyOptions}</div>
     </div>
 
+    <div class="edit-group-label">④ 现场联系人</div>
+    <div class="edit-field">
+      <div class="edit-field-label required">联系人姓名</div>
+      <input class="edit-input" id="f-contact-name" value="${escapeHtml(b.contactName || '')}" placeholder="接单师傅联系的人" oninput="woBuffer.contactName = this.value">
+    </div>
+    <div class="edit-field">
+      <div class="edit-field-label required">联系方式</div>
+      <input class="edit-input" id="f-contact-phone" type="tel" value="${escapeHtml(b.contactPhone || '')}" placeholder="例如：企业微信、手机号、对讲机频道" oninput="woBuffer.contactPhone = this.value">
+    </div>
+
     <div style="padding:20px 0 0;color:var(--muted);font-size:12px;line-height:1.6;">
       💡 提交后会进入审批流程：<br>
-      待李主任/王主任审批 → 师傅接单 → 完工 → 您确认关单
+      待李主任/王主任审批 → 师傅接单 → 完工 → 您确认关单<br>
+      <strong style="color:var(--g-forest);">📞 填好现场联系人能帮师傅快速找到人</strong>
     </div>
   `;
 }
@@ -3415,6 +3534,27 @@ function toggleIssueTag(tag) {
     chipsEl.innerHTML = COMMON_ISSUE_TAGS.map(t =>
       `<span class="tag-chip${woBuffer.issueTags.includes(t) ? ' selected' : ''}" onclick="toggleIssueTag('${t}')">${t}</span>`
     ).join('');
+  }
+}
+
+function pickEquipmentOther() {
+  hideSheet();
+  const desc = prompt('请填写工作对象或位置（例如：923 子项跨管道楼梯、201 区地面排水沟、202-PP-AG 旁护栏）：');
+  if (!desc || !desc.trim()) { showToast('未填写，已取消'); return; }
+  const trimmed = desc.trim();
+  woBuffer.equipmentId = 'other';
+  woBuffer.equipmentTag = '其他';
+  woBuffer.equipmentName = trimmed;
+  const trigger = document.querySelector('.eq-picker-trigger');
+  if (trigger) {
+    trigger.classList.remove('empty');
+    trigger.innerHTML = `
+      <div class="eq-picker-selected">
+        <span class="tag">其他</span>
+        <span class="name">${escapeHtml(trimmed)}</span>
+      </div>
+      <span class="eq-picker-arrow">›</span>
+    `;
   }
 }
 
@@ -3447,6 +3587,19 @@ async function submitWorkorder() {
     showToast('请填写故障描述或选择故障标签');
     return;
   }
+  if (!b.contactName || !b.contactName.trim()) {
+    showToast('请填写现场联系人');
+    return;
+  }
+  if (!b.contactPhone || !b.contactPhone.trim()) {
+    showToast('请填写联系方式');
+    return;
+  }
+  // 记住本次填的联系信息，下次默认
+  try {
+    localStorage.setItem('last_contact_name', b.contactName);
+    localStorage.setItem('last_contact_phone', b.contactPhone);
+  } catch(e) {}
   try {
     await cloudSaveWorkorder(b);
     showToast('工单已提交，等待审批');
@@ -4862,7 +5015,7 @@ async function hardDeletePartHistory(historyId) {
 // VIP 工号配置：只有这些工号登录才显示欢迎卡（其他用户直接进入系统）
 const VIP_WELCOMES = {
   '6724013003': {
-    title: '欢迎翔总',
+    title: '翔总',
     sub: '翔总辛苦了',
     subEn: 'Welcome back · Xiang',
     mark: '',
@@ -4890,7 +5043,12 @@ function showWelcome(user) {
   const subEnEl = document.getElementById('welcome-sub-en');
 
   card.classList.add('vip');
-  markEl.textContent = vip.mark || '—';
+  if (vip.mark && vip.mark.trim()) {
+    markEl.textContent = vip.mark;
+    markEl.style.display = '';
+  } else {
+    markEl.style.display = 'none';
+  }
   titleEl.textContent = vip.title;
   subEl.textContent = vip.sub;
   subEnEl.textContent = vip.subEn;
@@ -4950,6 +5108,7 @@ window.submitWorkorder = submitWorkorder;
 window.pickUrgency = pickUrgency;
 window.toggleIssueTag = toggleIssueTag;
 window.pickEquipment = pickEquipment;
+window.pickEquipmentOther = pickEquipmentOther;
 window.approveWorkorder = approveWorkorder;
 window.rejectWorkorder = rejectWorkorder;
 window.claimWorkorder = claimWorkorder;
@@ -5004,6 +5163,8 @@ async function init() {
     await seedLubeIfEmpty();
     // 首次启动：如果备件为空则上传种子数据
     await seedPartsIfEmpty();
+    // 首次启动：导入 Excel 历史工单
+    await seedImportedWorkordersIfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
