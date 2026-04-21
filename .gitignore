@@ -1,0 +1,52 @@
+# 操作系统生成文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code 本地状态
+.claude/
+CLAUDE.local.md
+*.local.md
+
+# 临时文件
+*.tmp
+*.bak
+*.backup
+*.orig
+
+# 构建产物（本项目不应该有）
+node_modules/
+dist/
+build/
+
+# 密钥和敏感信息
+.env
+.env.local
+*.key
+*.pem
+secrets.json
+
+# 原始数据和备份（不该 commit 到仓库）
+*.xlsx
+*.xls
+*.csv
+/raw_data/
+/backups/
+
+# 种子数据 JSON（这些应该保留在本地，不 commit 到仓库）
+# 如果 seed 逻辑已经内联到 index.html 里就不需要
+# equipments.json
+# lube_points.json
+# spare_parts.json
+# imported_workorders.json
+
+# 测试生成的中间文件
+/tmp/
+*.log

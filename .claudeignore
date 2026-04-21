@@ -1,0 +1,41 @@
+# Claude Code 扫描项目时忽略这些
+
+# 二进制 / 原始数据（不该被 AI 读取）
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+# Git 历史
+.git/
+
+# 备份和临时文件
+*.bak
+*.backup
+*.tmp
+/backups/
+/raw_data/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 种子数据 JSON 很大（已经内联在 index.html 里）
+# 如果有本地 json 备份，不需要读
+equipments.json
+lube_points.json
+spare_parts.json
+imported_workorders.json
+
+# 其他 AI 助手的文件
+.cursor/
+.github/copilot-instructions.md
+
+# 节点模块（本项目不应该有，但防御性添加）
+node_modules/
+
+# 日志
+*.log
