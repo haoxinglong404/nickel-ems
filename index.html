@@ -1441,6 +1441,85 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     margin-top: 2px;
   }
 
+  /* ════════ 宽屏布局（≥1024px）· 阶段 1 ════════ */
+  /* 移动端下 .app-main 保持透明，不影响现有布局 */
+  .app-main { display: contents; }
+
+  @media (min-width: 1024px) {
+    /* 1. 主容器改横向：左栏 + 右侧主区域 */
+    #app { flex-direction: row; }
+
+    /* 2. 右侧主区域重新纵向排列 topbar + content */
+    .app-main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 3. 左侧栏（由原 bottom-nav 变身）*/
+    .bottom-nav {
+      order: -1;
+      width: 240px;
+      height: 100vh;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      grid-template-columns: unset;
+      background: #173404;
+      border-top: none;
+      border-right: 1px solid rgba(255,255,255,.08);
+      padding: 28px 12px;
+      padding-bottom: 28px;
+      gap: 4px;
+    }
+
+    /* 4. 侧栏内导航项：横向布局 */
+    .bottom-nav .nav-item {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: rgba(255,255,255,.72);
+      transition: background .15s, color .15s;
+    }
+    .bottom-nav .nav-item:hover {
+      background: rgba(255,255,255,.06);
+      color: #fff;
+    }
+    .bottom-nav .nav-item.active {
+      background: var(--g-primary);
+      color: #fff;
+    }
+    .bottom-nav .nav-item.active::before { display: none; }
+    .bottom-nav .nav-icon { width: 20px; height: 20px; }
+    .bottom-nav .nav-label {
+      font-size: 14px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: .02em;
+    }
+
+    /* 5. 顶栏：缩小内边距，sticky 置顶 */
+    .topbar { padding: 12px 32px; }
+
+    /* 6. 主内容区：更宽的水平内边距 */
+    .content { padding: 32px 48px 60px; }
+
+    /* 7. 每个模块内容居中并限宽 */
+    .module.active {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* 8. 浮动 FAB：原本 bottom:80px 给底栏让位，宽屏无底栏可以下移 */
+    .fab { bottom: 40px; right: 40px; }
+  }
+
 </style>
 </head>
 <body>
@@ -1471,6 +1550,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
 <!-- 主应用 -->
 <div id="app">
+  <div class="app-main">
   <header class="topbar" id="topbar-main">
     <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div></div>
     <div class="topbar-right">
@@ -1726,6 +1806,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     </section>
 
   </main>
+  </div>
 
   <!-- 浮动新增按钮（仅管理员在设备列表时显示） -->
   <button class="fab hidden" id="fab-add" onclick="openAdd()" title="新增设备">+</button>
