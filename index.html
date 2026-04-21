@@ -1520,6 +1520,38 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     .fab { bottom: 40px; right: 40px; }
   }
 
+
+  /* ════════ 导出 Excel 按钮 · 阶段 1 ════════ */
+  .section-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .section-label-row .section-label { margin-bottom: 0; }
+  .export-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    background: var(--g-mist);
+    color: var(--g-forest);
+    border: 1px solid var(--g-deep);
+    border-radius: 16px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    letter-spacing: .1em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  .export-btn:hover { background: var(--g-primary); color: #fff; }
+  .export-btn:active { transform: scale(.96); }
+  .export-btn:disabled { opacity: .55; cursor: wait; }
+  .export-btn-arrow { font-size: 13px; line-height: 1; }
+
 </style>
 </head>
 <body>
@@ -1616,7 +1648,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <!-- 设备列表 -->
     <section class="module active" data-module="equipment" id="module-equipment">
       <div class="section-header">
-        <div class="section-label">Equipment · 设备台账</div>
+        <div class="section-label-row">
+          <div class="section-label">Equipment · 设备台账</div>
+          <button class="export-btn" onclick="exportEquipmentsXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+        </div>
         <h1 class="section-title">Fleet overview</h1>
       </div>
 
@@ -1711,7 +1746,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
     <section class="module" data-module="parts">
       <div class="section-header">
-        <div class="section-label">Spare Parts · 备件管理</div>
+        <div class="section-label-row">
+          <div class="section-label">Spare Parts · 备件管理</div>
+          <button class="export-btn" onclick="exportPartsXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+        </div>
         <h1 class="section-title">Inventory</h1>
         <div class="section-sub" id="parts-section-sub">—</div>
       </div>
@@ -1746,7 +1784,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
     <section class="module" data-module="lube">
       <div class="section-header">
-        <div class="section-label">Lubrication · 润滑管理</div>
+        <div class="section-label-row">
+          <div class="section-label">Lubrication · 润滑管理</div>
+          <button class="export-btn" onclick="exportLubeXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+        </div>
         <h1 class="section-title">Schedule</h1>
         <div class="section-sub" id="lube-section-sub">—</div>
       </div>
@@ -5244,7 +5285,229 @@ function closeWelcome() {
   }
 }
 
+/* ========== 导出 Excel 功能 (2026-04-21) ========== */
+let _xlsxLib = null;
+async function loadXlsxLib() {
+  if (_xlsxLib) return _xlsxLib;
+  if (window.XLSX) { _xlsxLib = window.XLSX; return _xlsxLib; }
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('XLSX 库加载失败，请检查网络'));
+    document.head.appendChild(s);
+  });
+  _xlsxLib = window.XLSX;
+  if (!_xlsxLib) throw new Error('XLSX 库加载失败');
+  return _xlsxLib;
+}
+
+function _fmtTs(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') +
+         ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function _fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function _today() { return _fmtDate(Date.now()); }
+
+/* 通用：把 [[sheetName, rows], ...] 写成 xlsx 并触发下载 */
+async function _exportSheets(sheets, filename) {
+  const btns = document.querySelectorAll('.export-btn');
+  btns.forEach(b => b.disabled = true);
+  setCloudStatus('syncing', '生成 Excel...');
+  try {
+    const XLSX = await loadXlsxLib();
+    const wb = XLSX.utils.book_new();
+    for (const [name, rows] of sheets) {
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      // 自动列宽：按内容长度粗略估算（中文算 2 宽）
+      const header = rows[0] || [];
+      const cols = [];
+      for (let c = 0; c < header.length; c++) {
+        let max = 0;
+        for (let r = 0; r < rows.length; r++) {
+          const v = rows[r][c];
+          if (v == null) continue;
+          const s = String(v);
+          let len = 0;
+          for (const ch of s) len += ch.charCodeAt(0) > 127 ? 2 : 1;
+          if (len > max) max = len;
+        }
+        cols.push({ wch: Math.min(Math.max(max + 2, 6), 50) });
+      }
+      ws['!cols'] = cols;
+      // 冻结首行
+      ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+      // 筛选器
+      if (header.length > 0 && rows.length > 1) {
+        const lastCol = XLSX.utils.encode_col(header.length - 1);
+        ws['!autofilter'] = { ref: 'A1:' + lastCol + '1' };
+      }
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    }
+    XLSX.writeFile(wb, filename);
+    setCloudStatus('online', '已同步');
+    showToast('已导出 ' + filename);
+  } catch (err) {
+    console.error('[Export] 失败', err);
+    setCloudStatus('error', '导出失败');
+    showToast('导出失败：' + err.message);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+const _STATUS_CN_EXP = { running:'运行', idle:'闲置', repair:'维修', scrap:'报废', standby:'备用' };
+
+async function exportEquipmentsXlsx() {
+  const list = (typeof loadEquipments === 'function' ? loadEquipments() : (typeof eqCache !== 'undefined' ? eqCache : [])).slice();
+  if (!list.length) { showToast('暂无设备数据'); return; }
+  const AREA_ORDER = { '201':1, '202':2, '203':3, '316-1':4, '218':5, '546':6, '923':7 };
+  list.sort((a, b) => {
+    const oa = AREA_ORDER[a.area || ''] || 99;
+    const ob = AREA_ORDER[b.area || ''] || 99;
+    if (oa !== ob) return oa - ob;
+    return (a.tag || '').localeCompare(b.tag || '');
+  });
+  const rows = [['序号','位号','设备名称','设备类型','规格型号','安装区域','运行状态','责任人','电机信息','减速机/泵','技术参数','供应商','备注']];
+  list.forEach((r, i) => {
+    rows.push([
+      i + 1,
+      r.tag || '',
+      r.name || '',
+      r.type || '',
+      r.spec || '',
+      r.area || '',
+      _STATUS_CN_EXP[r.status] || r.status || '',
+      r.responsible || '',
+      r.motor || '',
+      r.gearPump || '',
+      r.specDetail || '',
+      r.supplier || '',
+      r.remark || '',
+    ]);
+  });
+  await _exportSheets([['设备台账', rows]], '设备台账_' + _today() + '.xlsx');
+}
+
+async function exportLubeXlsx() {
+  const points = (lubePointsCache || []).slice();
+  const history = (lubeHistoryCache || []).slice();
+  if (!points.length && !history.length) { showToast('暂无润滑数据'); return; }
+
+  const pointsRows = [['序号','位号','设备名称','润滑点','安装区域','操作类型','标准油号','标准量','周期(小时)','周期(天)','上次润滑','下次润滑','状态','备注']];
+  points.sort((a, b) => (a.tag || '').localeCompare(b.tag || ''));
+  points.forEach((p, i) => {
+    let opType = p.operationType;
+    if (opType === 'grease') opType = '加脂';
+    else if (opType === 'oil') opType = '换油';
+    else opType = opType || '';
+    pointsRows.push([
+      i + 1,
+      p.tag || '',
+      p.name || '',
+      p.point || '',
+      p.area || '',
+      opType,
+      p.standardOil || '',
+      p.standardAmount || '',
+      p.periodHours || '',
+      p.periodDays || '',
+      _fmtDate(p.lastLubeAt),
+      _fmtDate(p.nextLubeAt),
+      p.status || '',
+      p.remark || '',
+    ]);
+  });
+
+  const histRows = [['序号','执行时间','位号','设备名称','实际油号','实际量','操作人','备注']];
+  history.sort((a, b) => (b.lubeAt || 0) - (a.lubeAt || 0));
+  history.forEach((h, i) => {
+    histRows.push([
+      i + 1,
+      _fmtTs(h.lubeAt || h.createdAt),
+      h.lubePointTag || '',
+      h.lubePointName || '',
+      h.actualOil || '',
+      h.actualAmount || '',
+      h.operatorName || '',
+      h.note || '',
+    ]);
+  });
+
+  await _exportSheets([
+    ['润滑点清单', pointsRows],
+    ['润滑执行记录', histRows],
+  ], '润滑_' + _today() + '.xlsx');
+}
+
+async function exportPartsXlsx() {
+  const parts = (sparePartsCache || []).slice();
+  const history = (sparePartsHistoryCache || []).slice();
+  if (!parts.length && !history.length) { showToast('暂无备件数据'); return; }
+
+  const partsRows = [['序号','备件名称','规格型号','使用设备','库存','单位','类型','物资编码','采购单号','采购状态','供应商','存放位置','到货情况','备注']];
+  parts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  parts.forEach((p, i) => {
+    let src = p.source;
+    if (src === 'long') src = '长周期';
+    else if (src === 'random') src = '随机';
+    else src = src || '';
+    partsRows.push([
+      i + 1,
+      p.name || '',
+      p.spec || '',
+      p.device || '',
+      p.quantity == null ? '' : p.quantity,
+      p.unit || '',
+      src,
+      p.materialCode || '',
+      p.purchaseNo || '',
+      p.purchaseStatus || '',
+      p.supplier || '',
+      p.location || '',
+      p.received || '',
+      p.remark || '',
+    ]);
+  });
+
+  const histRows = [['序号','时间','类型','备件名称','数量','用途/来源','操作人','状态']];
+  history.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  history.forEach((h, i) => {
+    let status = '正常';
+    if (h.reverted) status = '已撤销';
+    else if (h.isCounter) status = '撤销冲账';
+    let type = h.type;
+    if (type === 'out') type = '领用';
+    else if (type === 'in') type = '入库';
+    else type = type || '';
+    histRows.push([
+      i + 1,
+      _fmtTs(h.createdAt),
+      type,
+      h.sparePartName || '',
+      h.quantity || 0,
+      h.reason || '',
+      h.operatorName || '',
+      status,
+    ]);
+  });
+
+  await _exportSheets([
+    ['备件清单', partsRows],
+    ['出入库记录', histRows],
+  ], '备件_' + _today() + '.xlsx');
+}
+
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
+window.exportEquipmentsXlsx = exportEquipmentsXlsx;
+window.exportLubeXlsx = exportLubeXlsx;
+window.exportPartsXlsx = exportPartsXlsx;
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
 window.showSheet = showSheet;
