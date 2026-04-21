@@ -2139,6 +2139,97 @@ async function seedImportedWorkordersIfNeeded() {
   }
 }
 
+/* ========== V2 新增设备 (2026-04-21)：2 台 923 区 + 55 台临时位号 218/546 区 ========== */
+const SEED_NEW_EQUIPMENTS_V2 = [{"tag":"923-SP0301","name":"液下渣浆泵","type":"离心泵","spec":"","area":"923","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"上利石泵业集团","remark":"","id":"eq_new_001"},{"tag":"923-SP0302","name":"液下渣浆泵","type":"离心泵","spec":"","area":"923","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"上利石泵业集团","remark":"","id":"eq_new_002"},{"tag":"218-TBD-PAC加药泵-01","name":"PAC加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_003"},{"tag":"218-TBD-PAC加药泵-02","name":"PAC加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_004"},{"tag":"218-TBD-PAC加药泵-03","name":"PAC加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_005"},{"tag":"218-TBD-PAC加药泵-04","name":"PAC加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_006"},{"tag":"218-TBD-PAC加药泵-05","name":"PAC加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_007"},{"tag":"218-TBD-PAM加药泵-01","name":"PAM加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_008"},{"tag":"218-TBD-PAM加药泵-02","name":"PAM加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_009"},{"tag":"218-TBD-PAM加药泵-03","name":"PAM加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_010"},{"tag":"218-TBD-PAM加药泵-04","name":"PAM加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_011"},{"tag":"218-TBD-PAM加药泵-05","name":"PAM加药泵","type":"隔膜泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_012"},{"tag":"218-TBD-PAM搅拌器-01","name":"PAM搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_013"},{"tag":"218-TBD-PAM搅拌器-02","name":"PAM搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_014"},{"tag":"218-TBD-PAM搅拌器-03","name":"PAM搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_015"},{"tag":"218-TBD-pac搅拌器-01","name":"pac搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_016"},{"tag":"218-TBD-pac搅拌器-02","name":"pac搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_017"},{"tag":"218-TBD-刮泥机-01","name":"刮泥机","type":"成套设备","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_018"},{"tag":"218-TBD-刮泥机-02","name":"刮泥机","type":"成套设备","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_019"},{"tag":"218-TBD-刮泥机-03","name":"刮泥机","type":"成套设备","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_020"},{"tag":"218-TBD-反洗泵-01","name":"反洗泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_021"},{"tag":"218-TBD-反洗泵-02","name":"反洗泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_022"},{"tag":"218-TBD-反洗泵-03","name":"反洗泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_023"},{"tag":"218-TBD-回用水泵-01","name":"回用水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_024"},{"tag":"218-TBD-回用水泵-02","name":"回用水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_025"},{"tag":"218-TBD-回用水泵-03","name":"回用水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_026"},{"tag":"218-TBD-回用水泵-04","name":"回用水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_027"},{"tag":"218-TBD-排泥泵-01","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_028"},{"tag":"218-TBD-排泥泵-02","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_029"},{"tag":"218-TBD-排泥泵-03","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_030"},{"tag":"218-TBD-排泥泵-04","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_031"},{"tag":"218-TBD-排泥泵-05","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_032"},{"tag":"218-TBD-排泥泵-06","name":"排泥泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_033"},{"tag":"218-TBD-潜水搅拌-01","name":"潜水搅拌","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_034"},{"tag":"218-TBD-潜水搅拌-02","name":"潜水搅拌","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_035"},{"tag":"218-TBD-潜水泵-01","name":"潜水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_036"},{"tag":"218-TBD-潜水泵-02","name":"潜水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_037"},{"tag":"218-TBD-电动单梁悬挂起重机-01","name":"电动单梁悬挂起重机","type":"起重机","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_038"},{"tag":"218-TBD-电动单梁悬挂起重机-02","name":"电动单梁悬挂起重机","type":"起重机","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_039"},{"tag":"218-TBD-絮凝剂搅拌器-01","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_040"},{"tag":"218-TBD-絮凝剂搅拌器-02","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_041"},{"tag":"218-TBD-絮凝剂搅拌器-03","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_042"},{"tag":"218-TBD-絮凝剂搅拌器-04","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_043"},{"tag":"218-TBD-絮凝剂搅拌器-05","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_044"},{"tag":"218-TBD-絮凝剂搅拌器-06","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_045"},{"tag":"218-TBD-絮凝剂搅拌器-07","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_046"},{"tag":"218-TBD-絮凝剂搅拌器-08","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_047"},{"tag":"218-TBD-絮凝剂搅拌器-09","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_048"},{"tag":"218-TBD-絮凝剂搅拌器-10","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_049"},{"tag":"218-TBD-絮凝剂搅拌器-11","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_050"},{"tag":"218-TBD-絮凝剂搅拌器-12","name":"絮凝剂搅拌器","type":"搅拌器","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_051"},{"tag":"218-TBD-罗茨风机-01","name":"罗茨风机","type":"空气压缩机","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_052"},{"tag":"218-TBD-罗茨风机-02","name":"罗茨风机","type":"空气压缩机","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_053"},{"tag":"218-TBD-集水坑潜水泵-01","name":"集水坑潜水泵","type":"离心泵","spec":"","area":"218","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"待定","remark":"","id":"eq_new_054"},{"tag":"546-TBD-雨水回用泵-01","name":"雨水回用泵","type":"离心泵","spec":"","area":"546","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"上海连成泵业","remark":"","id":"eq_new_055"},{"tag":"546-TBD-雨水回用泵-02","name":"雨水回用泵","type":"离心泵","spec":"","area":"546","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"上海连成泵业","remark":"","id":"eq_new_056"},{"tag":"546-TBD-雨水回用泵-03","name":"雨水回用泵","type":"离心泵","spec":"","area":"546","status":"idle","responsible":"","motor":"","gearPump":"","specDetail":"","supplier":"江苏钲清环保设备有限公司","remark":"","id":"eq_new_057"}];
+
+async function seedNewEquipmentsV2IfNeeded() {
+  if (!SEED_NEW_EQUIPMENTS_V2 || SEED_NEW_EQUIPMENTS_V2.length === 0) return;
+  const checkId = SEED_NEW_EQUIPMENTS_V2[0].id;  // 'eq_new_001'
+  try {
+    const s = await getDoc(doc(db, 'equipments', checkId));
+    if (s.exists()) return;  // 已导入过
+  } catch(e) { console.error('[Seed V2] 检查失败', e); return; }
+  setCloudStatus('syncing', '导入新增设备...');
+  const now = Date.now();
+  const BATCH_SIZE = 400;
+  try {
+    for (let i = 0; i < SEED_NEW_EQUIPMENTS_V2.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_NEW_EQUIPMENTS_V2.slice(i, i + BATCH_SIZE);
+      chunk.forEach((e, idx) => {
+        batch.set(doc(db, 'equipments', e.id), {
+          ...e,
+          createdAt: now - (SEED_NEW_EQUIPMENTS_V2.length - i - idx) * 1000,
+          updatedAt: now,
+        });
+      });
+      await batch.commit();
+    }
+    showToast('已导入 ' + SEED_NEW_EQUIPMENTS_V2.length + ' 台新设备');
+    console.log('[Seed V2] 新增设备导入完成');
+  } catch(e) {
+    console.error('[Seed V2] 批量写入失败', e);
+  }
+}
+
+/* ========== V2 位号修正 (2026-04-21)：修 312A/B 重复 + 删 201B 重复行 ========== */
+async function fixEquipmentTagsV2IfNeeded() {
+  const markerId = 'eq_fix_v2_20260421';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;  // 已执行过
+  } catch(e) { console.error('[Fix V2] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '修正位号...');
+  try {
+    const snap = await getDocs(collection(db, 'equipments'));
+    const batch = writeBatch(db);
+    let renameCount = 0;
+    let deleteCount = 0;
+
+    // 1. 把"高压釜搅拌冲洗水泵"的 312A/B 改成 313A/B
+    snap.docs.forEach(d => {
+      const e = d.data();
+      if (e.name === '高压釜搅拌冲洗水泵') {
+        if (e.tag === '203-PE-PP-312A') {
+          batch.update(d.ref, { tag: '203-PE-PP-313A', updatedAt: Date.now() });
+          renameCount++;
+        } else if (e.tag === '203-PE-PP-312B') {
+          batch.update(d.ref, { tag: '203-PE-PP-313B', updatedAt: Date.now() });
+          renameCount++;
+        }
+      }
+    });
+
+    // 2. 删除 203-PE-PP-201B "中温矿浆预热器给料泵 五二五" 的重复行（保留 id 最小的那一条）
+    const dup201B = snap.docs
+      .filter(d => {
+        const e = d.data();
+        return e.tag === '203-PE-PP-201B' && e.name && e.name.includes('中温矿浆预热器给料泵');
+      })
+      .sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+    if (dup201B.length > 1) {
+      dup201B.slice(1).forEach(d => { batch.delete(d.ref); deleteCount++; });
+    }
+
+    // 3. 写迁移标记
+    batch.set(markerRef, {
+      appliedAt: Date.now(),
+      description: '修正 203-PE-PP-312A/B 位号冲突 + 删 203-PE-PP-201B 重复行',
+      renameCount, deleteCount,
+    });
+
+    await batch.commit();
+    if (renameCount + deleteCount > 0) {
+      showToast('已修正 ' + renameCount + ' 个位号，删除 ' + deleteCount + ' 条重复');
+    }
+    console.log('[Fix V2] 位号修正完成: rename=' + renameCount + ' delete=' + deleteCount);
+  } catch(e) {
+    console.error('[Fix V2] 执行失败', e);
+  }
+}
+
 // 首次启动：如果云端为空，上传种子数据
 async function seedIfEmpty() {
   setCloudStatus('syncing', '检查云端数据...');
@@ -5246,6 +5337,10 @@ async function init() {
     await seedPartsIfEmpty();
     // 首次启动：导入 Excel 历史工单
     await seedImportedWorkordersIfNeeded();
+    // 2026-04-21 补：导入 57 台新增设备（923 原矿消能站 + 218 溢流水处理 + 546 雨水池）
+    await seedNewEquipmentsV2IfNeeded();
+    // 2026-04-21 补：修正 203 区域位号重复 bug
+    await fixEquipmentTagsV2IfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
