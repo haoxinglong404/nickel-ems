@@ -2274,6 +2274,55 @@ async function fixEquipmentTagsV2IfNeeded() {
 /* ========== V3 位号补全 (2026-04-22)：62 个位号规范化 + 59 个备注标记 ========== */
 const SEED_TAG_FIXES_V3 = [{"id":"eq_new_001","remark":"2026-04-21 新增"},{"id":"eq_new_002","remark":"2026-04-21 新增"},{"id":"eq_new_003","tag":"218-PE-PP-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_004","tag":"218-PE-PP-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_005","tag":"218-PE-PP-001C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_006","tag":"218-PE-PP-001D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_007","tag":"218-PE-PP-001E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_008","tag":"218-PE-PP-002A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_009","tag":"218-PE-PP-002B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_010","tag":"218-PE-PP-002C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_011","tag":"218-PE-PP-002D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_012","tag":"218-PE-PP-002E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_013","tag":"218-PE-AG-002A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_014","tag":"218-PE-AG-002B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_015","tag":"218-PE-AG-002C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_016","tag":"218-PE-AG-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_017","tag":"218-PE-AG-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_018","tag":"218-PE-SC-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_019","tag":"218-PE-SC-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_020","tag":"218-PE-SC-001C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_021","tag":"218-PE-PP-003A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_022","tag":"218-PE-PP-003B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_023","tag":"218-PE-PP-003C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_024","tag":"218-PE-PP-004A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_025","tag":"218-PE-PP-004B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_026","tag":"218-PE-PP-004C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_027","tag":"218-PE-PP-004D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_028","tag":"218-PE-PP-005A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_029","tag":"218-PE-PP-005B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_030","tag":"218-PE-PP-005C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_031","tag":"218-PE-PP-005D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_032","tag":"218-PE-PP-005E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_033","tag":"218-PE-PP-005F-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_034","tag":"218-PE-AG-004A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_035","tag":"218-PE-AG-004B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_036","tag":"218-PE-PP-006A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_037","tag":"218-PE-PP-006B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_038","tag":"218-PE-CR-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_039","tag":"218-PE-CR-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_040","tag":"218-PE-AG-003A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_041","tag":"218-PE-AG-003B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_042","tag":"218-PE-AG-003C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_043","tag":"218-PE-AG-003D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_044","tag":"218-PE-AG-003E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_045","tag":"218-PE-AG-003F-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_046","tag":"218-PE-AG-003G-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_047","tag":"218-PE-AG-003H-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_048","tag":"218-PE-AG-003I-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_049","tag":"218-PE-AG-003J-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_050","tag":"218-PE-AG-003K-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_051","tag":"218-PE-AG-003L-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_052","tag":"218-PE-FA-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_053","tag":"218-PE-FA-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_054","tag":"218-PE-PP-007-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_055","tag":"546-JP-PP-001A","remark":"2026-04-21 新增"},{"id":"eq_new_056","tag":"546-JP-PP-001B","remark":"2026-04-21 新增"},{"id":"eq_new_057","tag":"546-JP-PP-001C","remark":"2026-04-21 新增"},{"id":"eq_seed_0298","remark":"原位号 312 系列，2026-04-21 更正"},{"id":"eq_seed_0300","remark":"原位号 312 系列，2026-04-21 更正"},{"id":"eq_seed_0346","tag":"316-1-PE-CR-001"},{"id":"eq_seed_0347","tag":"316-1-PE-EP-002"},{"id":"eq_seed_0348","tag":"316-1-PE-EP-003"},{"id":"eq_seed_0349","tag":"316-1-PE-PP-002"},{"id":"eq_seed_0350","tag":"316-1-PE-TK-001"},{"id":"eq_seed_0351","tag":"316-1-PE-TK-002"},{"id":"eq_seed_0352","tag":"316-1-PE-TK-003"}];
 
+// 2026-04-22 补丁 V4：批量补 57 台严重不全设备的"负责人 = 郝行龙"
+// + eq_new_052/053（两台罗茨风机）补齐完整规格（WSR 战尔 250H + 皖南电机 YXVF315M-4 132kW）
+const SEED_TAG_FIXES_V4 = [{"id":"eq_new_001","responsible":"郝行龙"},{"id":"eq_new_002","responsible":"郝行龙"},{"id":"eq_new_003","responsible":"郝行龙"},{"id":"eq_new_004","responsible":"郝行龙"},{"id":"eq_new_005","responsible":"郝行龙"},{"id":"eq_new_006","responsible":"郝行龙"},{"id":"eq_new_007","responsible":"郝行龙"},{"id":"eq_new_008","responsible":"郝行龙"},{"id":"eq_new_009","responsible":"郝行龙"},{"id":"eq_new_010","responsible":"郝行龙"},{"id":"eq_new_011","responsible":"郝行龙"},{"id":"eq_new_012","responsible":"郝行龙"},{"id":"eq_new_013","responsible":"郝行龙"},{"id":"eq_new_014","responsible":"郝行龙"},{"id":"eq_new_015","responsible":"郝行龙"},{"id":"eq_new_016","responsible":"郝行龙"},{"id":"eq_new_017","responsible":"郝行龙"},{"id":"eq_new_018","responsible":"郝行龙"},{"id":"eq_new_019","responsible":"郝行龙"},{"id":"eq_new_020","responsible":"郝行龙"},{"id":"eq_new_021","responsible":"郝行龙"},{"id":"eq_new_022","responsible":"郝行龙"},{"id":"eq_new_023","responsible":"郝行龙"},{"id":"eq_new_024","responsible":"郝行龙"},{"id":"eq_new_025","responsible":"郝行龙"},{"id":"eq_new_026","responsible":"郝行龙"},{"id":"eq_new_027","responsible":"郝行龙"},{"id":"eq_new_028","responsible":"郝行龙"},{"id":"eq_new_029","responsible":"郝行龙"},{"id":"eq_new_030","responsible":"郝行龙"},{"id":"eq_new_031","responsible":"郝行龙"},{"id":"eq_new_032","responsible":"郝行龙"},{"id":"eq_new_033","responsible":"郝行龙"},{"id":"eq_new_034","responsible":"郝行龙"},{"id":"eq_new_035","responsible":"郝行龙"},{"id":"eq_new_036","responsible":"郝行龙"},{"id":"eq_new_037","responsible":"郝行龙"},{"id":"eq_new_038","responsible":"郝行龙"},{"id":"eq_new_039","responsible":"郝行龙"},{"id":"eq_new_040","responsible":"郝行龙"},{"id":"eq_new_041","responsible":"郝行龙"},{"id":"eq_new_042","responsible":"郝行龙"},{"id":"eq_new_043","responsible":"郝行龙"},{"id":"eq_new_044","responsible":"郝行龙"},{"id":"eq_new_045","responsible":"郝行龙"},{"id":"eq_new_046","responsible":"郝行龙"},{"id":"eq_new_047","responsible":"郝行龙"},{"id":"eq_new_048","responsible":"郝行龙"},{"id":"eq_new_049","responsible":"郝行龙"},{"id":"eq_new_050","responsible":"郝行龙"},{"id":"eq_new_051","responsible":"郝行龙"},{"id":"eq_new_052","responsible":"郝行龙","spec":"250H","motor":"电机:皖南电机WNM/YXVF315M-4/132kW/380V/50Hz/238A/IP55/F级绝缘/△接法/IM B3/变频调速三相异步","gearPump":"罗茨风机无减速机,联轴器直连","specDetail":"风量:95 m³/min\n压力:49 kPa\n转速:1480 rpm\n效率:94.7%\n功率因数:0.89\n额定转矩:849 N·m\n轴承:6319/6319-F\n变频范围:恒转矩5-50Hz, 恒功率50-75Hz\n整机重量:1600 kg / 电机重量:940 kg","supplier":"山东战尔机械有限公司","remark":"2025-03 出厂"},{"id":"eq_new_053","responsible":"郝行龙","spec":"250H","motor":"电机:皖南电机WNM/YXVF315M-4/132kW/380V/50Hz/238A/IP55/F级绝缘/△接法/IM B3/变频调速三相异步","gearPump":"罗茨风机无减速机,联轴器直连","specDetail":"风量:95 m³/min\n压力:49 kPa\n转速:1480 rpm\n效率:94.7%\n功率因数:0.89\n额定转矩:849 N·m\n轴承:6319/6319-F\n变频范围:恒转矩5-50Hz, 恒功率50-75Hz\n整机重量:1600 kg / 电机重量:940 kg","supplier":"山东战尔机械有限公司","remark":"2025-03 出厂"},{"id":"eq_new_054","responsible":"郝行龙"},{"id":"eq_new_055","responsible":"郝行龙"},{"id":"eq_new_056","responsible":"郝行龙"},{"id":"eq_new_057","responsible":"郝行龙"}];
+
+async function applyTagFixesV4IfNeeded() {
+  if (!SEED_TAG_FIXES_V4 || SEED_TAG_FIXES_V4.length === 0) return;
+  const markerId = 'eq_fix_v4_20260422';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;  // 已执行过
+  } catch(e) { console.error('[Fix V4] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '应用铭牌补全...');
+  try {
+    const BATCH_SIZE = 400;
+    let respCount = 0, fullCount = 0, failCount = 0;
+    for (let i = 0; i < SEED_TAG_FIXES_V4.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_TAG_FIXES_V4.slice(i, i + BATCH_SIZE);
+      chunk.forEach(fix => {
+        const { id, ...updates } = fix;
+        if ('motor' in updates) fullCount++; else respCount++;
+        batch.update(doc(db, 'equipments', id), { ...updates, updatedAt: Date.now() });
+      });
+      try {
+        await batch.commit();
+      } catch(e) {
+        console.error('[Fix V4] 批次写入失败', e);
+        failCount += chunk.length;
+      }
+    }
+    await setDoc(markerRef, {
+      appliedAt: Date.now(),
+      description: '补全负责人 57 台 + 完整铭牌 2 台罗茨风机',
+      respCount, fullCount, failCount,
+      totalFixes: SEED_TAG_FIXES_V4.length,
+    });
+    if (failCount === 0) {
+      showToast('已补全 ' + SEED_TAG_FIXES_V4.length + ' 台设备信息');
+    } else {
+      showToast('已补全 ' + (SEED_TAG_FIXES_V4.length - failCount) + ' 台，' + failCount + ' 台失败');
+    }
+    console.log('[Fix V4] 铭牌补全完成: 负责人=' + respCount + ' 完整=' + fullCount + ' 失败=' + failCount);
+  } catch(e) {
+    console.error('[Fix V4] 执行失败', e);
+  }
+}
+
 async function applyTagFixesV3IfNeeded() {
   if (!SEED_TAG_FIXES_V3 || SEED_TAG_FIXES_V3.length === 0) return;
   const markerId = 'eq_fix_v3_20260422';
@@ -5666,6 +5715,8 @@ async function init() {
     await fixEquipmentTagsV2IfNeeded();
     // 2026-04-22 补：应用 Excel 位号补全（TBD → 正式位号）
     await applyTagFixesV3IfNeeded();
+    // 2026-04-22 补：铭牌补全 V4（57 台负责人 + 2 台罗茨风机完整规格）
+    await applyTagFixesV4IfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
