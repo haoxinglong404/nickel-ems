@@ -1669,7 +1669,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
 
       <div class="eq-search-bar">
-        <input class="eq-search-input" id="eq-search" placeholder="搜索位号、名称或型号…" oninput="onSearchInput()">
+        <input class="eq-search-input" id="eq-search" placeholder="搜索位号、名称、型号、功率（如 132KW）…" oninput="onSearchInput()">
         <div class="eq-search-clear" id="eq-search-clear" onclick="clearSearch()">×</div>
         <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
@@ -2271,6 +2271,55 @@ async function fixEquipmentTagsV2IfNeeded() {
   }
 }
 
+/* ========== V3 位号补全 (2026-04-22)：62 个位号规范化 + 59 个备注标记 ========== */
+const SEED_TAG_FIXES_V3 = [{"id":"eq_new_001","remark":"2026-04-21 新增"},{"id":"eq_new_002","remark":"2026-04-21 新增"},{"id":"eq_new_003","tag":"218-PE-PP-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_004","tag":"218-PE-PP-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_005","tag":"218-PE-PP-001C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_006","tag":"218-PE-PP-001D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_007","tag":"218-PE-PP-001E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_008","tag":"218-PE-PP-002A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_009","tag":"218-PE-PP-002B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_010","tag":"218-PE-PP-002C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_011","tag":"218-PE-PP-002D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_012","tag":"218-PE-PP-002E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_013","tag":"218-PE-AG-002A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_014","tag":"218-PE-AG-002B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_015","tag":"218-PE-AG-002C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_016","tag":"218-PE-AG-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_017","tag":"218-PE-AG-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_018","tag":"218-PE-SC-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_019","tag":"218-PE-SC-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_020","tag":"218-PE-SC-001C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_021","tag":"218-PE-PP-003A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_022","tag":"218-PE-PP-003B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_023","tag":"218-PE-PP-003C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_024","tag":"218-PE-PP-004A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_025","tag":"218-PE-PP-004B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_026","tag":"218-PE-PP-004C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_027","tag":"218-PE-PP-004D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_028","tag":"218-PE-PP-005A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_029","tag":"218-PE-PP-005B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_030","tag":"218-PE-PP-005C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_031","tag":"218-PE-PP-005D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_032","tag":"218-PE-PP-005E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_033","tag":"218-PE-PP-005F-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_034","tag":"218-PE-AG-004A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_035","tag":"218-PE-AG-004B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_036","tag":"218-PE-PP-006A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_037","tag":"218-PE-PP-006B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_038","tag":"218-PE-CR-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_039","tag":"218-PE-CR-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_040","tag":"218-PE-AG-003A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_041","tag":"218-PE-AG-003B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_042","tag":"218-PE-AG-003C-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_043","tag":"218-PE-AG-003D-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_044","tag":"218-PE-AG-003E-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_045","tag":"218-PE-AG-003F-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_046","tag":"218-PE-AG-003G-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_047","tag":"218-PE-AG-003H-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_048","tag":"218-PE-AG-003I-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_049","tag":"218-PE-AG-003J-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_050","tag":"218-PE-AG-003K-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_051","tag":"218-PE-AG-003L-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_052","tag":"218-PE-FA-001A-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_053","tag":"218-PE-FA-001B-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_054","tag":"218-PE-PP-007-TBD","remark":"2026-04-21 新增"},{"id":"eq_new_055","tag":"546-JP-PP-001A","remark":"2026-04-21 新增"},{"id":"eq_new_056","tag":"546-JP-PP-001B","remark":"2026-04-21 新增"},{"id":"eq_new_057","tag":"546-JP-PP-001C","remark":"2026-04-21 新增"},{"id":"eq_seed_0298","remark":"原位号 312 系列，2026-04-21 更正"},{"id":"eq_seed_0300","remark":"原位号 312 系列，2026-04-21 更正"},{"id":"eq_seed_0346","tag":"316-1-PE-CR-001"},{"id":"eq_seed_0347","tag":"316-1-PE-EP-002"},{"id":"eq_seed_0348","tag":"316-1-PE-EP-003"},{"id":"eq_seed_0349","tag":"316-1-PE-PP-002"},{"id":"eq_seed_0350","tag":"316-1-PE-TK-001"},{"id":"eq_seed_0351","tag":"316-1-PE-TK-002"},{"id":"eq_seed_0352","tag":"316-1-PE-TK-003"}];
+
+async function applyTagFixesV3IfNeeded() {
+  if (!SEED_TAG_FIXES_V3 || SEED_TAG_FIXES_V3.length === 0) return;
+  const markerId = 'eq_fix_v3_20260422';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;  // 已执行过
+  } catch(e) { console.error('[Fix V3] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '应用位号补全...');
+  try {
+    const BATCH_SIZE = 400;
+    let tagCount = 0, remarkCount = 0, failCount = 0;
+    for (let i = 0; i < SEED_TAG_FIXES_V3.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_TAG_FIXES_V3.slice(i, i + BATCH_SIZE);
+      chunk.forEach(fix => {
+        const { id, ...updates } = fix;
+        if ('tag' in updates) tagCount++;
+        if ('remark' in updates) remarkCount++;
+        batch.update(doc(db, 'equipments', id), { ...updates, updatedAt: Date.now() });
+      });
+      try {
+        await batch.commit();
+      } catch(e) {
+        console.error('[Fix V3] 批次写入失败', e);
+        failCount += chunk.length;
+      }
+    }
+    await setDoc(markerRef, {
+      appliedAt: Date.now(),
+      description: '应用 Excel 位号补全（62 个位号规范化 + 57 新增/更正备注）',
+      tagCount, remarkCount, failCount,
+      totalFixes: SEED_TAG_FIXES_V3.length,
+    });
+    if (failCount === 0) {
+      showToast('已更新 ' + SEED_TAG_FIXES_V3.length + ' 台设备');
+    } else {
+      showToast('已更新 ' + (SEED_TAG_FIXES_V3.length - failCount) + ' 台，' + failCount + ' 台失败');
+    }
+    console.log('[Fix V3] 位号补全完成: tag=' + tagCount + ' remark=' + remarkCount + ' fail=' + failCount);
+  } catch(e) {
+    console.error('[Fix V3] 执行失败', e);
+  }
+}
+
 // 首次启动：如果云端为空，上传种子数据
 async function seedIfEmpty() {
   setCloudStatus('syncing', '检查云端数据...');
@@ -2513,6 +2562,18 @@ function switchModule(name) {
 }
 
 /* ========== 设备列表 ========== */
+// 区域排序约定（2026-04-22）：201→202→203→316-1→218→923→546
+const AREA_ORDER = ['201', '202', '203', '316-1', '218', '923', '546'];
+function areaRank(a) {
+  const i = AREA_ORDER.indexOf(a || '');
+  return i === -1 ? 99 : i;
+}
+function compareEquipments(a, b) {
+  const ra = areaRank(a.area), rb = areaRank(b.area);
+  if (ra !== rb) return ra - rb;
+  return (a.tag || '').localeCompare(b.tag || '', undefined, { numeric: true, sensitivity: 'base' });
+}
+
 let state = {
   statusFilter: 'all',     // all / running / repair / idle / stopped / scrap
   typeFilter: '',          // '' = 全部
@@ -2553,7 +2614,7 @@ function renderFilterRow() {
 
   const items = [];
   items.push({key:'area:',label:'全部区域',count:all.length});
-  Object.entries(areas).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>items.push({key:'area:'+k,label:'区域 '+k,count:v}));
+  Object.entries(areas).sort((a,b)=>areaRank(a[0])-areaRank(b[0])).forEach(([k,v])=>items.push({key:'area:'+k,label:'区域 '+k,count:v}));
   items.push({key:'_sep_',label:'|',count:0});
   items.push({key:'type:',label:'全部类型',count:all.length});
   topTypes.forEach(([k,v])=>items.push({key:'type:'+k,label:k,count:v}));
@@ -2584,11 +2645,16 @@ function filterEquipments() {
     if (state.typeFilter && e.type !== state.typeFilter) return false;
     if (state.searchText) {
       const s = state.searchText.toLowerCase();
-      const hay = (e.tag + ' ' + e.name + ' ' + (e.spec||'') + ' ' + (e.type||'')).toLowerCase();
+      // 搜索范围：位号/名称/规格型号/设备类型/安装区域/供应商/备注
+      //            + 电机信息 / 减速机或泵 / 技术参数（2026-04-22 扩展，支持搜功率如 132KW）
+      const hay = [
+        e.tag, e.name, e.spec, e.type, e.area, e.supplier,
+        e.motor, e.gearPump, e.specDetail, e.remark
+      ].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(s)) return false;
     }
     return true;
-  });
+  }).sort(compareEquipments);
 }
 
 function renderEquipmentList() {
@@ -5367,13 +5433,7 @@ const _STATUS_CN_EXP = { running:'运行', idle:'闲置', repair:'维修', scrap
 async function exportEquipmentsXlsx() {
   const list = (typeof loadEquipments === 'function' ? loadEquipments() : (typeof eqCache !== 'undefined' ? eqCache : [])).slice();
   if (!list.length) { showToast('暂无设备数据'); return; }
-  const AREA_ORDER = { '201':1, '202':2, '203':3, '316-1':4, '218':5, '546':6, '923':7 };
-  list.sort((a, b) => {
-    const oa = AREA_ORDER[a.area || ''] || 99;
-    const ob = AREA_ORDER[b.area || ''] || 99;
-    if (oa !== ob) return oa - ob;
-    return (a.tag || '').localeCompare(b.tag || '');
-  });
+  list.sort(compareEquipments);
   const rows = [['序号','位号','设备名称','设备类型','规格型号','安装区域','运行状态','责任人','电机信息','减速机/泵','技术参数','供应商','备注']];
   list.forEach((r, i) => {
     rows.push([
@@ -5604,6 +5664,8 @@ async function init() {
     await seedNewEquipmentsV2IfNeeded();
     // 2026-04-21 补：修正 203 区域位号重复 bug
     await fixEquipmentTagsV2IfNeeded();
+    // 2026-04-22 补：应用 Excel 位号补全（TBD → 正式位号）
+    await applyTagFixesV3IfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
