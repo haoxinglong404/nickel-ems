@@ -32,12 +32,15 @@
 
 **Firestore 集合**（每个文档的 id 字段要和 Firestore doc id 一致）：
 - `users` · 用户账号（id = 工号字符串）
-- `equipments` · 设备台账（id = `eq_seed_XXXX`）
+- `equipments` · 设备台账（**420** 台 · id = `eq_seed_XXXX` / `eq_new_XXX` / `eq_v6_XXX`）
 - `workorders` · 工单（id = `wo_时间戳_随机`）
-- `lubepoints` · 润滑点（id = `lp_XXXX`）
+- `lubepoints` · 润滑点（**620** 个 · id = `lp_XXXX` / `lp_v6_001` / `lp_v7_001` / `lp_v8_NNN`）
 - `lubehistory` · 润滑执行记录
-- `spareparts` · 备件（id = `sp_XXXXX`）
+- `spareparts` · 备件（**1861** 条 · id = `sp_XXXXX` / `sp_tbd_NNN` 协议待清点）
 - `spareparthistory` · 备件出入库记录（id = `ph_时间戳_随机`）
+- `tools` · **工器具台账**（251 件 · id = `tl_seed_XXXX`）—— 2026-04-23 新增模块
+- `toolhistory` · 工器具出入库历史（id = `th_seed_XXXX` / `th_时间戳_随机`）
+- `meta` · 一次性迁移幂等标记（id = `*_v[N]_YYYYMMDD`）
 
 ---
 
@@ -61,8 +64,16 @@
 | workorders | `status` | `pending-approval` / `approved` / `rejected` / `in-progress` / `pending-confirm` / `done` / `reopened` |
 | workorders | `equipmentId === 'other'` | 非设备工作的特殊值 |
 | spareparts | `source` | `long`（长周期）或 `random`（随机） |
-| spareparthistory | `type` | `in`（入库）或 `out`（领用） |
+| spareparts | `stockStatus` | `'missing'` 表示协议待清点（仅 sp_tbd_*） |
+| spareparts | `countedAt` / `countedQty` / `countDiff` | 现场清点字段（不动 quantity）|
+| spareparts | `techAgreementName` / `techAgreementQty` / `techAgreementUnit` | 技术协议数据 |
+| spareparthistory | `type` | `in`（入库）/ `out`（领用）/ `count`（清点） |
 | spareparthistory | `reverted` / `isCounter` | 撤销标记，别用其他字段名 |
+| tools | `quantity` / `totalIn` / `totalOut` / `totalConsume` / `totalReturn` | 库存 + 4 类累计 |
+| toolhistory | `type` | `in`（入库）/ `out`（**借用**·要还）/ `consume`（**领用**·消耗）/ `return`（归还）|
+| toolhistory | `slipId` | 同次提交的多条共享单号（如 `CN20260423-XXXX`）|
+| toolhistory | `consumed: true` | V10 把历史 isImport=true 的 out 标记为消耗 |
+| lubepoints | `operationType` | `'oil'` / `'grease'` —— **但显示分类按 standardOil 是否含"脂"判断**，详见 `getLubeKind()` |
 
 ### ❌ 禁止用 localStorage 存业务数据
 
@@ -202,21 +213,44 @@
 
 ## 🚀 下次会话应该知道的上下文
 
-当前版本：**v0.8**（含备件模块 + 撤销/硬删除 + 翔总欢迎卡 + 工单联系人字段 + "其他"设备选项 + 6 条历史工单导入）
+当前版本：**v0.9**（v0.8 + 工器具模块 + 购物车 + 7 次数据迁移 + 备件/润滑分 tab + 宽屏布局）
+
+**底部导航 6 项**：设备 / 工单 / 备件 / 工器具 / 润滑 / 我的（grid `repeat(6,1fr)`，label 9px）
+
+**模块结构**：
+- 备件模块顶部 2 tab：📦 采购 / 🎲 随机（不同 module，tab 间用 `switchModule` 切换）
+- 润滑模块顶部 3 tab：🛢️ 脂润滑 / ⛽ 油润滑 / 📝 待补充油号（**按 standardOil 是否含"脂"分**）
+- 工器具：常显购物车 bar 紧贴 nav 上方（**不在 .content 内，跟 .bottom-nav 同级**，仅 tools 模块显示）
+  - 卡片 2 按钮：`+ 加入领用单`（消耗）/ `+ 加入借用单`（要还）
+  - 顶部 3 按钮：归还（选借用人→选物品）/ 批量入库（admin only，粘贴 Excel）/ 导出
+  - 历史 type：`in`/`out`/`consume`/`return`，对应**入库/借用/领用/归还**
+
+**已运行的一次性迁移（marker 都在 `meta/` 集合）**：
+| Marker | 做的事 |
+|---|---|
+| `eq_seed_fix_v2_20260421` | 修 312A/B 位号冲突 + 删 201B 重复 |
+| `eq_fix_v3_20260422` | 62 个位号规范化（TBD→正式 + 316-1 空格修复）|
+| `eq_lube_fix_v6_20260423` | 修 10 个孤立润滑点 + 拆 002/003 设备 + 加 102B + 313B 润滑点 |
+| `parts_enrich_v4_20260422` | 367 随机备件补 5 字段（材质/技术协议/设备位号等）|
+| `parts_tech_agreement_v5_20260422` | 加 84 条"协议待清点"备件 + 补技术协议单位 |
+| `add_motor_lp_v7_20260423` | 202-PE-PP-005 高压水泵·电机润滑点 |
+| `area_lube_v8_20260423` | 218/923/546 区 107 个新润滑点 |
+| `tools_v9_20260423` | 导入 251 工器具 + 410 出入库历史 |
+| `tool_reclassify_v10_20260423` | 历史 410 条 out 改为 consume（领用·不算待归还）|
 
 **最近做的改动**（按时间倒序）：
-1. 工单提报加必填字段 `contactName` + `contactPhone`
-2. 设备选择器加 "其他/非设备工作" 按钮（用 `pickEquipmentOther()`）
-3. 首次启动自动导入 6 条 Excel 历史工单（都是待审批状态）
-4. 翔总欢迎卡去"敬"字
-5. 用户管理可添加/改为"管理员"角色（有自我保护 + 最后一管理员保护）
+1. 底栏 grid 6 列 + cart bar 移出 .content 跟 nav 同级（紧贴 nav 上方）
+2. 工器具购物车（领用 vs 借用 2 类）+ 归还流程 + 批量入库
+3. 备件 nav 合并为单"备件"（内含 2 tab） + 数据导出（含 SheetJS CDN 懒加载）
+4. 宽屏布局（≥1024px 左侧 240px 镍钴绿侧栏）
+5. V4-V10 七次数据迁移
 
-**已知待办**（按紧急度）：
+**已知待办**：
 - ⚠️ Firestore 测试模式规则 ~2026-05-19 到期，需升级（高优先级）
-- 📊 数据导出 Excel 功能（用户多次提过）
+- 📝 218 区 55 台 TBD 临时位号待用户分配正式位号
+- 📝 156 个润滑点待补充标准油号 + 周期
 - 📸 图片上传（设备故障照片）
-- 📬 消息通知
-- 📊 数据看板
+- 📬 消息通知 / 数据看板
 
 ---
 
