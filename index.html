@@ -237,7 +237,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .u-role.tech { background:#EAF3DE; color:#27500A; }
 
 /* 底部导航 */
-.bottom-nav { background:var(--paper); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(5,1fr); flex-shrink:0; padding-bottom:env(safe-area-inset-bottom,0); }
+.bottom-nav { background:var(--paper); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(6,1fr); flex-shrink:0; padding-bottom:env(safe-area-inset-bottom,0); }
 .nav-item { padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--subtle); position:relative; transition:color .2s; }
 .nav-item.active { color:var(--g-forest); }
 .nav-item.active::before { content:""; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--g-deep); }
@@ -2094,14 +2094,11 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .cart-tab.active.borrow { color: #C75B1E; border-bottom-color: #C75B1E; font-weight: 500; }
   .cart-tab.active.consume { color: var(--g-forest); border-bottom-color: var(--g-forest); font-weight: 500; }
 
-  /* 常显购物车 bar — sticky 在 .content 底部，紧贴 nav 上方 */
+  /* 购物车 bar — 跟 nav 同级，紧贴 nav 上方（不需要 sticky） */
   #tools-cart-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 20;
+    flex-shrink: 0;
     background: var(--paper);
-    margin: 14px -20px -40px;     /* 抵消 .content 的左右 padding 和 bottom padding */
-    padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0));
+    padding: 10px 20px;
     border-top: 1px solid var(--line);
     box-shadow: 0 -6px 18px rgba(0,0,0,0.08);
   }
@@ -2571,8 +2568,6 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div id="tools-load-more" style="display:none;text-align:center;padding:16px;">
         <button class="load-more-btn" onclick="loadMoreTools()">加载更多</button>
       </div>
-      <!-- 2026-04-23：购物车 bar 放最底部 sticky，像外卖那样常驻底部 -->
-      <div id="tools-cart-bar"></div>
     </section>
 
     <!-- 工器具详情 -->
@@ -2666,6 +2661,9 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <button class="welcome-close" onclick="closeWelcome()">进入系统</button>
     </div>
   </div>
+
+  <!-- 2026-04-23：购物车 bar 跟 nav 同级，紧贴 nav 上方，仅工器具模块时显示 -->
+  <div id="tools-cart-bar" style="display:none;"></div>
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
@@ -3739,12 +3737,15 @@ function switchModule(name) {
   }
   if (name === 'tools' && typeof renderToolsList === 'function') {
     renderToolsList();
-    renderCartBar();  // 2026-04-23：常显购物车 bar
+    renderCartBar();
     // 2026-04-23：admin 才显示批量入库按钮
     const u = getCurrentUser();
     const btn = document.getElementById('tools-batch-in-btn');
     if (btn) btn.style.display = (u && u.role === 'admin') ? '' : 'none';
   }
+  // 2026-04-23：购物车 bar 只在工器具模块显示
+  const cartBar = document.getElementById('tools-cart-bar');
+  if (cartBar) cartBar.style.display = (name === 'tools') ? '' : 'none';
 
   document.querySelector('.content').scrollTop = 0;
   updateFab();
