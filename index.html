@@ -6408,7 +6408,7 @@ function renderCountCard(sp) {
     body = `
       <div class="count-counted-info">
         <strong>${who}</strong> · ${when} 清点<br>
-        现场 <strong>${countedQty}</strong> ${escapeHtml(sp.unit || '件')}${diffBadge}
+        船清单 <strong>${bookQty}</strong> → 现场 <strong style="color:${(sp.countDiff||0)===0?'var(--g-forest)':'#D97935'};">${countedQty}</strong> ${escapeHtml(sp.unit || '件')}${diffBadge}
       </div>
       <button class="count-recount-btn" onclick="recountPart(event, '${sp.id}')">重新清点</button>
     `;
@@ -6459,10 +6459,9 @@ async function confirmCount(e, spId) {
   const diff = newQty - bookQty;
 
   try {
-    // 1. Update part: set quantity + count metadata
+    // 2026-04-23 改：保留原 quantity（船清单数量）不变，现场实际数另存 countedQty，方便对照差异
     const updated = {
       ...sp,
-      quantity: newQty,
       countedAt: Date.now(),
       countedBy: user.empno,
       countedByName: user.name,
