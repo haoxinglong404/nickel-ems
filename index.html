@@ -242,7 +242,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .nav-item.active { color:var(--g-forest); }
 .nav-item.active::before { content:""; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--g-deep); }
 .nav-icon { width:20px; height:20px; }
-.nav-label { font-size:10px; font-family:var(--font-mono); letter-spacing:.1em; text-transform:uppercase; font-weight:500; }
+.nav-label { font-size:9px; font-family:var(--font-mono); letter-spacing:.05em; text-transform:uppercase; font-weight:500; white-space:nowrap; }
 
 /* 抽屉 */
 .sheet-mask { position:fixed; inset:0; background:rgba(26,42,26,.35); display:none; align-items:flex-end; z-index:200; backdrop-filter:blur(2px); }
@@ -1874,6 +1874,385 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     text-align: center;
   }
 
+
+  /* ════════ 工器具模块 · 2026-04-23 ════════ */
+  .tools-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .tools-ov-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tools-ov-card.clickable { cursor: pointer; }
+  .tools-ov-card.clickable:hover { border-color: var(--g-deep); }
+  .tools-ov-card.active {
+    background: var(--g-mist);
+    border-color: var(--g-deep);
+  }
+  .tools-ov-card.zero { background: #FFF5EB; border-color: #F0D0A8; }
+  .tools-ov-card.zero.active { background: #FCEAD6; border-color: #D97935; }
+  .tools-ov-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .tools-ov-card.zero .tools-ov-num { color: #D97935; }
+  .tools-ov-card.active .tools-ov-num { color: var(--g-forest); }
+  .tools-ov-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    letter-spacing: .03em;
+  }
+
+  .tool-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .tool-card:hover { background: var(--surface); }
+  .tool-card.zero { background: #FFF8F0; border-color: #F0D0A8; }
+  .tool-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .tool-card-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .tool-card-qty {
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .tool-card-qty-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--g-forest);
+    line-height: 1;
+  }
+  .tool-card.zero .tool-card-qty-num { color: #D97935; }
+  .tool-card-qty-unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--subtle);
+    letter-spacing: .03em;
+  }
+  .tool-card-meta {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .tool-card-meta .meta-sep { color: var(--line); margin: 0 6px; }
+  .tool-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+  .tool-act-btn {
+    flex: 1;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tool-act-btn:hover { border-color: var(--g-deep); background: var(--g-mist); color: var(--g-forest); }
+  .tool-act-btn.out { border-color: #D97935; color: #C75B1E; }
+  .tool-act-btn.out:hover:not(:disabled) { background: #FFF5EB; }
+  .tool-act-btn.in { border-color: var(--g-deep); color: var(--g-forest); }
+  .tool-act-btn.in:hover { background: var(--g-mist); }
+  .tool-act-btn.return { border-color: #2B5AA0; color: #2B5AA0; }
+  .tool-act-btn.return:hover { background: #DDEBF7; }
+  .tool-act-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* 购物车按钮 */
+  .cart-btn { background: var(--g-deep); color: #fff; border-color: var(--g-deep); position: relative; }
+  .cart-btn:hover { background: var(--g-forest); }
+
+  /* 购物车 sheet */
+  .cart-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cart-tab {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .cart-tab.active.out {
+    color: #C75B1E;
+    border-bottom-color: #C75B1E;
+    font-weight: 500;
+  }
+  .cart-tab.active.return {
+    color: #2B5AA0;
+    border-bottom-color: #2B5AA0;
+    font-weight: 500;
+  }
+  .cart-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .cart-line:last-of-type { border-bottom: none; }
+  .cart-line-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .cart-line-stock { font-size: 11px; color: var(--subtle); margin-top: 2px; }
+  .cart-qty-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .cart-qty-input {
+    width: 44px;
+    height: 32px;
+    text-align: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: var(--font-serif);
+    font-size: 15px;
+    background: var(--paper);
+  }
+  .cart-line-rm {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--subtle);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .cart-line-rm:hover { color: #C13B3B; }
+  .cart-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--subtle);
+    font-size: 13px;
+  }
+
+  /* 历史记录中的归还 / 领用 tag */
+  .tool-hist-type.return { background: #DDEBF7; color: #2B5AA0; }
+  .tool-hist-qty.return { color: #2B5AA0; }
+  .tool-hist-type.consume { background: #F0EDE5; color: #6B6A66; }
+  .tool-hist-qty.consume { color: #6B6A66; }
+
+  /* 卡片"加入领用单"按钮（消耗品）— 灰色 */
+  .tool-act-btn.consume { border-color: var(--muted); color: var(--muted); }
+  .tool-act-btn.consume:hover:not(:disabled) { background: var(--surface); }
+
+  /* cart-tab.borrow / consume */
+  .cart-tab.active.borrow { color: #C75B1E; border-bottom-color: #C75B1E; font-weight: 500; }
+  .cart-tab.active.consume { color: var(--g-forest); border-bottom-color: var(--g-forest); font-weight: 500; }
+
+  /* 常显购物车 bar — sticky 在 .content 底部，紧贴 nav 上方 */
+  #tools-cart-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    background: var(--paper);
+    margin: 14px -20px -40px;     /* 抵消 .content 的左右 padding 和 bottom padding */
+    padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0));
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 18px rgba(0,0,0,0.08);
+  }
+  .tools-cart-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tools-cart-bar-inner.has-items {
+    background: var(--g-mist);
+    border: 1px solid var(--g-deep);
+    border-style: solid;
+  }
+  .tools-cart-bar-inner:hover { background: var(--g-mist); border-color: var(--g-deep); }
+  .tools-cart-bar-icon { font-size: 18px; flex-shrink: 0; }
+  .tools-cart-bar-text { flex: 1; min-width: 0; line-height: 1.4; }
+  .tools-cart-bar-title {
+    display: block;
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .tools-cart-bar-counts {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .tools-cart-bar-counts strong { color: var(--g-forest); font-family: var(--font-mono); }
+  .tools-cart-bar-arrow {
+    font-size: 12px;
+    color: var(--g-forest);
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  /* 工器具概览卡 → 平铺信息样式（去掉框，仅内容）*/
+  .tools-overview {
+    background: none;
+    border: none;
+    padding: 0;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .tools-overview .tools-ov-card {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: default;
+    transition: none;
+  }
+  .tools-overview .tools-ov-card:hover { border: none; background: none; }
+  .tools-overview .tools-ov-card.active { background: none; border: none; }
+
+  .tool-hist-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 13px;
+  }
+  .tool-hist-item:last-child { border-bottom: none; }
+  .tool-hist-top {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .tool-hist-type {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tool-hist-type.in {
+    background: var(--g-mist);
+    color: var(--g-forest);
+  }
+  .tool-hist-type.out {
+    background: #FFF5EB;
+    color: #C75B1E;
+  }
+  .tool-hist-qty {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .tool-hist-qty.in { color: var(--g-forest); }
+  .tool-hist-qty.out { color: #C75B1E; }
+  .tool-hist-date {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--subtle);
+  }
+  .tool-hist-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: 4px;
+  }
+  .tool-hist-meta strong { color: var(--ink); font-weight: 500; }
+  .tool-hist-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+  }
+  .tool-hist-btn {
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tool-hist-btn.revert:hover { color: #C13B3B; border-color: #F0C4C4; }
+  .tool-hist-item.reverted { opacity: 0.55; }
+  .tool-hist-reverted-tag {
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #F5D8D8;
+    color: #C13B3B;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  /* 工器具领用/入库 sheet */
+  .tool-receiver-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+  }
+  .tool-receiver-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tool-receiver-chip:hover { border-color: var(--g-deep); color: var(--g-forest); }
+
 </style>
 </head>
 <body>
@@ -1957,6 +2336,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <header class="detail-back" id="topbar-parts-detail" style="display:none;" onclick="backToPartsList()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     <span class="detail-back-text">返回备件列表</span>
+  </header>
+
+  <!-- 工器具详情顶栏 (2026-04-23) -->
+  <header class="detail-back" id="topbar-tool-detail" style="display:none;" onclick="backToToolsList()">
+    <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="detail-back-text">返回工器具列表</span>
   </header>
 
   <!-- 备件领用/入库顶栏 -->
@@ -2075,6 +2460,17 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <h1 class="section-title">Inventory</h1>
         <div class="section-sub" id="parts-section-sub">—</div>
       </div>
+      <!-- 2026-04-23 备件二级 tab：采购 / 随机 -->
+      <div class="lube-op-tabs">
+        <button class="lube-op-tab active" onclick="switchModule('parts')">
+          <div class="lube-op-tab-icon">📦</div>
+          <div class="lube-op-tab-text"><div class="lube-op-tab-name">采购备件</div><div class="lube-op-tab-cnt">长周期</div></div>
+        </button>
+        <button class="lube-op-tab" onclick="switchModule('random')">
+          <div class="lube-op-tab-icon">🎲</div>
+          <div class="lube-op-tab-text"><div class="lube-op-tab-name">随机备件</div><div class="lube-op-tab-cnt">现场清点</div></div>
+        </button>
+      </div>
       <div class="parts-overview" id="parts-overview"></div>
       <div class="lube-search-bar">
         <input class="eq-search-input" id="parts-search" placeholder="搜索名称、型号、厂家、存放位置…" oninput="onPartsSearchInput()">
@@ -2114,6 +2510,17 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <h1 class="section-title">Inventory count</h1>
         <div class="section-sub" id="random-section-sub">—</div>
       </div>
+      <!-- 2026-04-23 备件二级 tab：采购 / 随机 -->
+      <div class="lube-op-tabs">
+        <button class="lube-op-tab" onclick="switchModule('parts')">
+          <div class="lube-op-tab-icon">📦</div>
+          <div class="lube-op-tab-text"><div class="lube-op-tab-name">采购备件</div><div class="lube-op-tab-cnt">长周期</div></div>
+        </button>
+        <button class="lube-op-tab active" onclick="switchModule('random')">
+          <div class="lube-op-tab-icon">🎲</div>
+          <div class="lube-op-tab-text"><div class="lube-op-tab-name">随机备件</div><div class="lube-op-tab-cnt">现场清点</div></div>
+        </button>
+      </div>
 
       <!-- 清点进度条 -->
       <div class="random-progress" id="random-progress"></div>
@@ -2136,6 +2543,43 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div id="random-load-more" style="display:none;text-align:center;padding:16px;">
         <button class="load-more-btn" onclick="loadMoreRandom()">加载更多</button>
       </div>
+    </section>
+
+    <!-- 工器具模块 (2026-04-23) -->
+    <section class="module" data-module="tools">
+      <div class="section-header">
+        <div class="section-label-row">
+          <div class="section-label">Tools · 工器具台账</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            <button class="export-btn" onclick="openReturnSheet()" title="归还工器具"><span class="export-btn-arrow">↩️</span>归还</button>
+            <button class="export-btn admin-only" id="tools-batch-in-btn" onclick="showSheet('toolBatchIn')" title="批量入库（仅管理员）" style="display:none;"><span class="export-btn-arrow">📥</span>批量入库</button>
+            <button class="export-btn" onclick="exportToolsXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+          </div>
+        </div>
+        <h1 class="section-title">Tool checkout</h1>
+        <div class="section-sub" id="tools-section-sub">—</div>
+      </div>
+      <!-- 老的隐藏按钮（兼容旧代码引用） -->
+      <button id="tools-cart-btn" style="display:none;"><span id="tools-cart-count">0</span></button>
+      <div class="tools-overview" id="tools-overview"></div>
+      <div class="eq-search-bar">
+        <input class="eq-search-input" id="tools-search" placeholder="搜索工器具名称、单位、备注…" oninput="onToolsSearchInput()">
+        <div class="eq-search-clear" id="tools-search-clear" onclick="clearToolsSearch()">×</div>
+        <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div id="tools-list-container"></div>
+      <div id="tools-load-more" style="display:none;text-align:center;padding:16px;">
+        <button class="load-more-btn" onclick="loadMoreTools()">加载更多</button>
+      </div>
+      <!-- 2026-04-23：购物车 bar 放最底部 sticky，像外卖那样常驻底部 -->
+      <div id="tools-cart-bar"></div>
+    </section>
+
+    <!-- 工器具详情 -->
+    <section class="module" data-module="tool-detail">
+      <div class="parts-detail-hero" id="tool-detail-hero"></div>
+      <div class="parts-detail-body" id="tool-detail-body"></div>
+      <div class="parts-detail-actions" id="tool-detail-actions"></div>
     </section>
 
     <section class="module" data-module="lube">
@@ -2226,8 +2670,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
     <div class="nav-item" data-nav="workorder"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg><span class="nav-label">工单</span></div>
-    <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">采购备件</span></div>
-    <div class="nav-item" data-nav="random"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="13" r="2"/><path d="M12 11V9M12 17v-2"/></svg><span class="nav-label">随机备件</span></div>
+    <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">备件</span></div>
+    <div class="nav-item" data-nav="tools"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 7l-1-1-3 3 1 1 3-3z"/><path d="M5 19l7-7"/><path d="M16.5 7.5L17 7l3 3-.5.5-3-3z"/><path d="M3 21l3-3 1 1-3 3z"/></svg><span class="nav-label">工器具</span></div>
     <div class="nav-item" data-nav="lube"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v6M8 9h8l-1 12H9z"/><circle cx="12" cy="15" r="1.5"/></svg><span class="nav-label">润滑</span></div>
     <div class="nav-item" data-nav="profile"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-label">我的</span></div>
   </nav>
@@ -3232,6 +3676,8 @@ function switchModule(name) {
   let navKey = name;
   if (name === 'workorder-detail' || name === 'workorder-create') navKey = 'workorder';
   if (name === 'equipment-detail' || name === 'equipment-edit') navKey = 'equipment';
+  // 2026-04-23：随机备件并入"备件"导航
+  if (name === 'random') navKey = 'parts';
   const navItem = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (navItem) navItem.classList.add('active');
 
@@ -3244,7 +3690,8 @@ function switchModule(name) {
   const isLubeExec = name==='lube-execute';
   const isPartsDetail = name==='parts-detail';
   const isPartsTxn = name==='parts-txn';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn;
+  const isToolDetail = name==='tool-detail';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isToolDetail;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -3261,6 +3708,8 @@ function switchModule(name) {
   if (ppdet) ppdet.style.display = isPartsDetail ? 'flex' : 'none';
   const pptxn = document.getElementById('topbar-parts-txn');
   if (pptxn) pptxn.style.display = isPartsTxn ? 'flex' : 'none';
+  const tldet = document.getElementById('topbar-tool-detail');
+  if (tldet) tldet.style.display = isToolDetail ? 'flex' : 'none';
   document.getElementById('bottom-nav').style.display = hideMain ? 'none' : '';
 
   // 底部导航激活处理
@@ -3268,6 +3717,9 @@ function switchModule(name) {
   if (navKey === 'equipment-detail' || navKey === 'equipment-edit') navKey = 'equipment';
   if (navKey === 'lube-detail' || navKey === 'lube-execute') navKey = 'lube';
   if (navKey === 'parts-detail' || navKey === 'parts-txn') navKey = 'parts';
+  // 2026-04-23：随机备件并入"备件"导航
+  if (navKey === 'random') navKey = 'parts';
+  if (navKey === 'tool-detail') navKey = 'tools';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const ni2 = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (ni2) ni2.classList.add('active');
@@ -3284,6 +3736,14 @@ function switchModule(name) {
   }
   if (name === 'random' && typeof renderRandomList === 'function') {
     renderRandomList();
+  }
+  if (name === 'tools' && typeof renderToolsList === 'function') {
+    renderToolsList();
+    renderCartBar();  // 2026-04-23：常显购物车 bar
+    // 2026-04-23：admin 才显示批量入库按钮
+    const u = getCurrentUser();
+    const btn = document.getElementById('tools-batch-in-btn');
+    if (btn) btn.style.display = (u && u.role === 'admin') ? '' : 'none';
   }
 
   document.querySelector('.content').scrollTop = 0;
@@ -3830,6 +4290,14 @@ function showSheet(type, arg) {
           </button>`).join('')}
         <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
     }
+  } else if (type==='toolTxn') {
+    content.innerHTML = `<div class="sheet-handle"></div>` + renderToolTxnSheet() + `<button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+  } else if (type==='toolCart') {
+    content.innerHTML = `<div class="sheet-handle"></div>` + renderToolCartSheet();
+  } else if (type==='toolReturn') {
+    content.innerHTML = `<div class="sheet-handle"></div>` + renderToolReturnSheet();
+  } else if (type==='toolBatchIn') {
+    content.innerHTML = `<div class="sheet-handle"></div>` + renderToolBatchInSheet();
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
@@ -6684,6 +7152,1330 @@ async function exportRandomXlsx() {
   await _exportSheets([['随机备件', rows]], '随机备件_' + _today() + '.xlsx');
 }
 
+/* ========== 工器具模块 · 2026-04-23 ========== */
+let toolsCache = [];
+let toolsHistoryCache = [];
+let toolsUnsub = null;
+let toolsHistUnsub = null;
+let currentToolId = null;
+let toolsFilter = 'all';     // all / in-stock / zero
+let toolsSearchText = '';
+let toolsPageSize = 50;
+let toolsPageNum = 1;
+
+/* ----- 数据层 ----- */
+async function cloudSaveTool(t) {
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'tools', t.id), { ...t, updatedAt: Date.now() });
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[Tools] 保存失败', e);
+    setCloudStatus('error', '同步失败：' + e.message);
+    throw e;
+  }
+}
+
+async function cloudSaveToolHistory(h) {
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'toolhistory', h.id), { ...h, updatedAt: Date.now() });
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[Tools] 保存历史失败', e);
+    setCloudStatus('error', '同步失败：' + e.message);
+    throw e;
+  }
+}
+
+async function cloudDeleteToolHistory(id) {
+  setCloudStatus('syncing', '删除中...');
+  try {
+    await deleteDoc(doc(db, 'toolhistory', id));
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[Tools] 删除历史失败', e);
+    setCloudStatus('error', '失败');
+    throw e;
+  }
+}
+
+function subscribeTools() {
+  if (toolsUnsub) toolsUnsub();
+  toolsUnsub = onSnapshot(collection(db, 'tools'), (snap) => {
+    toolsCache = snap.docs.map(d => d.data());
+    const mod = document.querySelector('.module[data-module="tools"]');
+    if (mod && mod.classList.contains('active')) renderToolsList();
+    if (currentToolId) {
+      const detMod = document.querySelector('.module[data-module="tool-detail"]');
+      if (detMod && detMod.classList.contains('active')) {
+        const t = toolsCache.find(t => t.id === currentToolId);
+        if (t) renderToolDetail(t);
+      }
+    }
+  }, (err) => {
+    console.error('[Firebase] 订阅工器具失败', err);
+  });
+}
+
+function subscribeToolsHistory() {
+  if (toolsHistUnsub) toolsHistUnsub();
+  toolsHistUnsub = onSnapshot(collection(db, 'toolhistory'), (snap) => {
+    toolsHistoryCache = snap.docs.map(d => d.data());
+    toolsHistoryCache.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (currentToolId) {
+      const detMod = document.querySelector('.module[data-module="tool-detail"]');
+      if (detMod && detMod.classList.contains('active')) {
+        const t = toolsCache.find(t => t.id === currentToolId);
+        if (t) renderToolDetail(t);
+      }
+    }
+  });
+}
+
+/* ----- V9 迁移：导入 Excel 工器具数据 ----- */
+const SEED_TOOLS_V9 = [{"id":"tl_seed_0001","name":"塑料薄膜 2000*100000*0.15mm","unit":"卷Roll","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0002","name":"手持黄油枪 500G","unit":"把","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0003","name":"带盖手提桶 15L","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0004","name":"铁皮剪 10寸","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0005","name":"双盖式化工桶 10L","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0006","name":"双盖式化工桶 20L","unit":"个","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0007","name":"活动扳手 300mm","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0008","name":"油漆笔（蓝色） SA61","unit":"支Piece","quantity":7,"totalIn":10,"totalOut":3},{"id":"tl_seed_0009","name":"高压锁钳式注油嘴 NPT1/8\"","unit":"个","quantity":1,"totalIn":10,"totalOut":9},{"id":"tl_seed_0010","name":"管子钳 600mm","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0011","name":"塑料垃圾铲 GM550","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0012","name":"红外测温枪 GM63A","unit":"把","quantity":-1,"totalIn":4,"totalOut":5},{"id":"tl_seed_0013","name":"强光手电筒","unit":"个","quantity":6,"totalIn":19,"totalOut":13},{"id":"tl_seed_0014","name":"对讲机-摩托罗拉 XiR V16 15w","unit":"台Set","quantity":-7,"totalIn":0,"totalOut":7},{"id":"tl_seed_0015","name":"美工刀 18mm","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0016","name":"门锁芯 CYL TC KK DL 70MM","unit":"套Set","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0017","name":"工具柜 L1023×D550×H1800 蓝色","unit":"套Set","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0018","name":"测振仪 GM63A","unit":"台Set","quantity":-1,"totalIn":4,"totalOut":5},{"id":"tl_seed_0019","name":"人字梯 LGP-40","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0020","name":"黄油枪弹簧软管 300mm，一端螺纹口径10mm，一端螺纹口径8mm","unit":"根Piece","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0021","name":"黄油枪弹簧软管 300mm  一端螺纹口径10mm，一端螺纹口径6mm","unit":"根Piece","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0022","name":"黄油45°油嘴 规格：M6，材料：黄铜","unit":"个","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0023","name":"黄油45°油嘴 规格：M8，材料：黄铜","unit":"个","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0024","name":"14件加长球头内六角扳手组套 1.5，2，2.5，3，4，5，5.5，6，7，8，10，12，14，17MM，材质：整体铬钒合金","unit":"套Set","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0025","name":"内六角扳手套装(世达12件套) 规格：1/16-3/8寸套装，材质：整体铬钒合金","unit":"套Set","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0026","name":"两用扳手套装(23件套) (6，7，8，9，10，11，12，13，14，15，16，17，18，19，20，21，22，23，24，25，27，30，32MM))，材质：铬钒钢","unit":"套Set","quantity":-1,"totalIn":3,"totalOut":4},{"id":"tl_seed_0027","name":"长柄捞网 0.5×3m","unit":"把","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0028","name":"梅花敲击扳手 34#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0029","name":"梅花敲击扳手 36#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0030","name":"梅花敲击扳手 41#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0031","name":"梅花敲击扳手 46#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0032","name":"梅花敲击扳手 50#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0033","name":"梅花敲击扳手 55#\n材质：铬钒钢","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0034","name":"五点式安全带 FH005 双钩五点式全身安全带\n（带缓冲绳）","unit":"个","quantity":1,"totalIn":2,"totalOut":1},{"id":"tl_seed_0035","name":"水带接头 DK65-A","unit":"套Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0036","name":"水带接头 KD65","unit":"套Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0037","name":"不锈钢消防水带卡箍 DN65","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0038","name":"挂锁 60MM","unit":"把","quantity":0,"totalIn":9,"totalOut":9},{"id":"tl_seed_0039","name":"铝合金一字伸缩梯 6.2m","unit":"把","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0040","name":"过塑机 VT-330 A3","unit":"台Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0041","name":"吊带 3T*3M","unit":"条Piece","quantity":1,"totalIn":5,"totalOut":4},{"id":"tl_seed_0042","name":"管子钳 300MM","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0043","name":"油灰刀 4寸","unit":"个","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0044","name":"手摇油泵 WYB32E","unit":"套Set","quantity":8,"totalIn":10,"totalOut":2},{"id":"tl_seed_0045","name":"毛刷 2\"","unit":"把","quantity":1,"totalIn":20,"totalOut":19},{"id":"tl_seed_0046","name":"自喷漆 白色","unit":"瓶Bottle","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0047","name":"自喷漆 蓝色","unit":"瓶Bottle","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0048","name":"自喷漆 绿色","unit":"瓶Bottle","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0049","name":"自喷漆 红色","unit":"瓶Bottle","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0050","name":"自喷漆 黄色","unit":"瓶Bottle","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0051","name":"活动扳手 8\"","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0052","name":"一字螺丝刀 5×150mm","unit":"个","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0053","name":"十字螺丝刀 5×150mm","unit":"把","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0054","name":"钢丝钳 8\"","unit":"个","quantity":0,"totalIn":4,"totalOut":4},{"id":"tl_seed_0055","name":"黄油直嘴 规格：M6，材料：黄铜","unit":"个","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0056","name":"黄油直嘴 规格：M8，材料：黄铜","unit":"个","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0057","name":"消防水带 10-65-25","unit":"千克","quantity":22,"totalIn":22,"totalOut":0},{"id":"tl_seed_0058","name":"八角锤 6LB","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0059","name":"八角锤 12LB","unit":"把","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0060","name":"测振仪-叠式电池 9V","unit":"块Piece","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0061","name":"钢卷尺 5M","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0062","name":"生料带 宽度12mm，厚度为0.15mm;长度30m","unit":"个","quantity":2,"totalIn":30,"totalOut":28},{"id":"tl_seed_0063","name":"锂电手电钻 GSB 185-LI","unit":"套Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0064","name":"扁平吊带 5T*6M","unit":"条Piece","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0065","name":"美工刀片","unit":"片","quantity":1,"totalIn":60,"totalOut":59},{"id":"tl_seed_0066","name":"活动扳手 15\"","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0067","name":"一字螺丝刀 8*200MM","unit":"把","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0068","name":"十字螺丝刀 8*200MM","unit":"把","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0069","name":"尖嘴钳 6\"","unit":"把","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0070","name":"钢锯条 300*12*0.65mm","unit":"根Piece","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0071","name":"潜水排污泵 80WQC80-34-15 15KW","unit":"台Set","quantity":6,"totalIn":6,"totalOut":0},{"id":"tl_seed_0072","name":"自喷漆 紫色 紫色","unit":"瓶Bottle","quantity":20,"totalIn":20,"totalOut":0},{"id":"tl_seed_0073","name":"双头十字批头 PH2-100","unit":"个","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0074","name":"强磁六角批头套筒 6*100MM","unit":"支Piece","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0075","name":"可调节球阀锁 M-H18","unit":"个","quantity":0,"totalIn":20,"totalOut":20},{"id":"tl_seed_0076","name":"红外热成像仪 UTi260B","unit":"套Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0077","name":"F型阀门扳手 700mm","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0078","name":"F型阀门扳手 500mm","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0079","name":"F型阀门扳手 300mm","unit":"把","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0080","name":"安全搭扣锁 BD-K14","unit":"个","quantity":0,"totalIn":20,"totalOut":20},{"id":"tl_seed_0081","name":"LED低压移动安全行灯 S-40 40W","unit":"个","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0082","name":"LED充电投光灯 YC9009 100W","unit":"台Set","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0083","name":"二级防化服 XL","unit":"套Set","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0084","name":"二级防化服 XXL","unit":"套Set","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0085","name":"二级防化服 XXXL","unit":"套Set","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0086","name":"安全吊牌 150*80*0.55MM","unit":"个","quantity":0,"totalIn":200,"totalOut":200},{"id":"tl_seed_0087","name":"断路器锁 BD-D200","unit":"个","quantity":0,"totalIn":50,"totalOut":50},{"id":"tl_seed_0088","name":"钢丝绳自锁器 适用于8mm钢丝绳","unit":"台Set","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0089","name":"消防扳手 5.6*44CM","unit":"把","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0090","name":"撬棍 18*400MM","unit":"根Piece","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0091","name":"撬棍 22*1000MM","unit":"根Piece","quantity":0,"totalIn":6,"totalOut":6},{"id":"tl_seed_0092","name":"锁具管理箱 BD-B206 580*630*95MM","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0093","name":"工业抹布 400*400MM","unit":"千克","quantity":100,"totalIn":100,"totalOut":0},{"id":"tl_seed_0094","name":"工具柜-配件","unit":"套Set","quantity":-1,"totalIn":2,"totalOut":3},{"id":"tl_seed_0095","name":"救援三脚架 SJY-10 2.1M","unit":"套Set","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0096","name":"正压式空气呼吸器 HG-GB-RHZKF6.8/30","unit":"套Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0097","name":"长柄捞网 12\"","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0098","name":"订书机 ZRM HD-50","unit":"个","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0099","name":"浓密机测定记录表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0100","name":"机械密封检查表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0101","name":"消能站及雨水收集池现场巡检记录表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0102","name":"设备润滑记录表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0103","name":"交接班记录本","unit":"本","quantity":15,"totalIn":15,"totalOut":0},{"id":"tl_seed_0104","name":"会议记录本","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0105","name":"出入库台账","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0106","name":"班前会记录本","unit":"本","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0107","name":"耐酸碱胶管 DN65，PN10","unit":"条Piece","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0108","name":"耐酸碱胶管 DN65，CL150","unit":"条Piece","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0109","name":"耐酸碱胶管 DN80,PN10","unit":"条Piece","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0110","name":"耐酸碱胶管 DN100,PN10","unit":"条Piece","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0111","name":"耐酸碱胶管 DN150,PN10","unit":"条Piece","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0112","name":"耐酸碱胶管 DN200,PN10","unit":"条Piece","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0113","name":"对讲机 摩托罗拉 XiR V16 15W","unit":"台Set","quantity":0,"totalIn":28,"totalOut":28},{"id":"tl_seed_0114","name":"对讲机电池 摩托罗拉 V16","unit":"块Piece","quantity":0,"totalIn":10,"totalOut":10},{"id":"tl_seed_0115","name":"饮水桶","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0116","name":"带线插排 8位3孔 5M","unit":"个","quantity":1,"totalIn":4,"totalOut":3},{"id":"tl_seed_0117","name":"304不锈钢尖锹 300*240*1250MM","unit":"把","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0118","name":"银基抗咬合剂 LB8150","unit":"瓶Bottle","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0119","name":"可调节线缆挂锁 BD-L11","unit":"个","quantity":50,"totalIn":50,"totalOut":0},{"id":"tl_seed_0120","name":"安全挂锁 BD-G81L","unit":"把","quantity":0,"totalIn":100,"totalOut":100},{"id":"tl_seed_0121","name":"尼龙测量绳 3.5mm*30000mm","unit":"根Piece","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0122","name":"订书针 盒\nBox","unit":"盒","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0123","name":"塑料量筒 1000ml","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0124","name":"不锈钢浓度壶 500ml","unit":"个","quantity":0,"totalIn":4,"totalOut":4},{"id":"tl_seed_0125","name":"六角套筒套装 32件套","unit":"套Set","quantity":0,"totalIn":3,"totalOut":3},{"id":"tl_seed_0126","name":"超声波测厚仪 GTS-409","unit":"台Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0127","name":"壁挂式医药箱 35*14*42CM","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0128","name":"电子秤 精度0.1g\\5Kg","unit":"台Set","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0129","name":"安全绳 φ12MM 20MM/根","unit":"根Piece","quantity":4,"totalIn":4,"totalOut":0},{"id":"tl_seed_0130","name":"绳梯 5M","unit":"套Set","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0131","name":"红外线测温枪 GM-550","unit":"把","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0132","name":"手动液压搬运车 3T","unit":"台Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0133","name":"电镐 Z1G-FF06-6S 1400w","unit":"台Set","quantity":0,"totalIn":2,"totalOut":2},{"id":"tl_seed_0134","name":"救生圈 φ440*700MM","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0135","name":"起重机械点检表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0136","name":"水处理及矿浆贮存巡检记录表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0137","name":"矿浆浓密现场巡检记录表","unit":"本","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0138","name":"GEHO泵运行记录表","unit":"本","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0139","name":"高压酸浸现场巡检记录表","unit":"本","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0140","name":"核源巡检记录表","unit":"本","quantity":4,"totalIn":4,"totalOut":0},{"id":"tl_seed_0141","name":"高压酸浸车间-主控岗位记录表一","unit":"本","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0142","name":"高压酸浸车间-主控岗位记录表二","unit":"本","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0143","name":"多参数气体检测报警仪 CD4矿用多参数气体测定仪ExdibIMb，测量范围：LEL：0-100%LEL，CO：0-1000PPM，O2：0-25%VOL，H2S：0-100PPM","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0144","name":"氧气检测仪 ZXHD/DTN820-02","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0145","name":"尖凿电镐杆 17*400","unit":"支Piece","quantity":4,"totalIn":4,"totalOut":0},{"id":"tl_seed_0146","name":"锂电电动扳手 GD5 1BV-400 1/2","unit":"台Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0147","name":"六角套筒套装 1/2 22-55MM","unit":"套Set","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0148","name":"折叠担架 2000*530*180MM","unit":"副Pair","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0149","name":"防爆型电动送风长管呼吸器 HG-DHZK220V-EX","unit":"套Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0150","name":"德式喉箍 12-20mm","unit":"个","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0151","name":"喉箍 9-16mm","unit":"个","quantity":50,"totalIn":50,"totalOut":0},{"id":"tl_seed_0152","name":"喉箍 18-29mm","unit":"个","quantity":50,"totalIn":50,"totalOut":0},{"id":"tl_seed_0153","name":"喉箍 52-76mm","unit":"个","quantity":45,"totalIn":50,"totalOut":5},{"id":"tl_seed_0154","name":"密度仪 EX505 EX505","unit":"台Set","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0155","name":"电池 佰凡锂电 3.7V-2.8AH","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0156","name":"锂电池","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0157","name":"封塑膜 A4","unit":"包Bag","quantity":4,"totalIn":8,"totalOut":4},{"id":"tl_seed_0158","name":"封塑膜 A3","unit":"包Bag","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0159","name":"透明胶带","unit":"个","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0160","name":"304不锈钢钢丝绳 6*19M-WSC-8MM","unit":"米","quantity":100,"totalIn":100,"totalOut":0},{"id":"tl_seed_0161","name":"吸油垫 2000*1000","unit":"片","quantity":80,"totalIn":80,"totalOut":0},{"id":"tl_seed_0162","name":"管道内窥镜 SVC50120T/13C","unit":"套Set","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0163","name":"加油壶 10L 带过滤网","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0164","name":"加油壶 5L 带过滤网","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0165","name":"集油盘 个Piece","unit":"个","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0166","name":"塑料管 DN15","unit":"盘Roll","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0167","name":"塑料管 DN20","unit":"盘Roll","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0168","name":"有衬里消防水带 13-65-25","unit":"条Piece","quantity":6,"totalIn":6,"totalOut":0},{"id":"tl_seed_0169","name":"家用塑料鞋架  3层","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0170","name":"清洁钢丝球 60MM","unit":"个","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0171","name":"双面胶","unit":"卷Roll","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0172","name":"老鼠贴 200*300MM","unit":"张Piece","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0173","name":"带柄圆口铁锹 28*25*107CM","unit":"把","quantity":6,"totalIn":6,"totalOut":0},{"id":"tl_seed_0174","name":"夹布蒸汽胶管 DN25","unit":"条Piece","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0175","name":"耐酸碱胶管 DN50","unit":"条Piece","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0176","name":"洗耳球 30ml","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0177","name":"滴定台  300*150MM","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0178","name":"塑料洗瓶 500ml","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0179","name":"烧杯 50mL","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0180","name":"喷雾型杀虫剂 600ml","unit":"瓶Bottle","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0181","name":"塑料扫把 宽35cm，杆110cm","unit":"把","quantity":30,"totalIn":30,"totalOut":0},{"id":"tl_seed_0182","name":"竹扫把185*65CM 185*65CM","unit":"把","quantity":0,"totalIn":5,"totalOut":5},{"id":"tl_seed_0183","name":"竹扫把150*55CM 150*55CM","unit":"把","quantity":-20,"totalIn":20,"totalOut":40},{"id":"tl_seed_0184","name":"丁腈橡胶手套 XL 50双/盒","unit":"盒","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0185","name":"便携式ORP计 BPH-221","unit":"台Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0186","name":"高压清洗机  PM-2515","unit":"台Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0187","name":"法兰防护罩 DN25","unit":"个","quantity":146,"totalIn":146,"totalOut":0},{"id":"tl_seed_0188","name":"法兰保护套 DN50","unit":"个","quantity":68,"totalIn":68,"totalOut":0},{"id":"tl_seed_0189","name":"法兰保护套 DN80","unit":"个","quantity":48,"totalIn":48,"totalOut":0},{"id":"tl_seed_0190","name":"法兰保护套 DN100","unit":"个","quantity":58,"totalIn":58,"totalOut":0},{"id":"tl_seed_0191","name":"法兰保护套 DN125","unit":"个","quantity":150,"totalIn":150,"totalOut":0},{"id":"tl_seed_0192","name":"法兰保护套 DN150","unit":"个","quantity":77,"totalIn":77,"totalOut":0},{"id":"tl_seed_0193","name":"法兰保护套 DN200","unit":"个","quantity":41,"totalIn":41,"totalOut":0},{"id":"tl_seed_0194","name":"法兰保护套 DN250","unit":"个","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0195","name":"PU管 DN10","unit":"米","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0196","name":"PU管 φ8","unit":"米","quantity":100,"totalIn":100,"totalOut":0},{"id":"tl_seed_0197","name":"PU软管 φ10","unit":"米","quantity":58,"totalIn":58,"totalOut":0},{"id":"tl_seed_0198","name":"移动线缆盘 2*1.5mm²*30M","unit":"套Set","quantity":6,"totalIn":6,"totalOut":0},{"id":"tl_seed_0199","name":"移动线缆盘 4*1.5mm²*20M","unit":"套Set","quantity":4,"totalIn":4,"totalOut":0},{"id":"tl_seed_0200","name":"青稞纸 10000*1000*0.5mm","unit":"张Piece","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0201","name":"油桶提升翻转机 1500*950*2060MM","unit":"台Set","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0202","name":"航空插头3芯","unit":"个","quantity":4,"totalIn":4,"totalOut":0},{"id":"tl_seed_0203","name":"航空插头5芯","unit":"个","quantity":6,"totalIn":6,"totalOut":0},{"id":"tl_seed_0204","name":"S30408不锈钢宝塔头1/2*10","unit":"个","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0205","name":"304不锈钢宝塔头3/4\"*20","unit":"个","quantity":15,"totalIn":15,"totalOut":0},{"id":"tl_seed_0206","name":"电工胶布18mm*0.13mm(黑）","unit":"卷Roll","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0207","name":"轴流风机 SF6-4","unit":"台Set","quantity":15,"totalIn":15,"totalOut":0},{"id":"tl_seed_0208","name":"脚手架","unit":"套Set","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0209","name":"球阀 Q11F-16P DN15","unit":"台Set","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0210","name":"球阀 Q11F-16C DN20","unit":"台Set","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0211","name":"中性笔","unit":"支Piece","quantity":25,"totalIn":30,"totalOut":5},{"id":"tl_seed_0212","name":"中性笔 红色","unit":"支Piece","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0213","name":"水笔笔芯","unit":"支Piece","quantity":10,"totalIn":10,"totalOut":0},{"id":"tl_seed_0214","name":"塑料文件盒","unit":"个","quantity":2,"totalIn":5,"totalOut":3},{"id":"tl_seed_0215","name":"长尾夹 25MM","unit":"盒Box","quantity":2,"totalIn":3,"totalOut":1},{"id":"tl_seed_0216","name":"笔记本 大","unit":"本","quantity":3,"totalIn":10,"totalOut":7},{"id":"tl_seed_0217","name":"三层文件盘","unit":"套Set","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0218","name":"大回形针","unit":"盒Box","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0219","name":"小回形针","unit":"盒Box","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0220","name":"文件夹板 F4","unit":"个","quantity":5,"totalIn":5,"totalOut":0},{"id":"tl_seed_0221","name":"剪刀","unit":"把","quantity":0,"totalIn":4,"totalOut":4},{"id":"tl_seed_0222","name":"长尾夹 32MM","unit":"盒Box","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0223","name":"记号笔 白","unit":"支Piece","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0224","name":"S30408不锈钢板式平焊法兰\n DN40 PN10","unit":"个","quantity":0,"totalIn":4,"totalOut":4},{"id":"tl_seed_0225","name":"壳牌极压锂基脂_S1 V220 3 15kg","unit":"桶Pail","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0226","name":"美孚合成锂基脂 Mobiltih SHc 220 16kg","unit":"桶Pail","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0227","name":"美孚齿轮油 GEAR EP 220 208L","unit":"桶Pail","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0228","name":"齿轮油 MOB.GEAR EP320 208L","unit":"桶Pail","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0229","name":"壳牌合成压缩机油 Corena S4 P 100 20L","unit":"桶Pail","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0230","name":"抽滤瓶 500ml","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0231","name":"抽滤瓶 1000ml","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0232","name":"布氏漏斗 10cm","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0233","name":"布氏漏斗 120mm","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0234","name":"真空泵 SHZ-D(III)","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0235","name":"玻璃烧杯 50ml","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0236","name":"玻璃烧杯 250ml","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0237","name":"玻璃烧杯 500ml","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0238","name":"中速滤纸 70mm","unit":"张Piece","quantity":500,"totalIn":500,"totalOut":0},{"id":"tl_seed_0239","name":"大肚吸管 2mL","unit":"支Piece","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0240","name":"刻度吸管 20mL","unit":"支Piece","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0241","name":"刻度吸管 10mL","unit":"支Piece","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0242","name":"洗耳球","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0243","name":"滴定台  28*14*60CM","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0244","name":"梯形移液管架 20孔","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0245","name":"白色碱式滴定管 50mL","unit":"个","quantity":1,"totalIn":1,"totalOut":0},{"id":"tl_seed_0246","name":"玻璃锥形瓶 300mL","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0247","name":"玻璃棒","unit":"根Piece","quantity":3,"totalIn":3,"totalOut":0},{"id":"tl_seed_0248","name":"耐酸玻璃滴定管 25ml","unit":"个","quantity":2,"totalIn":2,"totalOut":0},{"id":"tl_seed_0249","name":"安全帽衬 按键式","unit":"个","quantity":0,"totalIn":1,"totalOut":1},{"id":"tl_seed_0250","name":"不锈钢听针 8×600mm","unit":"个","quantity":8,"totalIn":8,"totalOut":0},{"id":"tl_seed_0251","name":"加油桶配件","unit":"套Set","quantity":20,"totalIn":20,"totalOut":0}];
+const SEED_TOOLS_HISTORY_V9 = [{"id":"th_seed_0001","toolId":"tl_seed_0008","toolName":"油漆笔（蓝色） SA61","type":"in","quantity":10,"unit":"支Piece","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0002","toolId":"tl_seed_0221","toolName":"剪刀","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0003","toolId":"tl_seed_0009","toolName":"高压锁钳式注油嘴 NPT1/8\"","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0004","toolId":"tl_seed_0010","toolName":"管子钳 600mm","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0005","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"in","quantity":19,"unit":"个","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0006","toolId":"tl_seed_0015","toolName":"美工刀 18mm","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0007","toolId":"tl_seed_0017","toolName":"工具柜 L1023×D550×H1800 蓝色","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":null,"isImport":true},{"id":"th_seed_0008","toolId":"tl_seed_0018","toolName":"测振仪 GM63A","type":"in","quantity":4,"unit":"台Set","source":"堆场/仓库","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0009","toolId":"tl_seed_0250","toolName":"不锈钢听针 8×600mm","type":"in","quantity":3,"unit":"个","source":"","note":"","createdAt":null,"isImport":true},{"id":"th_seed_0010","toolId":"tl_seed_0038","toolName":"挂锁 60MM","type":"out","quantity":8,"unit":"把","receiver":"陈晓辉、徐朋","note":"现场箱体、218大门锁具","createdAt":null,"isImport":true},{"id":"th_seed_0011","toolId":"tl_seed_0060","toolName":"测振仪-叠式电池 9V","type":"out","quantity":1,"unit":"块Piece","receiver":"饶桐建","note":"现场测振仪更换电池","createdAt":null,"isImport":true},{"id":"th_seed_0012","toolId":"tl_seed_0183","toolName":"竹扫把150*55CM 150*55CM","type":"out","quantity":40,"unit":"把","receiver":"车间班组","note":"打扫卫生自然损耗","createdAt":null,"isImport":true},{"id":"th_seed_0013","toolId":"tl_seed_0182","toolName":"竹扫把185*65CM 185*65CM","type":"out","quantity":5,"unit":"把","receiver":"车间班组","note":"打扫卫生自然损耗","createdAt":null,"isImport":true},{"id":"th_seed_0014","toolId":"tl_seed_0002","toolName":"手持黄油枪 500G","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"","createdAt":1768320000000,"isImport":true},{"id":"th_seed_0015","toolId":"tl_seed_0003","toolName":"带盖手提桶 15L","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"","createdAt":1768406400000,"isImport":true},{"id":"th_seed_0016","toolId":"tl_seed_0004","toolName":"铁皮剪 10寸","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"","createdAt":1768579200000,"isImport":true},{"id":"th_seed_0017","toolId":"tl_seed_0001","toolName":"塑料薄膜 2000*100000*0.15mm","type":"in","quantity":1,"unit":"卷Roll","source":"堆场/仓库","note":"","createdAt":1768838400000,"isImport":true},{"id":"th_seed_0018","toolId":"tl_seed_0005","toolName":"双盖式化工桶 10L","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"","createdAt":1768838400000,"isImport":true},{"id":"th_seed_0019","toolId":"tl_seed_0006","toolName":"双盖式化工桶 20L","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"","createdAt":1768838400000,"isImport":true},{"id":"th_seed_0020","toolId":"tl_seed_0007","toolName":"活动扳手 300mm","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"","createdAt":1769011200000,"isImport":true},{"id":"th_seed_0021","toolId":"tl_seed_0011","toolName":"塑料垃圾铲 GM550","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"","createdAt":1769184000000,"isImport":true},{"id":"th_seed_0022","toolId":"tl_seed_0012","toolName":"红外测温枪 GM63A","type":"in","quantity":4,"unit":"把","source":"堆场/仓库","note":"","createdAt":1769184000000,"isImport":true},{"id":"th_seed_0023","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"in","quantity":5,"unit":"台Set","source":"堆场/仓库","note":"","createdAt":1769184000000,"isImport":true},{"id":"th_seed_0024","toolId":"tl_seed_0016","toolName":"门锁芯 CYL TC KK DL 70MM","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"","createdAt":1769443200000,"isImport":true},{"id":"th_seed_0025","toolId":"tl_seed_0019","toolName":"人字梯 LGP-40","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0026","toolId":"tl_seed_0020","toolName":"黄油枪弹簧软管 300mm，一端螺纹口径10mm，一端螺纹口径8mm","type":"in","quantity":10,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0027","toolId":"tl_seed_0021","toolName":"黄油枪弹簧软管 300mm  一端螺纹口径10mm，一端螺纹口径6mm","type":"in","quantity":10,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0028","toolId":"tl_seed_0022","toolName":"黄油45°油嘴 规格：M6，材料：黄铜","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0029","toolId":"tl_seed_0023","toolName":"黄油45°油嘴 规格：M8，材料：黄铜","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0030","toolId":"tl_seed_0024","toolName":"14件加长球头内六角扳手组套 1.5，2，2.5，3，4，5，5.5，6，7，8，10，12，14，17MM，材质：整体铬钒合金","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0031","toolId":"tl_seed_0025","toolName":"内六角扳手套装(世达12件套) 规格：1/16-3/8寸套装，材质：整体铬钒合金","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0032","toolId":"tl_seed_0026","toolName":"两用扳手套装(23件套) (6，7，8，9，10，11，12，13，14，15，16，17，18，19，20，21，22，23，24，25，27，30，32MM))，材质：铬钒钢","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0033","toolId":"tl_seed_0027","toolName":"长柄捞网 0.5×3m","type":"in","quantity":1,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0034","toolId":"tl_seed_0028","toolName":"梅花敲击扳手 34#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0035","toolId":"tl_seed_0029","toolName":"梅花敲击扳手 36#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0036","toolId":"tl_seed_0030","toolName":"梅花敲击扳手 41#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0037","toolId":"tl_seed_0031","toolName":"梅花敲击扳手 46#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0038","toolId":"tl_seed_0032","toolName":"梅花敲击扳手 50#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0039","toolId":"tl_seed_0033","toolName":"梅花敲击扳手 55#\n材质：铬钒钢","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0040","toolId":"tl_seed_0034","toolName":"五点式安全带 FH005 双钩五点式全身安全带\n（带缓冲绳）","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0041","toolId":"tl_seed_0035","toolName":"水带接头 DK65-A","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0042","toolId":"tl_seed_0036","toolName":"水带接头 KD65","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0043","toolId":"tl_seed_0037","toolName":"不锈钢消防水带卡箍 DN65","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0044","toolId":"tl_seed_0038","toolName":"挂锁 60MM","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1770307200000,"isImport":true},{"id":"th_seed_0045","toolId":"tl_seed_0039","toolName":"铝合金一字伸缩梯 6.2m","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0046","toolId":"tl_seed_0040","toolName":"过塑机 VT-330 A3","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0047","toolId":"tl_seed_0041","toolName":"吊带 3T*3M","type":"in","quantity":5,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0048","toolId":"tl_seed_0042","toolName":"管子钳 300MM","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0049","toolId":"tl_seed_0043","toolName":"油灰刀 4寸","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0050","toolId":"tl_seed_0044","toolName":"手摇油泵 WYB32E","type":"in","quantity":10,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0051","toolId":"tl_seed_0181","toolName":"塑料扫把 宽35cm，杆110cm","type":"in","quantity":20,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0052","toolId":"tl_seed_0045","toolName":"毛刷 2\"","type":"in","quantity":20,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0053","toolId":"tl_seed_0046","toolName":"自喷漆 白色","type":"in","quantity":30,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0054","toolId":"tl_seed_0047","toolName":"自喷漆 蓝色","type":"in","quantity":30,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0055","toolId":"tl_seed_0048","toolName":"自喷漆 绿色","type":"in","quantity":30,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0056","toolId":"tl_seed_0049","toolName":"自喷漆 红色","type":"in","quantity":30,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0057","toolId":"tl_seed_0050","toolName":"自喷漆 黄色","type":"in","quantity":30,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0058","toolId":"tl_seed_0051","toolName":"活动扳手 8\"","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0059","toolId":"tl_seed_0052","toolName":"一字螺丝刀 5×150mm","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0060","toolId":"tl_seed_0053","toolName":"十字螺丝刀 5×150mm","type":"in","quantity":5,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0061","toolId":"tl_seed_0054","toolName":"钢丝钳 8\"","type":"in","quantity":4,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0062","toolId":"tl_seed_0055","toolName":"黄油直嘴 规格：M6，材料：黄铜","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0063","toolId":"tl_seed_0056","toolName":"黄油直嘴 规格：M8，材料：黄铜","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0064","toolId":"tl_seed_0057","toolName":"消防水带 10-65-25","type":"in","quantity":22,"unit":"千克","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0065","toolId":"tl_seed_0058","toolName":"八角锤 6LB","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0066","toolId":"tl_seed_0059","toolName":"八角锤 12LB","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0067","toolId":"tl_seed_0060","toolName":"测振仪-叠式电池 9V","type":"in","quantity":1,"unit":"块Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0068","toolId":"tl_seed_0061","toolName":"钢卷尺 5M","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0069","toolId":"tl_seed_0183","toolName":"竹扫把150*55CM 150*55CM","type":"in","quantity":15,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0070","toolId":"tl_seed_0157","toolName":"封塑膜 A4","type":"in","quantity":5,"unit":"包Bag","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0071","toolId":"tl_seed_0062","toolName":"生料带 宽度12mm，厚度为0.15mm;长度30m","type":"in","quantity":30,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0072","toolId":"tl_seed_0063","toolName":"锂电手电钻 GSB 185-LI","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0073","toolId":"tl_seed_0064","toolName":"扁平吊带 5T*6M","type":"in","quantity":3,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0074","toolId":"tl_seed_0065","toolName":"美工刀片","type":"in","quantity":60,"unit":"片","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0075","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"in","quantity":22,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0076","toolId":"tl_seed_0038","toolName":"挂锁 60MM","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"","createdAt":1771516800000,"isImport":true},{"id":"th_seed_0077","toolId":"tl_seed_0066","toolName":"活动扳手 15\"","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771603200000,"isImport":true},{"id":"th_seed_0078","toolId":"tl_seed_0067","toolName":"一字螺丝刀 8*200MM","type":"in","quantity":5,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771603200000,"isImport":true},{"id":"th_seed_0079","toolId":"tl_seed_0068","toolName":"十字螺丝刀 8*200MM","type":"in","quantity":5,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771603200000,"isImport":true},{"id":"th_seed_0080","toolId":"tl_seed_0069","toolName":"尖嘴钳 6\"","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771603200000,"isImport":true},{"id":"th_seed_0081","toolId":"tl_seed_0070","toolName":"钢锯条 300*12*0.65mm","type":"in","quantity":6,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771603200000,"isImport":true},{"id":"th_seed_0082","toolId":"tl_seed_0071","toolName":"潜水排污泵 80WQC80-34-15 15KW","type":"in","quantity":6,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0083","toolId":"tl_seed_0072","toolName":"自喷漆 紫色 紫色","type":"in","quantity":20,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0084","toolId":"tl_seed_0073","toolName":"双头十字批头 PH2-100","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0085","toolId":"tl_seed_0074","toolName":"强磁六角批头套筒 6*100MM","type":"in","quantity":5,"unit":"支Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0086","toolId":"tl_seed_0075","toolName":"可调节球阀锁 M-H18","type":"in","quantity":20,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0087","toolId":"tl_seed_0076","toolName":"红外热成像仪 UTi260B","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0088","toolId":"tl_seed_0077","toolName":"F型阀门扳手 700mm","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0089","toolId":"tl_seed_0078","toolName":"F型阀门扳手 500mm","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0090","toolId":"tl_seed_0079","toolName":"F型阀门扳手 300mm","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0091","toolId":"tl_seed_0080","toolName":"安全搭扣锁 BD-K14","type":"in","quantity":20,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0092","toolId":"tl_seed_0081","toolName":"LED低压移动安全行灯 S-40 40W","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0093","toolId":"tl_seed_0082","toolName":"LED充电投光灯 YC9009 100W","type":"in","quantity":10,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0094","toolId":"tl_seed_0083","toolName":"二级防化服 XL","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0095","toolId":"tl_seed_0084","toolName":"二级防化服 XXL","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0096","toolId":"tl_seed_0085","toolName":"二级防化服 XXXL","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0097","toolId":"tl_seed_0086","toolName":"安全吊牌 150*80*0.55MM","type":"in","quantity":200,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0098","toolId":"tl_seed_0087","toolName":"断路器锁 BD-D200","type":"in","quantity":50,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0099","toolId":"tl_seed_0088","toolName":"钢丝绳自锁器 适用于8mm钢丝绳","type":"in","quantity":10,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0100","toolId":"tl_seed_0089","toolName":"消防扳手 5.6*44CM","type":"in","quantity":3,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0101","toolId":"tl_seed_0090","toolName":"撬棍 18*400MM","type":"in","quantity":6,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0102","toolId":"tl_seed_0091","toolName":"撬棍 22*1000MM","type":"in","quantity":6,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0103","toolId":"tl_seed_0092","toolName":"锁具管理箱 BD-B206 580*630*95MM","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0104","toolId":"tl_seed_0093","toolName":"工业抹布 400*400MM","type":"in","quantity":100,"unit":"千克","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0105","toolId":"tl_seed_0017","toolName":"工具柜 L1023×D550×H1800 蓝色","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0106","toolId":"tl_seed_0094","toolName":"工具柜-配件","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0107","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":1,"unit":"个","receiver":"马学斌","note":"夜间巡检用","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0108","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":1,"unit":"个","receiver":"赵丹","note":"夜间巡检用","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0109","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":1,"unit":"个","receiver":"龙金和","note":"夜间巡检用","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0110","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"陈晓辉","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0111","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"蒋阔","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0112","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"徐朋","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0113","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"马学斌","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0114","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"赵丹","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0115","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"宫泽胜","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0116","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"尹佳伟","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0117","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"朱平","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0118","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"梁飞龙","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0119","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"杨凤凯","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0120","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"龙金和","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0121","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"申佩松","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0122","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"吴玉华","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0123","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"杨锦峰","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0124","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"沈雷","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0125","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"熊邦政","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0126","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"孙永超","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0127","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"祝英林","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0128","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"李云峰","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0129","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"韦佰兵","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0130","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"苏海录","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0131","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"夏淑超","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0132","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"饶桐建","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0133","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"张捷","note":"车间每人一台","createdAt":1771776000000,"isImport":true},{"id":"th_seed_0134","toolId":"tl_seed_0017","toolName":"工具柜 L1023×D550×H1800 蓝色","type":"out","quantity":3,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室","createdAt":1771948800000,"isImport":true},{"id":"th_seed_0135","toolId":"tl_seed_0094","toolName":"工具柜-配件","type":"out","quantity":3,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室","createdAt":1771948800000,"isImport":true},{"id":"th_seed_0136","toolId":"tl_seed_0095","toolName":"救援三脚架 SJY-10 2.1M","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0137","toolId":"tl_seed_0096","toolName":"正压式空气呼吸器 HG-GB-RHZKF6.8/30","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0138","toolId":"tl_seed_0097","toolName":"长柄捞网 12\"","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0139","toolId":"tl_seed_0098","toolName":"订书机 ZRM HD-50","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0140","toolId":"tl_seed_0187","toolName":"法兰防护罩 DN25","type":"in","quantity":14,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0141","toolId":"tl_seed_0188","toolName":"法兰保护套 DN50","type":"in","quantity":28,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0142","toolId":"tl_seed_0189","toolName":"法兰保护套 DN80","type":"in","quantity":12,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0143","toolId":"tl_seed_0190","toolName":"法兰保护套 DN100","type":"in","quantity":52,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0144","toolId":"tl_seed_0191","toolName":"法兰保护套 DN125","type":"in","quantity":18,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0145","toolId":"tl_seed_0192","toolName":"法兰保护套 DN150","type":"in","quantity":37,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0146","toolId":"tl_seed_0193","toolName":"法兰保护套 DN200","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0147","toolId":"tl_seed_0194","toolName":"法兰保护套 DN250","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0148","toolId":"tl_seed_0099","toolName":"浓密机测定记录表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0149","toolId":"tl_seed_0100","toolName":"机械密封检查表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0150","toolId":"tl_seed_0101","toolName":"消能站及雨水收集池现场巡检记录表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0151","toolId":"tl_seed_0102","toolName":"设备润滑记录表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0152","toolId":"tl_seed_0103","toolName":"交接班记录本","type":"in","quantity":15,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0153","toolId":"tl_seed_0104","toolName":"会议记录本","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0154","toolId":"tl_seed_0105","toolName":"出入库台账","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0155","toolId":"tl_seed_0106","toolName":"班前会记录本","type":"in","quantity":5,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772035200000,"isImport":true},{"id":"th_seed_0156","toolId":"tl_seed_0107","toolName":"耐酸碱胶管 DN65，PN10","type":"in","quantity":5,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0157","toolId":"tl_seed_0108","toolName":"耐酸碱胶管 DN65，CL150","type":"in","quantity":10,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0158","toolId":"tl_seed_0109","toolName":"耐酸碱胶管 DN80,PN10","type":"in","quantity":8,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0159","toolId":"tl_seed_0110","toolName":"耐酸碱胶管 DN100,PN10","type":"in","quantity":5,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0160","toolId":"tl_seed_0111","toolName":"耐酸碱胶管 DN150,PN10","type":"in","quantity":5,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0161","toolId":"tl_seed_0112","toolName":"耐酸碱胶管 DN200,PN10","type":"in","quantity":8,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772208000000,"isImport":true},{"id":"th_seed_0162","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772380800000,"isImport":true},{"id":"th_seed_0163","toolId":"tl_seed_0114","toolName":"对讲机电池 摩托罗拉 V16","type":"in","quantity":10,"unit":"块Piece","source":"堆场/仓库","note":"","createdAt":1772380800000,"isImport":true},{"id":"th_seed_0164","toolId":"tl_seed_0115","toolName":"饮水桶","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"","createdAt":1772380800000,"isImport":true},{"id":"th_seed_0165","toolId":"tl_seed_0116","toolName":"带线插排 8位3孔 5M","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"","createdAt":1772380800000,"isImport":true},{"id":"th_seed_0166","toolId":"tl_seed_0117","toolName":"304不锈钢尖锹 300*240*1250MM","type":"in","quantity":10,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0167","toolId":"tl_seed_0118","toolName":"银基抗咬合剂 LB8150","type":"in","quantity":5,"unit":"瓶Bottle","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0168","toolId":"tl_seed_0119","toolName":"可调节线缆挂锁 BD-L11","type":"in","quantity":50,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0169","toolId":"tl_seed_0120","toolName":"安全挂锁 BD-G81L","type":"in","quantity":100,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0170","toolId":"tl_seed_0121","toolName":"尼龙测量绳 3.5mm*30000mm","type":"in","quantity":2,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0171","toolId":"tl_seed_0122","toolName":"订书针 盒\nBox","type":"in","quantity":1,"unit":"盒","source":"堆场/仓库","note":"","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0172","toolId":"tl_seed_0123","toolName":"塑料量筒 1000ml","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0173","toolId":"tl_seed_0124","toolName":"不锈钢浓度壶 500ml","type":"in","quantity":4,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0174","toolId":"tl_seed_0125","toolName":"六角套筒套装 32件套","type":"in","quantity":3,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0175","toolId":"tl_seed_0126","toolName":"超声波测厚仪 GTS-409","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0176","toolId":"tl_seed_0127","toolName":"壁挂式医药箱 35*14*42CM","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772467200000,"isImport":true},{"id":"th_seed_0177","toolId":"tl_seed_0128","toolName":"电子秤 精度0.1g\\5Kg","type":"in","quantity":2,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0178","toolId":"tl_seed_0129","toolName":"安全绳 φ12MM 20MM/根","type":"in","quantity":4,"unit":"根Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0179","toolId":"tl_seed_0130","toolName":"绳梯 5M","type":"in","quantity":5,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0180","toolId":"tl_seed_0131","toolName":"红外线测温枪 GM-550","type":"in","quantity":2,"unit":"把","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0181","toolId":"tl_seed_0132","toolName":"手动液压搬运车 3T","type":"in","quantity":2,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0182","toolId":"tl_seed_0133","toolName":"电镐 Z1G-FF06-6S 1400w","type":"in","quantity":2,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0183","toolId":"tl_seed_0134","toolName":"救生圈 φ440*700MM","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0184","toolId":"tl_seed_0135","toolName":"起重机械点检表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0185","toolId":"tl_seed_0136","toolName":"水处理及矿浆贮存巡检记录表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0186","toolId":"tl_seed_0137","toolName":"矿浆浓密现场巡检记录表","type":"in","quantity":3,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0187","toolId":"tl_seed_0138","toolName":"GEHO泵运行记录表","type":"in","quantity":8,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0188","toolId":"tl_seed_0139","toolName":"高压酸浸现场巡检记录表","type":"in","quantity":8,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0189","toolId":"tl_seed_0140","toolName":"核源巡检记录表","type":"in","quantity":4,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0190","toolId":"tl_seed_0141","toolName":"高压酸浸车间-主控岗位记录表一","type":"in","quantity":8,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0191","toolId":"tl_seed_0142","toolName":"高压酸浸车间-主控岗位记录表二","type":"in","quantity":8,"unit":"本","source":"堆场/仓库","note":"记录本","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0192","toolId":"tl_seed_0143","toolName":"多参数气体检测报警仪 CD4矿用多参数气体测定仪ExdibIMb，测量范围：LEL：0-100%LEL，CO：0-1000PPM，O2：0-25%VOL，H2S：0-100PPM","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0193","toolId":"tl_seed_0144","toolName":"氧气检测仪 ZXHD/DTN820-02","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1772726400000,"isImport":true},{"id":"th_seed_0194","toolId":"tl_seed_0145","toolName":"尖凿电镐杆 17*400","type":"in","quantity":4,"unit":"支Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0195","toolId":"tl_seed_0146","toolName":"锂电电动扳手 GD5 1BV-400 1/2","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0196","toolId":"tl_seed_0147","toolName":"六角套筒套装 1/2 22-55MM","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0197","toolId":"tl_seed_0148","toolName":"折叠担架 2000*530*180MM","type":"in","quantity":1,"unit":"副Pair","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0198","toolId":"tl_seed_0149","toolName":"防爆型电动送风长管呼吸器 HG-DHZK220V-EX","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0199","toolId":"tl_seed_0150","toolName":"德式喉箍 12-20mm","type":"in","quantity":30,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0200","toolId":"tl_seed_0151","toolName":"喉箍 9-16mm","type":"in","quantity":50,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0201","toolId":"tl_seed_0152","toolName":"喉箍 18-29mm","type":"in","quantity":50,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0202","toolId":"tl_seed_0153","toolName":"喉箍 52-76mm","type":"in","quantity":50,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0203","toolId":"tl_seed_0154","toolName":"密度仪 EX505 EX505","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1773331200000,"isImport":true},{"id":"th_seed_0204","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"熊邦政","note":"二次领，2.23领用的旧对讲机损坏","createdAt":1773417600000,"isImport":true},{"id":"th_seed_0205","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"姜风圣","note":"车间每人一台","createdAt":1773417600000,"isImport":true},{"id":"th_seed_0206","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"李汉栋","note":"车间每人一台","createdAt":1773417600000,"isImport":true},{"id":"th_seed_0207","toolId":"tl_seed_0155","toolName":"电池 佰凡锂电 3.7V-2.8AH","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0208","toolId":"tl_seed_0156","toolName":"锂电池","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0209","toolId":"tl_seed_0157","toolName":"封塑膜 A4","type":"in","quantity":3,"unit":"包Bag","source":"堆场/仓库","note":"","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0210","toolId":"tl_seed_0158","toolName":"封塑膜 A3","type":"in","quantity":1,"unit":"包Bag","source":"堆场/仓库","note":"","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0211","toolId":"tl_seed_0159","toolName":"透明胶带","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0212","toolId":"tl_seed_0214","toolName":"塑料文件盒","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0213","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":1,"unit":"个","receiver":"庄强","note":"夜间巡检用","createdAt":1773590400000,"isImport":true},{"id":"th_seed_0214","toolId":"tl_seed_0113","toolName":"对讲机 摩托罗拉 XiR V16 15W","type":"out","quantity":1,"unit":"台Set","receiver":"庄强","note":"车间每人一台","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0215","toolId":"tl_seed_0012","toolName":"红外测温枪 GM63A","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0216","toolId":"tl_seed_0018","toolName":"测振仪 GM63A","type":"out","quantity":2,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0217","toolId":"tl_seed_0004","toolName":"铁皮剪 10寸","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0218","toolId":"tl_seed_0066","toolName":"活动扳手 15\"","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"使用中已自然损坏\n放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0219","toolId":"tl_seed_0007","toolName":"活动扳手 300mm","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"使用中已自然损坏\n放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0220","toolId":"tl_seed_0010","toolName":"管子钳 600mm","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0221","toolId":"tl_seed_0058","toolName":"八角锤 6LB","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0222","toolId":"tl_seed_0059","toolName":"八角锤 12LB","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0223","toolId":"tl_seed_0028","toolName":"梅花敲击扳手 34#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0224","toolId":"tl_seed_0029","toolName":"梅花敲击扳手 36#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0225","toolId":"tl_seed_0030","toolName":"梅花敲击扳手 41#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0226","toolId":"tl_seed_0031","toolName":"梅花敲击扳手 46#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0227","toolId":"tl_seed_0032","toolName":"梅花敲击扳手 50#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0228","toolId":"tl_seed_0033","toolName":"梅花敲击扳手 55#\n材质：铬钒钢","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0229","toolId":"tl_seed_0025","toolName":"内六角扳手套装(世达12件套) 规格：1/16-3/8寸套装，材质：整体铬钒合金","type":"out","quantity":1,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0230","toolId":"tl_seed_0026","toolName":"两用扳手套装(23件套) (6，7，8，9，10，11，12，13，14，15，16，17，18，19，20，21，22，23，24，25，27，30，32MM))，材质：铬钒钢","type":"out","quantity":1,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0231","toolId":"tl_seed_0015","toolName":"美工刀 18mm","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0232","toolId":"tl_seed_0054","toolName":"钢丝钳 8\"","type":"out","quantity":1,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室白色铁皮柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0233","toolId":"tl_seed_0008","toolName":"油漆笔（蓝色） SA61","type":"out","quantity":3,"unit":"支Piece","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0234","toolId":"tl_seed_0012","toolName":"红外测温枪 GM63A","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0235","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":8,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0236","toolId":"tl_seed_0014","toolName":"对讲机-摩托罗拉 XiR V16 15w","type":"out","quantity":6,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0237","toolId":"tl_seed_0014","toolName":"对讲机-摩托罗拉 XiR V16 15w","type":"out","quantity":1,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0238","toolId":"tl_seed_0116","toolName":"带线插排 8位3孔 5M","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0239","toolId":"tl_seed_0018","toolName":"测振仪 GM63A","type":"out","quantity":3,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0240","toolId":"tl_seed_0040","toolName":"过塑机 VT-330 A3","type":"out","quantity":1,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0241","toolId":"tl_seed_0157","toolName":"封塑膜 A4","type":"out","quantity":4,"unit":"包Bag","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0242","toolId":"tl_seed_0065","toolName":"美工刀片","type":"out","quantity":59,"unit":"片","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0243","toolId":"tl_seed_0038","toolName":"挂锁 60MM","type":"out","quantity":1,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0244","toolId":"tl_seed_0076","toolName":"红外热成像仪 UTi260B","type":"out","quantity":1,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0245","toolId":"tl_seed_0081","toolName":"LED低压移动安全行灯 S-40 40W","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0246","toolId":"tl_seed_0082","toolName":"LED充电投光灯 YC9009 100W","type":"out","quantity":10,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0247","toolId":"tl_seed_0118","toolName":"银基抗咬合剂 LB8150","type":"out","quantity":5,"unit":"瓶Bottle","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0248","toolId":"tl_seed_0120","toolName":"安全挂锁 BD-G81L","type":"out","quantity":100,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0249","toolId":"tl_seed_0114","toolName":"对讲机电池 摩托罗拉 V16","type":"out","quantity":10,"unit":"块Piece","receiver":"车间班组公共使用","note":"放置203值班室1#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0250","toolId":"tl_seed_0034","toolName":"五点式安全带 FH005 双钩五点式全身安全带\n（带缓冲绳）","type":"out","quantity":1,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0251","toolId":"tl_seed_0041","toolName":"吊带 3T*3M","type":"out","quantity":4,"unit":"条Piece","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0252","toolId":"tl_seed_0043","toolName":"油灰刀 4寸","type":"out","quantity":10,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0253","toolId":"tl_seed_0044","toolName":"手摇油泵 WYB32E","type":"out","quantity":2,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0254","toolId":"tl_seed_0045","toolName":"毛刷 2\"","type":"out","quantity":19,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0255","toolId":"tl_seed_0062","toolName":"生料带 宽度12mm，厚度为0.15mm;长度30m","type":"out","quantity":28,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0256","toolId":"tl_seed_0073","toolName":"双头十字批头 PH2-100","type":"out","quantity":5,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0257","toolId":"tl_seed_0074","toolName":"强磁六角批头套筒 6*100MM","type":"out","quantity":5,"unit":"支Piece","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0258","toolId":"tl_seed_0075","toolName":"可调节球阀锁 M-H18","type":"out","quantity":20,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0259","toolId":"tl_seed_0080","toolName":"安全搭扣锁 BD-K14","type":"out","quantity":20,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0260","toolId":"tl_seed_0086","toolName":"安全吊牌 150*80*0.55MM","type":"out","quantity":200,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0261","toolId":"tl_seed_0087","toolName":"断路器锁 BD-D200","type":"out","quantity":50,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0262","toolId":"tl_seed_0124","toolName":"不锈钢浓度壶 500ml","type":"out","quantity":4,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0263","toolId":"tl_seed_0128","toolName":"电子秤 精度0.1g\\5Kg","type":"out","quantity":2,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0264","toolId":"tl_seed_0133","toolName":"电镐 Z1G-FF06-6S 1400w","type":"out","quantity":2,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室2#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0265","toolId":"tl_seed_0002","toolName":"手持黄油枪 500G","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0266","toolId":"tl_seed_0004","toolName":"铁皮剪 10寸","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0267","toolId":"tl_seed_0007","toolName":"活动扳手 300mm","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0268","toolId":"tl_seed_0221","toolName":"剪刀","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0269","toolId":"tl_seed_0009","toolName":"高压锁钳式注油嘴 NPT1/8\"","type":"out","quantity":9,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0270","toolId":"tl_seed_0010","toolName":"管子钳 600mm","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0271","toolId":"tl_seed_0015","toolName":"美工刀 18mm","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0272","toolId":"tl_seed_0021","toolName":"黄油枪弹簧软管 300mm  一端螺纹口径10mm，一端螺纹口径6mm","type":"out","quantity":10,"unit":"根Piece","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0273","toolId":"tl_seed_0020","toolName":"黄油枪弹簧软管 300mm，一端螺纹口径10mm，一端螺纹口径8mm","type":"out","quantity":10,"unit":"根Piece","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0274","toolId":"tl_seed_0022","toolName":"黄油45°油嘴 规格：M6，材料：黄铜","type":"out","quantity":10,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0275","toolId":"tl_seed_0023","toolName":"黄油45°油嘴 规格：M8，材料：黄铜","type":"out","quantity":10,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0276","toolId":"tl_seed_0024","toolName":"14件加长球头内六角扳手组套 1.5，2，2.5，3，4，5，5.5，6，7，8，10，12，14，17MM，材质：整体铬钒合金","type":"out","quantity":3,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0277","toolId":"tl_seed_0025","toolName":"内六角扳手套装(世达12件套) 规格：1/16-3/8寸套装，材质：整体铬钒合金","type":"out","quantity":2,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0278","toolId":"tl_seed_0026","toolName":"两用扳手套装(23件套) (6，7，8，9，10，11，12，13，14，15，16，17，18，19，20，21，22，23，24，25，27，30，32MM))，材质：铬钒钢","type":"out","quantity":3,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0279","toolId":"tl_seed_0042","toolName":"管子钳 300MM","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0280","toolId":"tl_seed_0051","toolName":"活动扳手 8\"","type":"out","quantity":6,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0281","toolId":"tl_seed_0052","toolName":"一字螺丝刀 5×150mm","type":"out","quantity":5,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0282","toolId":"tl_seed_0053","toolName":"十字螺丝刀 5×150mm","type":"out","quantity":5,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0283","toolId":"tl_seed_0054","toolName":"钢丝钳 8\"","type":"out","quantity":3,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0284","toolId":"tl_seed_0055","toolName":"黄油直嘴 规格：M6，材料：黄铜","type":"out","quantity":10,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0285","toolId":"tl_seed_0056","toolName":"黄油直嘴 规格：M8，材料：黄铜","type":"out","quantity":10,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0286","toolId":"tl_seed_0058","toolName":"八角锤 6LB","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0287","toolId":"tl_seed_0059","toolName":"八角锤 12LB","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0288","toolId":"tl_seed_0061","toolName":"钢卷尺 5M","type":"out","quantity":2,"unit":"个","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0289","toolId":"tl_seed_0063","toolName":"锂电手电钻 GSB 185-LI","type":"out","quantity":1,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0290","toolId":"tl_seed_0066","toolName":"活动扳手 15\"","type":"out","quantity":3,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0291","toolId":"tl_seed_0067","toolName":"一字螺丝刀 8*200MM","type":"out","quantity":5,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0292","toolId":"tl_seed_0068","toolName":"十字螺丝刀 8*200MM","type":"out","quantity":5,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0293","toolId":"tl_seed_0069","toolName":"尖嘴钳 6\"","type":"out","quantity":2,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0294","toolId":"tl_seed_0070","toolName":"钢锯条 300*12*0.65mm","type":"out","quantity":6,"unit":"根Piece","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0295","toolId":"tl_seed_0079","toolName":"F型阀门扳手 300mm","type":"out","quantity":6,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0296","toolId":"tl_seed_0078","toolName":"F型阀门扳手 500mm","type":"out","quantity":6,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0297","toolId":"tl_seed_0077","toolName":"F型阀门扳手 700mm","type":"out","quantity":6,"unit":"把","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0298","toolId":"tl_seed_0090","toolName":"撬棍 18*400MM","type":"out","quantity":6,"unit":"根Piece","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0299","toolId":"tl_seed_0091","toolName":"撬棍 22*1000MM","type":"out","quantity":6,"unit":"根Piece","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0300","toolId":"tl_seed_0125","toolName":"六角套筒套装 32件套","type":"out","quantity":3,"unit":"套Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0301","toolId":"tl_seed_0126","toolName":"超声波测厚仪 GTS-409","type":"out","quantity":1,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0302","toolId":"tl_seed_0146","toolName":"锂电电动扳手 GD5 1BV-400 1/2","type":"out","quantity":1,"unit":"台Set","receiver":"车间班组公共使用","note":"放置203值班室3#工具柜","createdAt":1773676800000,"isImport":true},{"id":"th_seed_0303","toolId":"tl_seed_0160","toolName":"304不锈钢钢丝绳 6*19M-WSC-8MM","type":"in","quantity":100,"unit":"米","source":"堆场/仓库","note":"车间工器具","createdAt":1773849600000,"isImport":true},{"id":"th_seed_0304","toolId":"tl_seed_0161","toolName":"吸油垫 2000*1000","type":"in","quantity":80,"unit":"片","source":"堆场/仓库","note":"车间工器具","createdAt":1773849600000,"isImport":true},{"id":"th_seed_0305","toolId":"tl_seed_0162","toolName":"管道内窥镜 SVC50120T/13C","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1773849600000,"isImport":true},{"id":"th_seed_0306","toolId":"tl_seed_0013","toolName":"强光手电筒","type":"out","quantity":1,"unit":"个","receiver":"祝英林","note":"夜间巡检用","createdAt":1773849600000,"isImport":true},{"id":"th_seed_0307","toolId":"tl_seed_0163","toolName":"加油壶 10L 带过滤网","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0308","toolId":"tl_seed_0164","toolName":"加油壶 5L 带过滤网","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0309","toolId":"tl_seed_0165","toolName":"集油盘 个Piece","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0310","toolId":"tl_seed_0166","toolName":"塑料管 DN15","type":"in","quantity":1,"unit":"盘Roll","source":"堆场/仓库","note":"车间工器具","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0311","toolId":"tl_seed_0167","toolName":"塑料管 DN20","type":"in","quantity":1,"unit":"盘Roll","source":"堆场/仓库","note":"车间工器具","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0312","toolId":"tl_seed_0169","toolName":"家用塑料鞋架  3层","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"值班室用","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0313","toolId":"tl_seed_0170","toolName":"清洁钢丝球 60MM","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"值班室用","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0314","toolId":"tl_seed_0171","toolName":"双面胶","type":"in","quantity":5,"unit":"卷Roll","source":"堆场/仓库","note":"","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0315","toolId":"tl_seed_0172","toolName":"老鼠贴 200*300MM","type":"in","quantity":10,"unit":"张Piece","source":"堆场/仓库","note":"值班室用","createdAt":1774022400000,"isImport":true},{"id":"th_seed_0316","toolId":"tl_seed_0168","toolName":"有衬里消防水带 13-65-25","type":"in","quantity":6,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1774108800000,"isImport":true},{"id":"th_seed_0317","toolId":"tl_seed_0173","toolName":"带柄圆口铁锹 28*25*107CM","type":"in","quantity":6,"unit":"把","source":"堆场/仓库","note":"","createdAt":1774627200000,"isImport":true},{"id":"th_seed_0318","toolId":"tl_seed_0174","toolName":"夹布蒸汽胶管 DN25","type":"in","quantity":10,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1774627200000,"isImport":true},{"id":"th_seed_0319","toolId":"tl_seed_0175","toolName":"耐酸碱胶管 DN50","type":"in","quantity":10,"unit":"条Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1774627200000,"isImport":true},{"id":"th_seed_0320","toolId":"tl_seed_0176","toolName":"洗耳球 30ml","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"化验器具","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0321","toolId":"tl_seed_0177","toolName":"滴定台  300*150MM","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"化验器具","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0322","toolId":"tl_seed_0178","toolName":"塑料洗瓶 500ml","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"化验器具","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0323","toolId":"tl_seed_0179","toolName":"烧杯 50mL","type":"in","quantity":2,"unit":"个","source":"堆场/仓库","note":"化验器具","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0324","toolId":"tl_seed_0180","toolName":"喷雾型杀虫剂 600ml","type":"in","quantity":10,"unit":"瓶Bottle","source":"堆场/仓库","note":"","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0325","toolId":"tl_seed_0181","toolName":"塑料扫把 宽35cm，杆110cm","type":"in","quantity":10,"unit":"把","source":"堆场/仓库","note":"","createdAt":1774713600000,"isImport":true},{"id":"th_seed_0326","toolId":"tl_seed_0182","toolName":"竹扫把185*65CM 185*65CM","type":"in","quantity":5,"unit":"把","source":"堆场/仓库","note":"","createdAt":1774800000000,"isImport":true},{"id":"th_seed_0327","toolId":"tl_seed_0183","toolName":"竹扫把150*55CM 150*55CM","type":"in","quantity":5,"unit":"把","source":"堆场/仓库","note":"","createdAt":1774800000000,"isImport":true},{"id":"th_seed_0328","toolId":"tl_seed_0184","toolName":"丁腈橡胶手套 XL 50双/盒","type":"in","quantity":5,"unit":"盒","source":"堆场/仓库","note":"化验器具","createdAt":1774800000000,"isImport":true},{"id":"th_seed_0329","toolId":"tl_seed_0185","toolName":"便携式ORP计 BPH-221","type":"in","quantity":2,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0330","toolId":"tl_seed_0186","toolName":"高压清洗机  PM-2515","type":"in","quantity":2,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0331","toolId":"tl_seed_0187","toolName":"法兰防护罩 DN25","type":"in","quantity":132,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0332","toolId":"tl_seed_0188","toolName":"法兰保护套 DN50","type":"in","quantity":40,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0333","toolId":"tl_seed_0189","toolName":"法兰保护套 DN80","type":"in","quantity":36,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0334","toolId":"tl_seed_0190","toolName":"法兰保护套 DN100","type":"in","quantity":6,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0335","toolId":"tl_seed_0191","toolName":"法兰保护套 DN125","type":"in","quantity":132,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0336","toolId":"tl_seed_0192","toolName":"法兰保护套 DN150","type":"in","quantity":40,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0337","toolId":"tl_seed_0193","toolName":"法兰保护套 DN200","type":"in","quantity":36,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0338","toolId":"tl_seed_0194","toolName":"法兰保护套 DN250","type":"in","quantity":6,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0339","toolId":"tl_seed_0195","toolName":"PU管 DN10","type":"in","quantity":10,"unit":"米","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0340","toolId":"tl_seed_0196","toolName":"PU管 φ8","type":"in","quantity":100,"unit":"米","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0341","toolId":"tl_seed_0197","toolName":"PU软管 φ10","type":"in","quantity":58,"unit":"米","source":"堆场/仓库","note":"车间工器具","createdAt":1775059200000,"isImport":true},{"id":"th_seed_0342","toolId":"tl_seed_0098","toolName":"订书机 ZRM HD-50","type":"out","quantity":1,"unit":"个","receiver":"申佩松","note":"办公室使用","createdAt":1775232000000,"isImport":true},{"id":"th_seed_0343","toolId":"tl_seed_0122","toolName":"订书针 盒\nBox","type":"out","quantity":1,"unit":"盒","receiver":"申佩松","note":"办公室使用","createdAt":1775232000000,"isImport":true},{"id":"th_seed_0344","toolId":"tl_seed_0198","toolName":"移动线缆盘 2*1.5mm²*30M","type":"in","quantity":6,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775318400000,"isImport":true},{"id":"th_seed_0345","toolId":"tl_seed_0199","toolName":"移动线缆盘 4*1.5mm²*20M","type":"in","quantity":4,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775318400000,"isImport":true},{"id":"th_seed_0346","toolId":"tl_seed_0200","toolName":"青稞纸 10000*1000*0.5mm","type":"in","quantity":2,"unit":"张Piece","source":"堆场/仓库","note":"车间工器具","createdAt":1775318400000,"isImport":true},{"id":"th_seed_0347","toolId":"tl_seed_0201","toolName":"油桶提升翻转机 1500*950*2060MM","type":"in","quantity":1,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775318400000,"isImport":true},{"id":"th_seed_0348","toolId":"tl_seed_0202","toolName":"航空插头3芯","type":"in","quantity":4,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775491200000,"isImport":true},{"id":"th_seed_0349","toolId":"tl_seed_0203","toolName":"航空插头5芯","type":"in","quantity":6,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1775491200000,"isImport":true},{"id":"th_seed_0350","toolId":"tl_seed_0204","toolName":"S30408不锈钢宝塔头1/2*10","type":"in","quantity":10,"unit":"个","source":"堆场/仓库","note":"","createdAt":1775664000000,"isImport":true},{"id":"th_seed_0351","toolId":"tl_seed_0205","toolName":"304不锈钢宝塔头3/4\"*20","type":"in","quantity":15,"unit":"个","source":"堆场/仓库","note":"","createdAt":1775664000000,"isImport":true},{"id":"th_seed_0352","toolId":"tl_seed_0206","toolName":"电工胶布18mm*0.13mm(黑）","type":"in","quantity":5,"unit":"卷Roll","source":"堆场/仓库","note":"","createdAt":1775664000000,"isImport":true},{"id":"th_seed_0353","toolId":"tl_seed_0207","toolName":"轴流风机 SF6-4","type":"in","quantity":15,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0354","toolId":"tl_seed_0208","toolName":"脚手架","type":"in","quantity":2,"unit":"套Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0355","toolId":"tl_seed_0209","toolName":"球阀 Q11F-16P DN15","type":"in","quantity":10,"unit":"台Set","source":"堆场/仓库","note":"车间工器具","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0356","toolId":"tl_seed_0210","toolName":"球阀 Q11F-16C DN20","type":"in","quantity":10,"unit":"台Set","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0357","toolId":"tl_seed_0211","toolName":"中性笔","type":"in","quantity":30,"unit":"支Piece","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0358","toolId":"tl_seed_0212","toolName":"中性笔 红色","type":"in","quantity":5,"unit":"支Piece","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0359","toolId":"tl_seed_0213","toolName":"水笔笔芯","type":"in","quantity":10,"unit":"支Piece","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0360","toolId":"tl_seed_0214","toolName":"塑料文件盒","type":"in","quantity":3,"unit":"个","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0361","toolId":"tl_seed_0215","toolName":"长尾夹 25MM","type":"in","quantity":3,"unit":"盒Box","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0362","toolId":"tl_seed_0216","toolName":"笔记本 大","type":"in","quantity":10,"unit":"本","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0363","toolId":"tl_seed_0217","toolName":"三层文件盘","type":"in","quantity":1,"unit":"套Set","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0364","toolId":"tl_seed_0218","toolName":"大回形针","type":"in","quantity":2,"unit":"盒Box","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0365","toolId":"tl_seed_0219","toolName":"小回形针","type":"in","quantity":2,"unit":"盒Box","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0366","toolId":"tl_seed_0220","toolName":"文件夹板 F4","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0367","toolId":"tl_seed_0221","toolName":"剪刀","type":"in","quantity":1,"unit":"把","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0368","toolId":"tl_seed_0222","toolName":"长尾夹 32MM","type":"in","quantity":3,"unit":"盒Box","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0369","toolId":"tl_seed_0223","toolName":"记号笔 白","type":"in","quantity":3,"unit":"支Piece","source":"堆场/仓库","note":"","createdAt":1775923200000,"isImport":true},{"id":"th_seed_0370","toolId":"tl_seed_0216","toolName":"笔记本 大","type":"out","quantity":3,"unit":"本","receiver":"孙永超、姜风圣、刘晨","note":"新员工入职发放","createdAt":1776009600000,"isImport":true},{"id":"th_seed_0371","toolId":"tl_seed_0211","toolName":"中性笔","type":"out","quantity":2,"unit":"支Piece","receiver":"姜风圣、刘晨","note":"新员工入职发放","createdAt":1776009600000,"isImport":true},{"id":"th_seed_0372","toolId":"tl_seed_0217","toolName":"三层文件盘","type":"out","quantity":1,"unit":"套Set","receiver":"申佩松","note":"办公室使用","createdAt":1776009600000,"isImport":true},{"id":"th_seed_0373","toolId":"tl_seed_0214","toolName":"塑料文件盒","type":"out","quantity":3,"unit":"个","receiver":"申佩松","note":"纸质资料存档使用","createdAt":1776009600000,"isImport":true},{"id":"th_seed_0374","toolId":"tl_seed_0221","toolName":"剪刀","type":"out","quantity":1,"unit":"把","receiver":"申佩松","note":"办公室使用","createdAt":1776009600000,"isImport":true},{"id":"th_seed_0375","toolId":"tl_seed_0215","toolName":"长尾夹 25MM","type":"out","quantity":1,"unit":"盒Box","receiver":"申佩松","note":"办公室使用","createdAt":1776096000000,"isImport":true},{"id":"th_seed_0376","toolId":"tl_seed_0153","toolName":"喉箍 52-76mm","type":"out","quantity":5,"unit":"个","receiver":"马学斌","note":"203-2高压釜给料B泵冷却水管裂口","createdAt":1776096000000,"isImport":true},{"id":"th_seed_0377","toolId":"tl_seed_0224","toolName":"S30408不锈钢板式平焊法兰\n DN40 PN10","type":"in","quantity":4,"unit":"个","source":"堆场/仓库","note":"润滑油品","createdAt":1776268800000,"isImport":true},{"id":"th_seed_0378","toolId":"tl_seed_0216","toolName":"笔记本 大","type":"out","quantity":3,"unit":"本","receiver":"王存华、李德海、高存志","note":"新员工入职发放","createdAt":1776268800000,"isImport":true},{"id":"th_seed_0379","toolId":"tl_seed_0211","toolName":"中性笔","type":"out","quantity":3,"unit":"支Piece","receiver":"王存华、李德海、高存志","note":"新员工入职发放","createdAt":1776268800000,"isImport":true},{"id":"th_seed_0380","toolId":"tl_seed_0225","toolName":"壳牌极压锂基脂_S1 V220 3 15kg","type":"in","quantity":2,"unit":"桶Pail","source":"堆场/仓库","note":"润滑油品","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0381","toolId":"tl_seed_0226","toolName":"美孚合成锂基脂 Mobiltih SHc 220 16kg","type":"in","quantity":1,"unit":"桶Pail","source":"堆场/仓库","note":"润滑油品","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0382","toolId":"tl_seed_0227","toolName":"美孚齿轮油 GEAR EP 220 208L","type":"in","quantity":2,"unit":"桶Pail","source":"堆场/仓库","note":"润滑油品","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0383","toolId":"tl_seed_0228","toolName":"齿轮油 MOB.GEAR EP320 208L","type":"in","quantity":1,"unit":"桶Pail","source":"堆场/仓库","note":"润滑油品","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0384","toolId":"tl_seed_0229","toolName":"壳牌合成压缩机油 Corena S4 P 100 20L","type":"in","quantity":1,"unit":"桶Pail","source":"堆场/仓库","note":"润滑油品","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0385","toolId":"tl_seed_0230","toolName":"抽滤瓶 500ml","type":"in","quantity":1,"unit":"个","source":"精炼技术部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0386","toolId":"tl_seed_0231","toolName":"抽滤瓶 1000ml","type":"in","quantity":1,"unit":"个","source":"精炼技术部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0387","toolId":"tl_seed_0232","toolName":"布氏漏斗 10cm","type":"in","quantity":1,"unit":"个","source":"精炼技术部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0388","toolId":"tl_seed_0233","toolName":"布氏漏斗 120mm","type":"in","quantity":1,"unit":"个","source":"精炼技术部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0389","toolId":"tl_seed_0234","toolName":"真空泵 SHZ-D(III)","type":"in","quantity":1,"unit":"个","source":"精炼技术部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0390","toolId":"tl_seed_0235","toolName":"玻璃烧杯 50ml","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0391","toolId":"tl_seed_0236","toolName":"玻璃烧杯 250ml","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0392","toolId":"tl_seed_0237","toolName":"玻璃烧杯 500ml","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0393","toolId":"tl_seed_0238","toolName":"中速滤纸 70mm","type":"in","quantity":500,"unit":"张Piece","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0394","toolId":"tl_seed_0239","toolName":"大肚吸管 2mL","type":"in","quantity":2,"unit":"支Piece","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0395","toolId":"tl_seed_0240","toolName":"刻度吸管 20mL","type":"in","quantity":1,"unit":"支Piece","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0396","toolId":"tl_seed_0241","toolName":"刻度吸管 10mL","type":"in","quantity":2,"unit":"支Piece","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0397","toolId":"tl_seed_0242","toolName":"洗耳球","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0398","toolId":"tl_seed_0178","toolName":"塑料洗瓶 500ml","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0399","toolId":"tl_seed_0243","toolName":"滴定台  28*14*60CM","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0400","toolId":"tl_seed_0244","toolName":"梯形移液管架 20孔","type":"in","quantity":2,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0401","toolId":"tl_seed_0245","toolName":"白色碱式滴定管 50mL","type":"in","quantity":1,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0402","toolId":"tl_seed_0246","toolName":"玻璃锥形瓶 300mL","type":"in","quantity":2,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0403","toolId":"tl_seed_0247","toolName":"玻璃棒","type":"in","quantity":3,"unit":"根Piece","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0404","toolId":"tl_seed_0248","toolName":"耐酸玻璃滴定管 25ml","type":"in","quantity":2,"unit":"个","source":"品质部借调","note":"化验器具","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0405","toolId":"tl_seed_0224","toolName":"S30408不锈钢板式平焊法兰\n DN40 PN10","type":"out","quantity":4,"unit":"个","receiver":"徐朋","note":"潜水泵焊接接口","createdAt":1776441600000,"isImport":true},{"id":"th_seed_0406","toolId":"tl_seed_0249","toolName":"安全帽衬 按键式","type":"in","quantity":1,"unit":"个","source":"堆场/仓库","note":"","createdAt":1776528000000,"isImport":true},{"id":"th_seed_0407","toolId":"tl_seed_0250","toolName":"不锈钢听针 8×600mm","type":"in","quantity":5,"unit":"个","source":"堆场/仓库","note":"车间工器具","createdAt":1776528000000,"isImport":true},{"id":"th_seed_0408","toolId":"tl_seed_0251","toolName":"加油桶配件","type":"in","quantity":20,"unit":"套Set","source":"堆场/仓库","note":"车间工器具\n每个油桶配件：螺丝1个，过滤网1个，顿珠1个","createdAt":1776528000000,"isImport":true},{"id":"th_seed_0409","toolId":"tl_seed_0249","toolName":"安全帽衬 按键式","type":"out","quantity":1,"unit":"个","receiver":"申佩松","note":"安全帽衬更换","createdAt":1776528000000,"isImport":true},{"id":"th_seed_0410","toolId":"tl_seed_0216","toolName":"笔记本 大","type":"out","quantity":1,"unit":"本","receiver":"李汉栋","note":"新员工入职补发","createdAt":1776700800000,"isImport":true}];
+
+async function seedToolsV9IfNeeded() {
+  if (!SEED_TOOLS_V9 || SEED_TOOLS_V9.length === 0) return;
+  const markerId = 'tools_v9_20260423';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V9] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '导入工器具台账...');
+  const now = Date.now();
+  const BATCH_SIZE = 400;
+  let okT = 0, okH = 0, fail = 0;
+
+  try {
+    // 工器具
+    for (let i = 0; i < SEED_TOOLS_V9.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_TOOLS_V9.slice(i, i + BATCH_SIZE);
+      chunk.forEach((t, idx) => {
+        batch.set(doc(db, 'tools', t.id), {
+          ...t,
+          createdAt: now - (SEED_TOOLS_V9.length - i - idx) * 1000,
+          updatedAt: now,
+        });
+      });
+      try { await batch.commit(); okT += chunk.length; }
+      catch(e) { console.error('[V9] tools 批次失败', e); fail += chunk.length; }
+    }
+    // 历史
+    for (let i = 0; i < SEED_TOOLS_HISTORY_V9.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_TOOLS_HISTORY_V9.slice(i, i + BATCH_SIZE);
+      chunk.forEach(h => {
+        batch.set(doc(db, 'toolhistory', h.id), { ...h, updatedAt: now });
+      });
+      try { await batch.commit(); okH += chunk.length; }
+      catch(e) { console.error('[V9] history 批次失败', e); fail += chunk.length; }
+    }
+    await setDoc(markerRef, {
+      appliedAt: now,
+      description: 'V9: 251 工器具 + 410 出入库历史',
+      tools: okT, history: okH, fail,
+    });
+    if (fail === 0) showToast('已导入 ' + okT + ' 工器具 + ' + okH + ' 历史');
+    else showToast('部分失败: 工器具 ' + okT + ', 历史 ' + okH + ', 失败 ' + fail);
+    console.log('[V9] tools=' + okT + ' history=' + okH + ' fail=' + fail);
+  } catch(e) {
+    console.error('[V9] 执行失败', e);
+  }
+}
+
+/* ========== V10 历史出库 reclassify 为领用 (2026-04-23) ==========
+   原 410 条历史导入记录都是 type='out'，按之前的逻辑算成"借用"待归还。
+   实际它们都是消耗性领用（不归还），改成 type='consume' + consumed=true。
+   同时把对应工器具的 totalOut 减回去，totalConsume 加上。 */
+async function reclassifyImportedToolsV10IfNeeded() {
+  const markerId = 'tool_reclassify_v10_20260423';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V10] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '迁移工器具历史: 旧出库归类为领用...');
+  const BATCH_SIZE = 400;
+  try {
+    const histSnap = await getDocs(collection(db, 'toolhistory'));
+    const recordsToFix = [];
+    const toolDelta = {};   // toolId → { decOut, incConsume }
+
+    histSnap.docs.forEach(d => {
+      const h = d.data();
+      if (h.isImport === true && h.type === 'out') {
+        const q = h.quantity || 0;
+        recordsToFix.push({ id: d.id, toolId: h.toolId, quantity: q });
+        if (!toolDelta[h.toolId]) toolDelta[h.toolId] = { decOut: 0, incConsume: 0 };
+        toolDelta[h.toolId].decOut += q;
+        toolDelta[h.toolId].incConsume += q;
+      }
+    });
+
+    if (recordsToFix.length === 0) {
+      // Nothing to migrate; mark applied
+      await setDoc(markerRef, { appliedAt: Date.now(), records: 0, tools: 0 });
+      console.log('[V10] no records to reclassify');
+      setCloudStatus('online', '已同步');
+      return;
+    }
+
+    // 1) Update history records (type → 'consume', consumed=true)
+    let okHist = 0, failHist = 0;
+    for (let i = 0; i < recordsToFix.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = recordsToFix.slice(i, i + BATCH_SIZE);
+      chunk.forEach(r => {
+        batch.update(doc(db, 'toolhistory', r.id), {
+          type: 'consume',
+          consumed: true,
+          updatedAt: Date.now(),
+        });
+      });
+      try { await batch.commit(); okHist += chunk.length; }
+      catch(e) { console.error('[V10] history 批次失败', e); failHist += chunk.length; }
+    }
+
+    // 2) Update tools: decrement totalOut by delta, increment totalConsume
+    const toolIds = Object.keys(toolDelta);
+    let okTool = 0, failTool = 0;
+    for (let i = 0; i < toolIds.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = toolIds.slice(i, i + BATCH_SIZE);
+      chunk.forEach(toolId => {
+        const t = toolsCache.find(x => x.id === toolId);
+        if (!t) return;
+        const newOut = Math.max(0, (t.totalOut || 0) - toolDelta[toolId].decOut);
+        const newConsume = (t.totalConsume || 0) + toolDelta[toolId].incConsume;
+        batch.update(doc(db, 'tools', toolId), {
+          totalOut: newOut,
+          totalConsume: newConsume,
+          updatedAt: Date.now(),
+        });
+      });
+      try { await batch.commit(); okTool += chunk.length; }
+      catch(e) { console.error('[V10] tool 批次失败', e); failTool += chunk.length; }
+    }
+
+    await setDoc(markerRef, {
+      appliedAt: Date.now(),
+      description: 'V10: 历史导入的 out 记录归类为 consume(领用) + 调整 totals',
+      records: okHist, tools: okTool, failHist, failTool,
+    });
+
+    showToast('已重分类 ' + okHist + ' 条历史记录为领用');
+    console.log('[V10] hist=' + okHist + ' tools=' + okTool);
+  } catch (e) {
+    console.error('[V10] 失败', e);
+    showToast('V10 迁移失败：' + (e.message || e));
+  }
+}
+
+/* ----- UI 层：列表 ----- */
+function setToolsFilter(f) {
+  toolsFilter = f;
+  toolsPageNum = 1;
+  renderToolsList();
+}
+function onToolsSearchInput() {
+  const v = document.getElementById('tools-search').value;
+  toolsSearchText = v.trim();
+  toolsPageNum = 1;
+  document.getElementById('tools-search-clear').classList.toggle('active', !!v);
+  renderToolsList();
+}
+function clearToolsSearch() {
+  document.getElementById('tools-search').value = '';
+  toolsSearchText = '';
+  document.getElementById('tools-search-clear').classList.remove('active');
+  toolsPageNum = 1;
+  renderToolsList();
+}
+function loadMoreTools() {
+  toolsPageNum += 1;
+  renderToolsList();
+}
+
+function filterTools() {
+  return toolsCache.filter(t => {
+    const qty = t.quantity == null ? 0 : t.quantity;
+    if (toolsFilter === 'in-stock' && qty <= 0) return false;
+    if (toolsFilter === 'zero' && qty > 0) return false;
+    if (toolsSearchText) {
+      const s = toolsSearchText.toLowerCase();
+      const hay = ((t.name || '') + ' ' + (t.unit || '')).toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  });
+}
+
+function renderToolsOverview() {
+  const all = toolsCache;
+  const totalQty = all.reduce((s, t) => s + (t.quantity || 0), 0);
+  // 2026-04-23：从历史记录直接算 待归还/累计领用，避免 cached counters 不准
+  let pending = 0;
+  let totalConsume = 0;
+  toolsHistoryCache.forEach(h => {
+    if (h.reverted || h.isCounter) return;
+    // 待归还 = 真实新借用 - 归还（跳过 isImport 的旧 out 和已标 consumed 的）
+    if (h.type === 'out' && !h.isImport && !h.consumed) pending += (h.quantity || 0);
+    if (h.type === 'return') pending -= (h.quantity || 0);
+    // 累计领用 = 所有 consume + 历史导入的旧 out（按用户口径都是领用）
+    if (h.type === 'consume') totalConsume += (h.quantity || 0);
+    else if (h.type === 'out' && h.isImport) totalConsume += (h.quantity || 0);
+  });
+  if (pending < 0) pending = 0;
+  const ov = document.getElementById('tools-overview');
+  if (!ov) return;
+  ov.innerHTML = `
+    <div class="tools-ov-card">
+      <div class="tools-ov-num">${all.length}</div>
+      <div class="tools-ov-lbl">品种</div>
+    </div>
+    <div class="tools-ov-card">
+      <div class="tools-ov-num">${totalQty}</div>
+      <div class="tools-ov-lbl">总库存</div>
+    </div>
+    <div class="tools-ov-card">
+      <div class="tools-ov-num" style="color:#C75B1E;">${pending}</div>
+      <div class="tools-ov-lbl">待归还</div>
+    </div>
+    <div class="tools-ov-card">
+      <div class="tools-ov-num">${totalConsume}</div>
+      <div class="tools-ov-lbl">累计领用</div>
+    </div>
+  `;
+}
+
+function renderToolsList() {
+  renderToolsOverview();
+  const filtered = filterTools();
+  // 2026-04-23：有库存的排前面，无库存的排最后（不然打开像没东西一样）
+  filtered.sort((a, b) => {
+    const qa = a.quantity || 0, qb = b.quantity || 0;
+    if ((qa <= 0) !== (qb <= 0)) return qa <= 0 ? 1 : -1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+  const total = filtered.length;
+  const shown = Math.min(toolsPageSize * toolsPageNum, total);
+  const page = filtered.slice(0, shown);
+
+  const sub = document.getElementById('tools-section-sub');
+  if (sub) sub.textContent = total + ' 种 · 共 ' + toolsCache.length;
+
+  const container = document.getElementById('tools-list-container');
+  if (!container) return;
+  if (page.length === 0) {
+    container.innerHTML = `<div class="empty" style="padding:60px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无匹配</div><div class="empty-hint">no matching tools</div></div>`;
+  } else {
+    container.innerHTML = page.map(renderToolCard).join('');
+  }
+  const lm = document.getElementById('tools-load-more');
+  if (lm) lm.style.display = shown < total ? '' : 'none';
+}
+
+function renderToolCard(t) {
+  const qty = t.quantity == null ? 0 : t.quantity;
+  const zero = qty <= 0;
+  const totalIn = t.totalIn || 0;
+  const totalOut = t.totalOut || 0;
+  return `
+    <div class="tool-card${zero ? ' zero' : ''}" onclick="openToolDetail('${t.id}')">
+      <div class="tool-card-head">
+        <div class="tool-card-name">${escapeHtml(t.name || '—')}</div>
+        <div class="tool-card-qty">
+          <div class="tool-card-qty-num">${qty}</div>
+          <div class="tool-card-qty-unit">${escapeHtml(t.unit || '')}</div>
+        </div>
+      </div>
+      <div class="tool-card-meta">入库 ${totalIn}<span class="meta-sep">·</span>出库 ${totalOut}</div>
+      <div class="tool-card-actions" onclick="event.stopPropagation()">
+        <button class="tool-act-btn consume" ${qty <= 0 ? 'disabled' : ''} onclick="addToCart('${t.id}', 'consume')">+ 加入领用单</button>
+        <button class="tool-act-btn out" ${qty <= 0 ? 'disabled' : ''} onclick="addToCart('${t.id}', 'borrow')">+ 加入借用单</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ----- UI 层：详情 ----- */
+function openToolDetail(id) {
+  const t = toolsCache.find(x => x.id === id);
+  if (!t) { showToast('工器具不存在'); return; }
+  currentToolId = id;
+  renderToolDetail(t);
+  switchModule('tool-detail');
+}
+
+function backToToolsList() {
+  currentToolId = null;
+  switchModule('tools');
+}
+
+function renderToolDetail(t) {
+  const user = getCurrentUser();
+  const qty = t.quantity == null ? 0 : t.quantity;
+  // Hero
+  document.getElementById('tool-detail-hero').innerHTML = `
+    <div class="parts-detail-tags">
+      <span class="parts-src-tag long" style="background:var(--g-mist);color:var(--g-forest);">工器具</span>
+    </div>
+    <h2 class="parts-detail-name">${escapeHtml(t.name || '—')}</h2>
+    <div class="parts-detail-qty-row">
+      <span class="parts-detail-qty${qty <= 0 ? ' low' : ''}">${qty}</span>
+      <span class="parts-detail-qty-lbl">${escapeHtml(t.unit || '件')} · 当前库存</span>
+    </div>
+  `;
+  // Body
+  const infoHtml = `
+    <div class="parts-info-grid">
+      ${renderInfoRow('单位', t.unit)}
+      ${renderInfoRow('入库累计', String(t.totalIn || 0))}
+      ${renderInfoRow('出库累计', String(t.totalOut || 0))}
+    </div>`;
+  // History
+  const history = toolsHistoryCache.filter(h => h.toolId === t.id).slice(0, 50);
+  const histHtml = history.length === 0
+    ? '<div style="text-align:center;padding:24px;color:var(--subtle);font-size:13px;">暂无出入库记录</div>'
+    : history.map(h => {
+      const d = new Date(h.createdAt || 0);
+      const dateStr = h.createdAt
+        ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+        : '—';
+      // 'in' / 'return' 都是 +；'out'(借用) 和 'consume'(领用) 是 -
+      const sign = (h.type === 'in' || h.type === 'return') ? '+' : '-';
+      const typeLabel = h.type === 'in' ? '入库' : (h.type === 'return' ? '归还' : (h.type === 'consume' ? '领用' : '借用'));
+      const isMine = user && h.operatorId === user.empno;
+      const isAdmin = user && user.role === 'admin';
+      const isReverted = h.reverted;
+      const isCounter = h.isCounter;
+      const canRevert = (isMine || isAdmin) && !isReverted && !isCounter && !h.isImport;
+      const canDelete = isAdmin;
+      let tags = '';
+      if (isReverted) tags += '<span class="tool-hist-reverted-tag">已撤销</span>';
+      if (h.isImport) tags += '<span class="tool-hist-reverted-tag" style="background:var(--g-mist);color:var(--g-forest);">导入</span>';
+      if (h.slipId) tags += `<span class="tool-hist-reverted-tag" style="background:var(--surface);color:var(--muted);font-family:var(--font-mono);" title="同单号: ${escapeHtml(h.slipId)}">${escapeHtml(h.slipId.slice(-8))}</span>`;
+      let actions = '';
+      if (canRevert) actions += `<button class="tool-hist-btn revert" onclick="event.stopPropagation();revertToolHistory('${h.id}')">撤销</button>`;
+      if (canDelete) actions += `<button class="tool-hist-btn revert" onclick="event.stopPropagation();hardDeleteToolHistory('${h.id}')">删除</button>`;
+      let meta;
+      if (h.type === 'in') meta = `来源: <strong>${escapeHtml(h.source || '—')}</strong>`;
+      else if (h.type === 'return') meta = `归还人: <strong>${escapeHtml(h.returnedBy || h.receiver || '—')}</strong>`;
+      else meta = `领取人: <strong>${escapeHtml(h.receiver || '—')}</strong>`;
+      return `
+        <div class="tool-hist-item${isReverted ? ' reverted' : ''}">
+          <div class="tool-hist-top">
+            <span class="tool-hist-type ${h.type}">${typeLabel}</span>
+            <span class="tool-hist-qty ${h.type}">${sign}${h.quantity}</span>
+            ${tags}
+            <span class="tool-hist-date">${dateStr}</span>
+          </div>
+          <div class="tool-hist-meta">${meta}${h.note ? ' · ' + escapeHtml(h.note) : ''}${h.operatorName ? ' · 经办 ' + escapeHtml(h.operatorName) : ''}</div>
+          ${actions ? `<div class="tool-hist-actions">${actions}</div>` : ''}
+        </div>`;
+    }).join('');
+  document.getElementById('tool-detail-body').innerHTML = `
+    <div class="wo-section-label">工器具信息</div>
+    ${infoHtml}
+    <div class="wo-section-label">出入库记录 ${history.length ? '(' + history.length + ' 条)' : ''}</div>
+    ${histHtml}
+  `;
+  // Bottom actions（2026-04-23 改：只领用按钮，加入购物车；入库走管理员批量入库；归还走顶部入口）
+  const actionsEl = document.getElementById('tool-detail-actions');
+  if (user) {
+    const canOut = qty > 0;
+    actionsEl.innerHTML = `
+      <div class="parts-act-twin">
+        <button class="wo-act-btn ${canOut ? 'success' : 'secondary'}" ${canOut ? '' : 'disabled'} onclick="addToCart('${t.id}', 'consume')">+ 加入领用单</button>
+        <button class="wo-act-btn ${canOut ? 'primary' : 'secondary'}" ${canOut ? '' : 'disabled'} onclick="addToCart('${t.id}', 'borrow')">+ 加入借用单</button>
+      </div>`;
+  } else {
+    actionsEl.innerHTML = '';
+  }
+}
+
+/* ----- 领用/入库 sheet ----- */
+let toolTxnBuffer = null;
+
+/* ========== 购物车（多选领用/归还）· 2026-04-23 ========== */
+// 2026-04-23 重构：领用(consume，无归还) vs 借用(borrow，要归还)
+// 形如: { borrow: { toolId: { qty, name, unit, currentStock } }, consume: {...} }
+let toolCart = { consume: {}, borrow: {} };
+let cartActiveTab = 'consume';  // 默认领用（更常用）
+let cartReceiver = '';   // 2026-04-23 改：默认空，必须填个人姓名（不允许"班组公共"）
+let cartNote = '';
+
+// mode: 'borrow' (借用，需要归还) | 'consume' (领用，消耗品)
+function cartCount(mode) {
+  return Object.keys(toolCart[mode] || {}).length;
+}
+function cartTotalCount() {
+  return cartCount('borrow') + cartCount('consume');
+}
+
+function modeLabel(mode) {
+  return mode === 'borrow' ? '借用' : '领用';
+}
+
+function addToCart(toolId, mode) {
+  // 兼容老的 mode 名
+  if (mode === 'out') mode = 'borrow';
+  const t = toolsCache.find(x => x.id === toolId);
+  if (!t) return;
+  const stock = t.quantity || 0;
+  if (stock <= 0) {
+    showToast('库存为 0，无法' + modeLabel(mode));
+    return;
+  }
+  const existing = toolCart[mode][toolId];
+  if (existing) {
+    if (existing.qty + 1 > stock) {
+      showToast('库存只有 ' + stock + ' ' + (t.unit || '件'));
+      return;
+    }
+    existing.qty += 1;
+  } else {
+    toolCart[mode][toolId] = {
+      qty: 1, name: t.name, unit: t.unit, currentStock: stock,
+    };
+  }
+  updateCartBadge();
+  showToast('加入' + modeLabel(mode) + '单：' + t.name);
+}
+
+function changeCartQty(toolId, mode, delta) {
+  const item = toolCart[mode][toolId];
+  if (!item) return;
+  const t = toolsCache.find(x => x.id === toolId);
+  const stock = t ? (t.quantity || 0) : 0;
+  const newQty = item.qty + delta;
+  if (newQty <= 0) { removeFromCart(toolId, mode); return; }
+  if (newQty > stock) {
+    showToast('库存只有 ' + stock + ' ' + (t.unit || '件'));
+    return;
+  }
+  item.qty = newQty;
+  updateCartBadge();
+  refreshCartSheet();
+}
+
+function setCartQty(toolId, mode, val) {
+  const item = toolCart[mode][toolId];
+  if (!item) return;
+  let n = parseInt(val, 10);
+  if (isNaN(n) || n <= 0) { removeFromCart(toolId, mode); return; }
+  const t = toolsCache.find(x => x.id === toolId);
+  const stock = t ? (t.quantity || 0) : 0;
+  if (n > stock) {
+    n = stock;
+    showToast('库存只有 ' + stock);
+  }
+  item.qty = n;
+  updateCartBadge();
+  refreshCartSheet();
+}
+
+function removeFromCart(toolId, mode) {
+  delete toolCart[mode][toolId];
+  updateCartBadge();
+  refreshCartSheet();
+}
+
+function clearCart(mode) {
+  if (mode) toolCart[mode] = {};
+  else toolCart = { consume: {}, borrow: {} };
+  updateCartBadge();
+  refreshCartSheet();
+}
+
+function setCartTab(mode) {
+  cartActiveTab = mode;
+  refreshCartSheet();
+}
+
+function updateCartBadge() {
+  // 老的 section-header 按钮（已隐藏）
+  const btn = document.getElementById('tools-cart-btn');
+  const cnt = document.getElementById('tools-cart-count');
+  const total = cartTotalCount();
+  if (btn) btn.style.display = total > 0 ? '' : 'none';
+  if (cnt) cnt.textContent = total;
+  // 新的常显购物车 bar
+  renderCartBar();
+}
+
+function renderCartBar() {
+  const bar = document.getElementById('tools-cart-bar');
+  if (!bar) return;
+  const bN = cartCount('borrow');
+  const cN = cartCount('consume');
+  const bQty = Object.values(toolCart.borrow || {}).reduce((s, x) => s + x.qty, 0);
+  const cQty = Object.values(toolCart.consume || {}).reduce((s, x) => s + x.qty, 0);
+  const total = bN + cN;
+  bar.innerHTML = `
+    <div class="tools-cart-bar-inner ${total > 0 ? 'has-items' : ''}" onclick="showSheet('toolCart')">
+      <span class="tools-cart-bar-icon">🛒</span>
+      <span class="tools-cart-bar-text">
+        <span class="tools-cart-bar-title">我的清单</span>
+        <span class="tools-cart-bar-counts">领用 <strong>${cN}</strong> 种 · ${cQty} 件 &nbsp;·&nbsp; 借用 <strong>${bN}</strong> 种 · ${bQty} 件</span>
+      </span>
+      <span class="tools-cart-bar-arrow">${total > 0 ? '查看 ›' : '暂无'}</span>
+    </div>
+  `;
+}
+
+function refreshCartSheet() {
+  const c = document.getElementById('sheet-content');
+  if (c && c.querySelector('.cart-tabs')) {
+    c.innerHTML = `<div class="sheet-handle"></div>` + renderToolCartSheet();
+  }
+}
+
+function renderToolCartSheet() {
+  const bN = cartCount('borrow');
+  const cN = cartCount('consume');
+  // 兼容旧 tab 值 + 自动切到非空 tab
+  if (cartActiveTab !== 'borrow' && cartActiveTab !== 'consume') cartActiveTab = 'consume';
+  if (cartActiveTab === 'consume' && cN === 0 && bN > 0) cartActiveTab = 'borrow';
+  if (cartActiveTab === 'borrow' && bN === 0 && cN > 0) cartActiveTab = 'consume';
+
+  const tabsHtml = `
+    <div class="cart-tabs">
+      <button class="cart-tab consume${cartActiveTab === 'consume' ? ' active' : ''}" onclick="setCartTab('consume')">领用 (${cN})</button>
+      <button class="cart-tab borrow${cartActiveTab === 'borrow' ? ' active' : ''}" onclick="setCartTab('borrow')">借用 (${bN})</button>
+    </div>`;
+
+  const items = toolCart[cartActiveTab] || {};
+  const ids = Object.keys(items);
+  const modeName = modeLabel(cartActiveTab);
+  let linesHtml = '';
+  if (ids.length === 0) {
+    linesHtml = `<div class="cart-empty">暂无${modeName}项</div>`;
+  } else {
+    linesHtml = ids.map(id => {
+      const it = items[id];
+      const t = toolsCache.find(x => x.id === id);
+      const stock = t ? (t.quantity || 0) : 0;
+      return `
+        <div class="cart-line">
+          <div style="flex:1;min-width:0;">
+            <div class="cart-line-name">${escapeHtml(it.name)}</div>
+            <div class="cart-line-stock">单位 ${escapeHtml(it.unit || '件')} · 当前库存 ${stock}</div>
+          </div>
+          <button class="cart-qty-btn" onclick="changeCartQty('${id}', '${cartActiveTab}', -1)">−</button>
+          <input class="cart-qty-input" type="number" min="1" value="${it.qty}" inputmode="numeric" onchange="setCartQty('${id}', '${cartActiveTab}', this.value)">
+          <button class="cart-qty-btn" onclick="changeCartQty('${id}', '${cartActiveTab}', 1)">+</button>
+          <button class="cart-line-rm" onclick="removeFromCart('${id}', '${cartActiveTab}')" title="移除">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  const personLabel = cartActiveTab === 'borrow' ? '借用人' : '领取人';
+  const submitLabel = '提交' + modeName + '单';
+  const submitDisabled = ids.length === 0 ? 'disabled' : '';
+
+  return `
+    <div class="sheet-title">🛒 我的${modeName}单</div>
+    ${tabsHtml}
+    ${linesHtml}
+    <div class="edit-field" style="margin-top:14px;">
+      <div class="edit-field-label required">${personLabel}</div>
+      <input class="edit-input" id="cart-receiver" value="${escapeHtml(cartReceiver)}" placeholder="必填具体姓名（不允许班组/公共）" oninput="cartReceiver = this.value">
+    </div>
+    <div class="edit-field">
+      <div class="edit-field-label">备注</div>
+      <textarea class="edit-textarea" id="cart-note" placeholder="${cartActiveTab === 'borrow' ? '例如：3 系列检修，借用对讲机' : '例如：消耗品领用'}" oninput="cartNote = this.value">${escapeHtml(cartNote)}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="sheet-btn" style="flex:1;margin:0;" onclick="clearCart('${cartActiveTab}'); refreshCartSheet();">清空</button>
+      <button class="btn-primary" style="flex:2;margin:0;" ${submitDisabled} onclick="submitToolCart('${cartActiveTab}')">${submitLabel}</button>
+    </div>
+    <button class="sheet-btn" onclick="hideSheet()">关闭</button>
+  `;
+}
+
+async function submitToolCart(mode) {
+  // mode: 'borrow' (借用) | 'consume' (领用) — 都减库存
+  if (mode !== 'borrow' && mode !== 'consume') { showToast('未知 mode: ' + mode); return; }
+  const items = toolCart[mode];
+  const ids = Object.keys(items);
+  if (ids.length === 0) { showToast('清单为空'); return; }
+  const personLabel = mode === 'borrow' ? '借用人' : '领取人';
+  if (!cartReceiver.trim()) { showToast('请填写' + personLabel); return; }
+  const r = cartReceiver.trim();
+  if (r.includes('车间') || r.includes('班组') || r.includes('公共') || r.length < 2) {
+    showToast(personLabel + '必须是具体个人姓名（不允许班组/公共）');
+    return;
+  }
+
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+
+  // Generate slipId
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const slipPrefix = mode === 'borrow' ? 'BR' : 'CN';   // BR=借用 CN=领用
+  const slipId = slipPrefix + ymd + '-' + rand;
+
+  // DB type: borrow → 'out' (兼容老数据)；consume → 'consume' (新)
+  const dbType = mode === 'borrow' ? 'out' : 'consume';
+
+  setCloudStatus('syncing', '提交单据...');
+  const now = Date.now();
+
+  try {
+    // Validate stock
+    for (const id of ids) {
+      const t = toolsCache.find(x => x.id === id);
+      if (!t || (t.quantity || 0) < items[id].qty) {
+        showToast(`${items[id].name} 库存不足`);
+        setCloudStatus('online', '已同步');
+        return;
+      }
+    }
+
+    const batch = writeBatch(db);
+    ids.forEach((id, idx) => {
+      const it = items[id];
+      const t = toolsCache.find(x => x.id === id);
+      const hid = 'th_' + now + '_' + idx + '_' + Math.random().toString(36).slice(2, 6);
+      const histRecord = {
+        id: hid,
+        toolId: id,
+        toolName: it.name,
+        type: dbType,
+        quantity: it.qty,
+        unit: it.unit,
+        receiver: cartReceiver.trim(),
+        note: cartNote.trim(),
+        operatorId: user.empno,
+        operatorName: user.name,
+        createdAt: now + idx,
+        slipId: slipId,
+      };
+      // Mark intent so consumed records won't show in 归还 list
+      if (mode === 'consume') histRecord.consumed = true;
+      batch.set(doc(db, 'toolhistory', hid), histRecord);
+      // Both modes deduct from stock; counters differ
+      const newQty = (t.quantity || 0) - it.qty;
+      const updates = { quantity: newQty, updatedAt: now };
+      if (mode === 'borrow') {
+        updates.totalOut = (t.totalOut || 0) + it.qty;
+      } else {
+        updates.totalConsume = (t.totalConsume || 0) + it.qty;
+      }
+      batch.update(doc(db, 'tools', id), updates);
+    });
+
+    await batch.commit();
+    showToast((mode === 'borrow' ? '已提交借用单 ' : '已提交领用单 ') + ids.length + ' 项 · ' + slipId);
+    // Clear cart
+    toolCart[mode] = {};
+    cartNote = '';
+    updateCartBadge();
+    hideSheet();
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[Cart] 提交失败', e);
+    showToast('提交失败：' + (e.message || e));
+    setCloudStatus('error', '提交失败');
+  }
+}
+
+/* ========== 归还流程 · 2026-04-23 ========== */
+// state: pickedReceiver=null → 选借用人; selected → 选物品归还
+let returnFlow = { receiver: null, picks: {} };
+
+function openReturnSheet() {
+  returnFlow = { receiver: null, picks: {} };
+  showSheet('toolReturn');
+}
+
+// 计算每个 receiver（非公共使用）的"已借出未归还"清单
+// 注意：'consume'（领用·消耗品）不算入归还候选；只有 'out'（借用）才算
+function computeOutstandingByReceiver() {
+  const byRecv = {};  // receiver -> { toolId -> outstandingQty }
+  toolsHistoryCache.forEach(h => {
+    if (h.reverted || h.isCounter) return;
+    if (h.consumed) return;  // 明确标了消耗的不算
+    let recv;
+    if (h.type === 'out') recv = h.receiver;
+    else if (h.type === 'return') recv = h.returnedBy || h.receiver;
+    else return;  // 'in' 和 'consume' 不算
+    if (!recv) return;
+    const r = String(recv).trim();
+    if (!r || r.includes('车间班组公共') || r.includes('班组公共')) return;
+    if (!byRecv[r]) byRecv[r] = {};
+    if (h.type === 'out') {
+      byRecv[r][h.toolId] = (byRecv[r][h.toolId] || 0) + (h.quantity || 0);
+    } else {
+      byRecv[r][h.toolId] = (byRecv[r][h.toolId] || 0) - (h.quantity || 0);
+    }
+  });
+  return byRecv;
+}
+
+function pickReturnReceiver(name) {
+  returnFlow.receiver = name;
+  // 预填 picks 为对应清单（数量初始 0，让用户选）
+  refreshReturnSheet();
+}
+
+function backToReturnReceiver() {
+  returnFlow.receiver = null;
+  returnFlow.picks = {};
+  refreshReturnSheet();
+}
+
+function refreshReturnSheet() {
+  const c = document.getElementById('sheet-content');
+  if (c) c.innerHTML = `<div class="sheet-handle"></div>` + renderToolReturnSheet();
+}
+
+function changeReturnQty(toolId, delta, max) {
+  const cur = returnFlow.picks[toolId] || 0;
+  let n = cur + delta;
+  if (n < 0) n = 0;
+  if (n > max) { showToast('最多归还 ' + max); return; }
+  returnFlow.picks[toolId] = n;
+  refreshReturnSheet();
+}
+
+function setReturnQty(toolId, val, max) {
+  let n = parseInt(val, 10);
+  if (isNaN(n) || n < 0) n = 0;
+  if (n > max) { n = max; showToast('最多归还 ' + max); }
+  returnFlow.picks[toolId] = n;
+  refreshReturnSheet();
+}
+
+function renderToolReturnSheet() {
+  if (!returnFlow.receiver) {
+    // Step 1: 选借用人
+    const byRecv = computeOutstandingByReceiver();
+    const list = Object.entries(byRecv).map(([recv, items]) => {
+      const outstanding = Object.entries(items).filter(([id, q]) => q > 0);
+      const totalQty = outstanding.reduce((s, [id, q]) => s + q, 0);
+      return { receiver: recv, itemCount: outstanding.length, totalQty };
+    }).filter(x => x.itemCount > 0);
+    list.sort((a, b) => b.totalQty - a.totalQty);
+
+    if (list.length === 0) {
+      return `
+        <div class="sheet-title">↩️ 归还工器具</div>
+        <div class="cart-empty">当前没有任何借用人有未归还物品 🎉</div>
+        <button class="sheet-btn" onclick="hideSheet()">关闭</button>
+      `;
+    }
+    const itemsHtml = list.map(x => `
+      <div class="cart-line" style="cursor:pointer;" onclick="pickReturnReceiver(${JSON.stringify(x.receiver).replace(/'/g, '&#39;').replace(/"/g, '&quot;')})">
+        <div style="flex:1;min-width:0;">
+          <div class="cart-line-name" style="font-weight:500;">${escapeHtml(x.receiver)}</div>
+          <div class="cart-line-stock">${x.itemCount} 种 · 合计 ${x.totalQty} 件未归还</div>
+        </div>
+        <span style="color:var(--g-forest);font-size:18px;">›</span>
+      </div>
+    `).join('');
+    return `
+      <div class="sheet-title">↩️ 选择归还人</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">下面是当前有未归还物品的借用人（不含"班组公共"）</div>
+      ${itemsHtml}
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>
+    `;
+  }
+
+  // Step 2: 该 receiver 的清单
+  const byRecv = computeOutstandingByReceiver();
+  const items = byRecv[returnFlow.receiver] || {};
+  const outstanding = Object.entries(items).filter(([id, q]) => q > 0);
+  if (outstanding.length === 0) {
+    return `
+      <div class="sheet-title">↩️ ${escapeHtml(returnFlow.receiver)}</div>
+      <div class="cart-empty">该借用人没有未归还物品</div>
+      <button class="sheet-btn" onclick="backToReturnReceiver()">← 重选借用人</button>
+      <button class="sheet-btn" onclick="hideSheet()">关闭</button>
+    `;
+  }
+  const linesHtml = outstanding.map(([toolId, max]) => {
+    const t = toolsCache.find(x => x.id === toolId);
+    const cur = returnFlow.picks[toolId] || 0;
+    return `
+      <div class="cart-line">
+        <div style="flex:1;min-width:0;">
+          <div class="cart-line-name">${escapeHtml(t ? t.name : toolId)}</div>
+          <div class="cart-line-stock">单位 ${escapeHtml(t ? (t.unit || '') : '')} · 借出未还 ${max}</div>
+        </div>
+        <button class="cart-qty-btn" onclick="changeReturnQty('${toolId}', -1, ${max})">−</button>
+        <input class="cart-qty-input" type="number" min="0" max="${max}" value="${cur}" inputmode="numeric" onchange="setReturnQty('${toolId}', this.value, ${max})">
+        <button class="cart-qty-btn" onclick="changeReturnQty('${toolId}', 1, ${max})">+</button>
+      </div>
+    `;
+  }).join('');
+  const totalToReturn = Object.values(returnFlow.picks).reduce((s, n) => s + (n || 0), 0);
+  return `
+    <div class="sheet-title">↩️ ${escapeHtml(returnFlow.receiver)} 的归还单</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">点 [- N +] 选要归还的数量，0 表示不归还</div>
+    ${linesHtml}
+    <div style="margin-top:14px;font-size:13px;color:var(--ink);">合计归还: <strong>${totalToReturn}</strong> 件</div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="sheet-btn" style="flex:1;" onclick="backToReturnReceiver()">← 重选</button>
+      <button class="btn-primary" style="flex:2;margin:0;" ${totalToReturn === 0 ? 'disabled' : ''} onclick="submitReturn()">提交归还单</button>
+    </div>
+    <button class="sheet-btn" onclick="hideSheet()">取消</button>
+  `;
+}
+
+async function submitReturn() {
+  const recv = returnFlow.receiver;
+  const picks = returnFlow.picks;
+  const items = Object.entries(picks).filter(([id, q]) => q > 0);
+  if (items.length === 0) { showToast('请至少归还 1 项'); return; }
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const slipId = 'RT' + ymd + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const now = Date.now();
+  setCloudStatus('syncing', '提交归还单...');
+
+  try {
+    const batch = writeBatch(db);
+    items.forEach(([toolId, qty], idx) => {
+      const t = toolsCache.find(x => x.id === toolId);
+      if (!t) return;
+      const hid = 'th_' + now + '_r' + idx + '_' + Math.random().toString(36).slice(2, 6);
+      batch.set(doc(db, 'toolhistory', hid), {
+        id: hid,
+        toolId, toolName: t.name,
+        type: 'return',
+        quantity: qty,
+        unit: t.unit,
+        returnedBy: recv,
+        operatorId: user.empno,
+        operatorName: user.name,
+        createdAt: now + idx,
+        slipId,
+      });
+      batch.update(doc(db, 'tools', toolId), {
+        quantity: (t.quantity || 0) + qty,
+        totalReturn: (t.totalReturn || 0) + qty,
+        updatedAt: now,
+      });
+    });
+    await batch.commit();
+    showToast('已归还 ' + items.length + ' 项');
+    returnFlow = { receiver: null, picks: {} };
+    hideSheet();
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[Return] 失败', e);
+    showToast('提交失败：' + (e.message || e));
+    setCloudStatus('error', '失败');
+  }
+}
+
+/* ========== 批量入库（admin only）· 2026-04-23 ========== */
+let batchInRows = [];   // [{name, spec, qty, source, note, status: 'ok'|'unknown'|'error', toolId?}]
+
+function openBatchInSheet() {
+  batchInRows = [];
+  showSheet('toolBatchIn');
+}
+
+function refreshBatchInSheet() {
+  const c = document.getElementById('sheet-content');
+  if (c) c.innerHTML = `<div class="sheet-handle"></div>` + renderToolBatchInSheet();
+}
+
+function parseBatchInPaste() {
+  const ta = document.getElementById('batch-in-paste');
+  if (!ta) return;
+  const text = ta.value.trim();
+  if (!text) { batchInRows = []; refreshBatchInSheet(); return; }
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  // Try to detect tab vs comma; tab is more common from Excel paste
+  const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(',') ? ',' : '\t');
+  // Skip header if first row contains "物品名称"
+  const startIdx = (lines[0].includes('物品名称') || lines[0].includes('名称')) ? 1 : 0;
+  const rows = [];
+  for (let i = startIdx; i < lines.length; i++) {
+    const cells = lines[i].split(sep).map(s => s.trim());
+    const [name, spec, qtyStr, source, note] = cells;
+    if (!name) continue;
+    const qty = parseInt(qtyStr, 10);
+    let row = { name, spec: spec || '', qtyRaw: qtyStr, qty, source: source || '', note: note || '' };
+    if (isNaN(qty) || qty <= 0) {
+      row.status = 'error';
+      row.statusMsg = '数量无效';
+    } else {
+      const tool = toolsCache.find(t => t.name === name);
+      if (!tool) {
+        row.status = 'unknown';
+        row.statusMsg = '系统里未找到此物品';
+      } else {
+        row.status = 'ok';
+        row.toolId = tool.id;
+        row.unit = tool.unit;
+      }
+    }
+    rows.push(row);
+  }
+  batchInRows = rows;
+  refreshBatchInSheet();
+}
+
+function renderToolBatchInSheet() {
+  const okN = batchInRows.filter(r => r.status === 'ok').length;
+  const unkN = batchInRows.filter(r => r.status === 'unknown').length;
+  const errN = batchInRows.filter(r => r.status === 'error').length;
+
+  let preview = '';
+  if (batchInRows.length > 0) {
+    preview = `
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);">已解析 ${batchInRows.length} 行：${okN} 可入库 · ${unkN} 系统未找到 · ${errN} 数量错</div>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px;">
+        ${batchInRows.slice(0, 50).map(r => {
+          const color = r.status === 'ok' ? 'var(--g-forest)' : (r.status === 'unknown' ? '#D97935' : '#C13B3B');
+          const icon = r.status === 'ok' ? '✓' : (r.status === 'unknown' ? '?' : '✗');
+          return `<div style="padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:12px;">
+            <span style="color:${color};font-weight:500;">${icon}</span>
+            <span style="margin-left:6px;">${escapeHtml(r.name)}</span>
+            ${r.spec ? `<span style="color:var(--subtle);"> · ${escapeHtml(r.spec)}</span>` : ''}
+            <span style="color:var(--muted);"> × ${r.qtyRaw}</span>
+            ${r.source ? `<span style="color:var(--muted);"> · ${escapeHtml(r.source)}</span>` : ''}
+            ${r.statusMsg ? `<div style="color:${color};font-size:11px;margin-left:18px;">${escapeHtml(r.statusMsg)}</div>` : ''}
+          </div>`;
+        }).join('')}
+        ${batchInRows.length > 50 ? `<div style="padding:8px 12px;color:var(--subtle);font-size:11px;">…还有 ${batchInRows.length - 50} 行未显示</div>` : ''}
+      </div>`;
+  }
+
+  return `
+    <div class="sheet-title">📥 批量入库（管理员）</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+      从 Excel 复制粘贴 5 列：<strong>物品名称 | 规格 | 数量 | 物品来源 | 备注</strong><br>
+      第一行可以是表头（自动识别）。物品名称必须和系统里的工器具名一致才能入库。
+    </div>
+    <textarea id="batch-in-paste" placeholder="物品名称	规格	数量	物品来源	备注&#10;塑料薄膜 2000*100000*0.15mm		1	堆场/仓库	&#10;手持黄油枪 500G	500G	2	堆场/仓库	" style="width:100%;height:140px;font-size:12px;font-family:var(--font-mono);padding:10px;border:1px solid var(--line);border-radius:8px;resize:vertical;" onchange="parseBatchInPaste()" oninput="parseBatchInPaste()"></textarea>
+    ${preview}
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="sheet-btn" style="flex:1;" onclick="hideSheet()">取消</button>
+      <button class="btn-primary" style="flex:2;margin:0;" ${okN === 0 ? 'disabled' : ''} onclick="submitBatchIn()">提交 ${okN} 条入库</button>
+    </div>
+  `;
+}
+
+async function submitBatchIn() {
+  const okRows = batchInRows.filter(r => r.status === 'ok');
+  if (okRows.length === 0) { showToast('没有可入库的行'); return; }
+  const user = getCurrentUser();
+  if (!user || user.role !== 'admin') { showToast('仅管理员可批量入库'); return; }
+
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const slipId = 'BI' + ymd + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const now = Date.now();
+  setCloudStatus('syncing', '批量入库...');
+
+  let ok = 0, fail = 0;
+  try {
+    // Aggregate by toolId so multiple rows of same item update tool once
+    const aggByTool = {};
+    okRows.forEach(r => {
+      if (!aggByTool[r.toolId]) aggByTool[r.toolId] = 0;
+      aggByTool[r.toolId] += r.qty;
+    });
+    const BATCH_SIZE = 400;
+    for (let i = 0; i < okRows.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = okRows.slice(i, i + BATCH_SIZE);
+      chunk.forEach((r, idx) => {
+        const hid = 'th_' + now + '_b' + (i + idx) + '_' + Math.random().toString(36).slice(2, 6);
+        batch.set(doc(db, 'toolhistory', hid), {
+          id: hid,
+          toolId: r.toolId,
+          toolName: r.name,
+          type: 'in',
+          quantity: r.qty,
+          unit: r.unit,
+          source: r.source || '堆场/仓库',
+          spec: r.spec || '',
+          note: r.note || '',
+          operatorId: user.empno,
+          operatorName: user.name,
+          createdAt: now + i + idx,
+          slipId,
+        });
+      });
+      try { await batch.commit(); ok += chunk.length; }
+      catch(e) { console.error('[BatchIn] 批次失败', e); fail += chunk.length; }
+    }
+    // Then update tool quantities and totalIn (separate batch)
+    const toolIds = Object.keys(aggByTool);
+    for (let i = 0; i < toolIds.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = toolIds.slice(i, i + BATCH_SIZE);
+      chunk.forEach(toolId => {
+        const t = toolsCache.find(x => x.id === toolId);
+        if (!t) return;
+        const addQty = aggByTool[toolId];
+        batch.update(doc(db, 'tools', toolId), {
+          quantity: (t.quantity || 0) + addQty,
+          totalIn: (t.totalIn || 0) + addQty,
+          updatedAt: now,
+        });
+      });
+      try { await batch.commit(); }
+      catch(e) { console.error('[BatchIn] tool 更新失败', e); }
+    }
+    if (fail === 0) showToast('已入库 ' + ok + ' 行（单据 ' + slipId + '）');
+    else showToast('入库 ' + ok + '/' + (ok + fail) + '，失败 ' + fail);
+    batchInRows = [];
+    hideSheet();
+    setCloudStatus('online', '已同步');
+  } catch (e) {
+    console.error('[BatchIn] 失败', e);
+    showToast('失败：' + (e.message || e));
+    setCloudStatus('error', '失败');
+  }
+}
+
+function openToolTxn(toolId, type) {
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  const t = toolsCache.find(x => x.id === toolId);
+  if (!t) return;
+  toolTxnBuffer = {
+    toolId: t.id,
+    toolName: t.name,
+    unit: t.unit,
+    type,
+    quantity: 1,
+    receiver: type === 'out' ? '车间班组公共使用' : '',
+    source: type === 'in' ? '堆场/仓库' : '',
+    note: '',
+  };
+  showSheet('toolTxn');
+}
+
+function renderToolTxnSheet() {
+  const b = toolTxnBuffer;
+  if (!b) return '';
+  const t = toolsCache.find(x => x.id === b.toolId);
+  const isOut = b.type === 'out';
+  const currentQty = (t ? t.quantity : 0) || 0;
+  const newQty = isOut ? currentQty - b.quantity : currentQty + b.quantity;
+  const recvQuickHtml = isOut ? `
+    <div class="tool-receiver-quick">
+      <span class="tool-receiver-chip" onclick="setToolReceiver('车间班组公共使用')">车间班组公共使用</span>
+    </div>` : '';
+  const sourceQuickHtml = !isOut ? `
+    <div class="tool-receiver-quick">
+      <span class="tool-receiver-chip" onclick="setToolSource('堆场/仓库')">堆场/仓库</span>
+      <span class="tool-receiver-chip" onclick="setToolSource('品质部借调')">品质部借调</span>
+      <span class="tool-receiver-chip" onclick="setToolSource('精炼技术部借调')">精炼技术部借调</span>
+    </div>` : '';
+  return `
+    <div class="sheet-title">${isOut ? '领用' : '入库'} · ${escapeHtml(b.toolName || '')}</div>
+    <div class="edit-field">
+      <div class="edit-field-label">数量</div>
+      <input type="number" class="edit-input" id="tool-txn-qty" value="${b.quantity}" min="1" inputmode="numeric" oninput="toolTxnBuffer.quantity = Math.max(1, parseInt(this.value, 10) || 1)">
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;">单位 ${escapeHtml(b.unit || '件')} · 当前库存 ${currentQty} → 之后 <strong style="color:${newQty < 0 ? '#C13B3B' : 'var(--g-forest)'};">${newQty}</strong></div>
+    </div>
+    <div class="edit-field">
+      <div class="edit-field-label required">${isOut ? '领取人' : '物品来源'}</div>
+      ${isOut
+        ? `<input class="edit-input" id="tool-txn-receiver" value="${escapeHtml(b.receiver || '')}" placeholder="姓名 / 班组" oninput="toolTxnBuffer.receiver = this.value">${recvQuickHtml}`
+        : `<input class="edit-input" id="tool-txn-source" value="${escapeHtml(b.source || '')}" placeholder="例如：堆场/仓库" oninput="toolTxnBuffer.source = this.value">${sourceQuickHtml}`}
+    </div>
+    <div class="edit-field">
+      <div class="edit-field-label">备注</div>
+      <textarea class="edit-textarea" id="tool-txn-note" placeholder="${isOut ? '例如：夜间巡检用' : '例如：补充常备'}" oninput="toolTxnBuffer.note = this.value">${escapeHtml(b.note || '')}</textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-primary" onclick="submitToolTxn()">${isOut ? '确认领用' : '确认入库'}</button>
+    </div>
+  `;
+}
+
+function setToolReceiver(name) {
+  if (!toolTxnBuffer) return;
+  toolTxnBuffer.receiver = name;
+  const inp = document.getElementById('tool-txn-receiver');
+  if (inp) inp.value = name;
+}
+function setToolSource(name) {
+  if (!toolTxnBuffer) return;
+  toolTxnBuffer.source = name;
+  const inp = document.getElementById('tool-txn-source');
+  if (inp) inp.value = name;
+}
+
+async function submitToolTxn() {
+  const b = toolTxnBuffer;
+  if (!b) return;
+  if (!b.quantity || b.quantity < 1) { showToast('数量需大于 0'); return; }
+  if (b.type === 'out' && !(b.receiver || '').trim()) { showToast('请填写领取人'); return; }
+  if (b.type === 'in' && !(b.source || '').trim()) { showToast('请填写物品来源'); return; }
+  const t = toolsCache.find(x => x.id === b.toolId);
+  if (!t) { showToast('工器具不存在'); return; }
+  const currentQty = t.quantity || 0;
+  const newQty = b.type === 'out' ? currentQty - b.quantity : currentQty + b.quantity;
+  if (b.type === 'out' && newQty < 0) {
+    showToast('库存不足，最多可领 ' + currentQty);
+    return;
+  }
+  const user = getCurrentUser();
+  try {
+    // 1. Save history
+    const hid = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    const histRecord = {
+      id: hid,
+      toolId: t.id,
+      toolName: t.name,
+      type: b.type,
+      quantity: b.quantity,
+      unit: b.unit,
+      note: (b.note || '').trim(),
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+    };
+    if (b.type === 'out') histRecord.receiver = b.receiver.trim();
+    else histRecord.source = b.source.trim();
+    await cloudSaveToolHistory(histRecord);
+    // 2. Update tool quantity + totals
+    const updated = {
+      ...t,
+      quantity: newQty,
+      totalIn: (t.totalIn || 0) + (b.type === 'in' ? b.quantity : 0),
+      totalOut: (t.totalOut || 0) + (b.type === 'out' ? b.quantity : 0),
+    };
+    await cloudSaveTool(updated);
+    showToast(b.type === 'out' ? '领用成功' : '入库成功');
+    toolTxnBuffer = null;
+    hideSheet();
+    // Refresh detail if currently viewing this tool
+    if (currentToolId === t.id) {
+      setTimeout(() => {
+        const fresh = toolsCache.find(x => x.id === t.id);
+        if (fresh) renderToolDetail(fresh);
+      }, 200);
+    }
+  } catch (err) {
+    showToast('提交失败：' + err.message);
+  }
+}
+
+/* ----- 撤销 / 硬删 ----- */
+async function revertToolHistory(historyId) {
+  const h = toolsHistoryCache.find(x => x.id === historyId);
+  if (!h) return;
+  const typeLabel = h.type === 'in' ? '入库' : (h.type === 'return' ? '归还' : '领用');
+  if (!confirm('撤销这条' + typeLabel + '记录？\n会写一条反向记录冲账。')) return;
+  const user = getCurrentUser();
+  const t = toolsCache.find(x => x.id === h.toolId);
+  if (!t) return;
+  // 反向 type：in/return → out（冲减库存）；out → in（加回库存）
+  const reverseType = (h.type === 'in' || h.type === 'return') ? 'out' : 'in';
+  const cid = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  const counter = {
+    id: cid,
+    toolId: t.id,
+    toolName: t.name,
+    type: reverseType,
+    quantity: h.quantity,
+    unit: h.unit || t.unit,
+    note: '撤销' + typeLabel + ' ' + historyId.slice(0, 14) + '...',
+    operatorId: user.empno,
+    operatorName: user.name,
+    createdAt: Date.now(),
+    isCounter: true,
+    counterOf: historyId,
+  };
+  if (reverseType === 'out') counter.receiver = '系统·撤销';
+  else counter.source = '系统·撤销';
+  try {
+    await cloudSaveToolHistory(counter);
+    await cloudSaveToolHistory({ ...h, reverted: true });
+    // 库存变化：原 in/return 加了库存 → 撤销时减；原 out 减了库存 → 撤销时加
+    const sign = (h.type === 'in' || h.type === 'return') ? -1 : +1;
+    const newQty = (t.quantity || 0) + sign * h.quantity;
+    const updated = {
+      ...t,
+      quantity: newQty,
+      totalIn: (t.totalIn || 0) + (reverseType === 'in' ? h.quantity : 0),
+      totalOut: (t.totalOut || 0) + (reverseType === 'out' ? h.quantity : 0),
+    };
+    await cloudSaveTool(updated);
+    showToast('已撤销');
+  } catch (err) {
+    showToast('撤销失败：' + err.message);
+  }
+}
+
+async function hardDeleteToolHistory(historyId) {
+  const user = getCurrentUser();
+  if (!user || user.role !== 'admin') { showToast('仅管理员可硬删'); return; }
+  if (!confirm('彻底删除这条历史记录？不可恢复（不会回滚库存）')) return;
+  try {
+    await cloudDeleteToolHistory(historyId);
+    showToast('已删除');
+  } catch (err) {
+    showToast('删除失败：' + err.message);
+  }
+}
+
+/* ----- 导出 ----- */
+async function exportToolsXlsx() {
+  if (!toolsCache.length && !toolsHistoryCache.length) { showToast('暂无工器具数据'); return; }
+  const tools = toolsCache.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const inHist = toolsHistoryCache.filter(h => h.type === 'in').slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const outHist = toolsHistoryCache.filter(h => h.type === 'out').slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const returnHist = toolsHistoryCache.filter(h => h.type === 'return').slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  const toolsRows = [['序号','名称','单位','库存','入库累计','出库累计']];
+  tools.forEach((t, i) => toolsRows.push([i+1, t.name || '', t.unit || '', t.quantity || 0, t.totalIn || 0, t.totalOut || 0]));
+  const inRows = [['序号','日期','物品来源','名称','单位','数量','操作人','备注','状态']];
+  inHist.forEach((h, i) => inRows.push([
+    i+1, _fmtTs(h.createdAt), h.source || '', h.toolName || '', h.unit || '',
+    h.quantity || 0, h.operatorName || '', h.note || '',
+    h.reverted ? '已撤销' : (h.isCounter ? '撤销冲账' : (h.isImport ? '导入' : '正常')),
+  ]));
+  const outRows = [['序号','日期','名称','单位','数量','领取人','操作人','备注','状态']];
+  outHist.forEach((h, i) => outRows.push([
+    i+1, _fmtTs(h.createdAt), h.toolName || '', h.unit || '',
+    h.quantity || 0, h.receiver || '', h.operatorName || '', h.note || '',
+    h.reverted ? '已撤销' : (h.isCounter ? '撤销冲账' : (h.isImport ? '导入' : '正常')),
+  ]));
+  const stockRows = [['序号','名称','单位','入库总计','出库总计','库存']];
+  tools.forEach((t, i) => stockRows.push([i+1, t.name || '', t.unit || '', t.totalIn || 0, t.totalOut || 0, t.quantity || 0]));
+
+  const returnRows = [['序号','日期','名称','单位','数量','归还人','操作人','单据号','备注','状态']];
+  returnHist.forEach((h, i) => returnRows.push([
+    i+1, _fmtTs(h.createdAt), h.toolName || '', h.unit || '',
+    h.quantity || 0, h.returnedBy || h.receiver || '', h.operatorName || '', h.slipId || '', h.note || '',
+    h.reverted ? '已撤销' : (h.isCounter ? '撤销冲账' : '正常'),
+  ]));
+
+  await _exportSheets([
+    ['工器具清单', toolsRows],
+    ['入库明细', inRows],
+    ['出库明细', outRows],
+    ['归还明细', returnRows],
+    ['库存统计', stockRows],
+  ], '工器具台账_' + _today() + '.xlsx');
+}
+
 /* ========== 导出 Excel 功能 (2026-04-21) ========== */
 let _xlsxLib = null;
 async function loadXlsxLib() {
@@ -6912,9 +8704,42 @@ window.editPartLocation = editPartLocation;
 window.openPartFromRandom = openPartFromRandom;
 window.openPartFromParts = openPartFromParts;
 window.exportRandomXlsx = exportRandomXlsx;
+window.setToolsFilter = setToolsFilter;
+window.onToolsSearchInput = onToolsSearchInput;
+window.clearToolsSearch = clearToolsSearch;
+window.loadMoreTools = loadMoreTools;
+window.openToolDetail = openToolDetail;
+window.backToToolsList = backToToolsList;
+window.openToolTxn = openToolTxn;
+window.submitToolTxn = submitToolTxn;
+window.addToCart = addToCart;
+window.changeCartQty = changeCartQty;
+window.setCartQty = setCartQty;
+window.removeFromCart = removeFromCart;
+window.clearCart = clearCart;
+window.setCartTab = setCartTab;
+window.refreshCartSheet = refreshCartSheet;
+window.submitToolCart = submitToolCart;
+window.openReturnSheet = openReturnSheet;
+window.pickReturnReceiver = pickReturnReceiver;
+window.backToReturnReceiver = backToReturnReceiver;
+window.changeReturnQty = changeReturnQty;
+window.setReturnQty = setReturnQty;
+window.refreshReturnSheet = refreshReturnSheet;
+window.submitReturn = submitReturn;
+window.openBatchInSheet = openBatchInSheet;
+window.parseBatchInPaste = parseBatchInPaste;
+window.refreshBatchInSheet = refreshBatchInSheet;
+window.submitBatchIn = submitBatchIn;
+window.setToolReceiver = setToolReceiver;
+window.setToolSource = setToolSource;
+window.revertToolHistory = revertToolHistory;
+window.hardDeleteToolHistory = hardDeleteToolHistory;
+window.exportToolsXlsx = exportToolsXlsx;
 window.exportEquipmentsXlsx = exportEquipmentsXlsx;
 window.exportLubeXlsx = exportLubeXlsx;
 window.exportPartsXlsx = exportPartsXlsx;
+window.switchModule = switchModule;  // 2026-04-23: 暴露给备件 tab 等内联 onclick
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
 window.showSheet = showSheet;
@@ -7028,6 +8853,10 @@ async function init() {
     await addMotorLubeV7IfNeeded();
     // 2026-04-23 补：218/923/546 区设备润滑点（107 个，油号/周期待补充）
     await addAreaLubePointsV8IfNeeded();
+    // 2026-04-23 补：导入工器具台账（251 工器具 + 410 出入库历史）
+    await seedToolsV9IfNeeded();
+    // 2026-04-23：V10 把历史导入的 out 改为 consume（领用，不算待归还）
+    await reclassifyImportedToolsV10IfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
@@ -7037,6 +8866,8 @@ async function init() {
     subscribeLubeHistory();
     subscribeSpareParts();
     subscribeSparePartsHistory();
+    subscribeTools();
+    subscribeToolsHistory();
 
     // 等首批数据到位再继续（最多等 3 秒）
     await new Promise(r => setTimeout(r, 800));
