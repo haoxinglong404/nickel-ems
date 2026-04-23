@@ -1552,6 +1552,328 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .export-btn:disabled { opacity: .55; cursor: wait; }
   .export-btn-arrow { font-size: 13px; line-height: 1; }
 
+
+  /* ════════ 润滑模块·油润滑/脂润滑 tab · 2026-04-23 ════════ */
+  .lube-op-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 0 0 14px;
+  }
+  .lube-op-tab {
+    padding: 10px 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    min-width: 0;
+  }
+  .lube-op-tab:hover { border-color: var(--g-deep); }
+  .lube-op-tab.active {
+    border-color: var(--g-deep);
+    background: var(--g-mist);
+  }
+  .lube-op-tab.unspec { border-color: #F0D0A8; }
+  .lube-op-tab.unspec:hover { border-color: #D97935; }
+  .lube-op-tab.unspec.active {
+    border-color: #D97935;
+    background: #FFF5EB;
+  }
+  .lube-op-tab.unspec.active .lube-op-tab-name { color: #D97935; }
+  .lube-op-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .lube-op-tab-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .lube-op-tab-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lube-op-tab.active .lube-op-tab-name { color: var(--g-forest); }
+  .lube-op-tab-cnt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--subtle);
+    margin-top: 2px;
+    letter-spacing: .03em;
+  }
+
+  /* ════════ 随机备件 · 现场清点模式 · 2026-04-22 ════════ */
+  .random-progress {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .random-progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .random-progress-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--g-forest);
+  }
+  .random-progress-num .sep { color: var(--subtle); font-size: 16px; margin: 0 4px; }
+  .random-progress-num .total { color: var(--subtle); }
+  .random-progress-meta { font-size: 12px; color: var(--muted); }
+  .random-progress-meta strong { color: var(--g-forest); font-weight: 500; }
+  .random-progress-bar {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .random-progress-bar-fill {
+    height: 100%;
+    background: var(--g-primary);
+    transition: width .4s ease-out;
+  }
+
+  .random-status-row, .random-location-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    margin: 0 -20px 8px;
+    padding-left: 20px;
+    padding-right: 20px;
+    scrollbar-width: none;
+  }
+  .random-status-row::-webkit-scrollbar, .random-location-row::-webkit-scrollbar { display: none; }
+  .random-chip {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--paper);
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .random-chip .cnt { margin-left: 4px; opacity: .6; font-size: 11px; }
+  .random-chip.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    font-weight: 500;
+  }
+  .random-chip.active .cnt { opacity: .8; }
+
+  /* 清点卡片 */
+  .count-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .count-card.counted { background: #F4F8EC; border-color: var(--g-mist); }
+  .count-card.diff { background: #FFF5EB; border-color: #F0D0A8; }
+  .count-card.missing { background: #FFF5EB; border-color: #F0D0A8; }
+  .count-card.missing .count-status-dot {
+    border-color: #D97935;
+    background: #D97935;
+    color: #fff;
+  }
+
+  .count-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .count-status-dot {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .count-card.counted .count-status-dot {
+    border-color: var(--g-primary);
+    background: var(--g-primary);
+    color: #fff;
+  }
+  .count-card.diff .count-status-dot {
+    border-color: #D97935;
+    background: #D97935;
+    color: #fff;
+  }
+
+  .count-card-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .count-card-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+  .count-card-spec {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g-deep);
+    letter-spacing: .03em;
+    margin-bottom: 2px;
+  }
+  .count-card-meta {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: 4px;
+  }
+  .count-card-meta .meta-label { color: var(--subtle); margin-right: 4px; }
+  .count-card-meta .meta-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--g-mist);
+    color: var(--g-forest);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    margin-right: 4px;
+  }
+
+  .count-card-diff-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #D97935;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  .count-card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+  .count-card-book {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .count-card-book-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: var(--ink);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .count-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .count-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--g-deep);
+    background: var(--paper);
+    color: var(--g-forest);
+    font-size: 20px;
+    font-weight: 400;
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .count-btn:hover { background: var(--g-mist); }
+  .count-btn:active { transform: scale(.92); background: var(--g-primary); color: #fff; }
+  .count-input {
+    width: 56px;
+    height: 40px;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .count-input::-webkit-outer-spin-button,
+  .count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .count-input:focus { border-color: var(--g-deep); }
+  .count-confirm-btn {
+    padding: 8px 16px;
+    height: 40px;
+    border-radius: 20px;
+    border: none;
+    background: var(--g-deep);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: .02em;
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .count-confirm-btn:active { background: var(--g-forest); }
+  .count-recount-btn {
+    padding: 8px 14px;
+    height: 40px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .count-recount-btn:hover { background: var(--surface); color: var(--ink); }
+
+  .count-counted-info {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .count-counted-info strong { color: var(--g-forest); font-weight: 500; }
+
+  .empty-random {
+    padding: 60px 20px 40px;
+    text-align: center;
+  }
+
 </style>
 </head>
 <body>
@@ -1747,7 +2069,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <section class="module" data-module="parts">
       <div class="section-header">
         <div class="section-label-row">
-          <div class="section-label">Spare Parts · 备件管理</div>
+          <div class="section-label">Procurement Parts · 采购备件</div>
           <button class="export-btn" onclick="exportPartsXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
         </div>
         <h1 class="section-title">Inventory</h1>
@@ -1782,15 +2104,51 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
     </section>
 
+    <!-- 随机备件 (2026-04-22 独立模块，现场清点优化) -->
+    <section class="module" data-module="random">
+      <div class="section-header">
+        <div class="section-label-row">
+          <div class="section-label">Random Stock · 随机备件</div>
+          <button class="export-btn" onclick="exportRandomXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+        </div>
+        <h1 class="section-title">Inventory count</h1>
+        <div class="section-sub" id="random-section-sub">—</div>
+      </div>
+
+      <!-- 清点进度条 -->
+      <div class="random-progress" id="random-progress"></div>
+
+      <!-- 搜索 -->
+      <div class="eq-search-bar">
+        <input class="eq-search-input" id="random-search" placeholder="搜索名称、型号、材质、设备、备注…" oninput="onRandomSearchInput()">
+        <div class="eq-search-clear" id="random-search-clear" onclick="clearRandomSearch()">×</div>
+        <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <!-- 按状态筛选（未清点/已清点/有差异/全部） -->
+      <div class="random-status-row" id="random-status-row"></div>
+
+      <!-- 按存放位置筛选 -->
+      <div class="random-location-row" id="random-location-row"></div>
+
+      <!-- 列表 -->
+      <div id="random-list-container"></div>
+      <div id="random-load-more" style="display:none;text-align:center;padding:16px;">
+        <button class="load-more-btn" onclick="loadMoreRandom()">加载更多</button>
+      </div>
+    </section>
+
     <section class="module" data-module="lube">
       <div class="section-header">
         <div class="section-label-row">
           <div class="section-label">Lubrication · 润滑管理</div>
           <button class="export-btn" onclick="exportLubeXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
         </div>
-        <h1 class="section-title">Schedule</h1>
+        <h1 class="section-title" id="lube-section-title">Schedule</h1>
         <div class="section-sub" id="lube-section-sub">—</div>
       </div>
+      <!-- 2026-04-23: 油润滑 / 脂润滑 切换 tab -->
+      <div class="lube-op-tabs" id="lube-op-tabs"></div>
       <div class="lube-overview" id="lube-overview"></div>
       <div class="lube-search-bar">
         <input class="eq-search-input" id="lube-search" placeholder="搜索位号、设备名或润滑点…" oninput="onLubeSearchInput()">
@@ -1868,7 +2226,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
     <div class="nav-item" data-nav="workorder"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg><span class="nav-label">工单</span></div>
-    <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">备件</span></div>
+    <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">采购备件</span></div>
+    <div class="nav-item" data-nav="random"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="13" r="2"/><path d="M12 11V9M12 17v-2"/></svg><span class="nav-label">随机备件</span></div>
     <div class="nav-item" data-nav="lube"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v6M8 9h8l-1 12H9z"/><circle cx="12" cy="15" r="1.5"/></svg><span class="nav-label">润滑</span></div>
     <div class="nav-item" data-nav="profile"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-label">我的</span></div>
   </nav>
@@ -2320,6 +2679,273 @@ async function applyTagFixesV3IfNeeded() {
   }
 }
 
+/* ========== V4 随机备件字段补全 (2026-04-22) ========== */
+const SEED_PARTS_ENRICH_V4 = [{"id":"sp_01411","techAgreementName":"油滤","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01414","techAgreementName":"一级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01415","techAgreementName":"一级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01420","techAgreementName":"四级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01421","techAgreementName":"四级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01427","techAgreementName":"五级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01428","techAgreementName":"五级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01431","techAgreementName":"二级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01432","techAgreementName":"二级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01436","techAgreementName":"三级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01437","techAgreementName":"三级气阀","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01442","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01444","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01446","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01449","techAgreementName":"减压阀26-1064-28-XXX-ST","techAgreementQty":1,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01450","techAgreementName":"进气滤芯(Φ125×Φ79×288)","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01451","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01452","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01453","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01454","techAgreementName":"专用工具包（厂家说只有内六角扳手）","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01463","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01464","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01465","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01466","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01467","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01468","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01469","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01470","deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01472","techAgreementName":"进出口密封垫","techAgreementQty":10,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01473","techAgreementName":"C型圈","techAgreementQty":5,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01474","techAgreementName":"O型圈（320×5.3/115×2.65）","techAgreementQty":5,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01475","techAgreementName":"前护板","techAgreementQty":2,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01476","techAgreementName":"叶轮","techAgreementQty":2,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01477","techAgreementName":"V型皮带","techAgreementQty":16,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01478","techAgreementName":"球阀（密封系统）","techAgreementQty":2,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01479","techAgreementName":"机械密封（中预泵）","techAgreementQty":2,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01484","techAgreementName":"机械密封（高预泵）","techAgreementQty":2,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01480","techAgreementName":"后护板","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01485","techAgreementName":"后护板","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01481","techAgreementName":"蜗壳","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01486","techAgreementName":"蜗壳","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01482","techAgreementName":"泵盖","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01487","techAgreementName":"泵盖","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01483","techAgreementName":"强制循环泵（密封液系统）","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01488","techAgreementName":"强制循环泵（密封液系统）","techAgreementQty":1,"deviceModel":"ZGG250-650","deviceTag":"109-203-PE-PP-101B~301B\n109-203-PE-PP-102B~302B\n109-203-PE-PP-103B~303B\n109-203-PE-PP-104B~304B\n109-203-PE-PP-105B~305B"},{"id":"sp_01489","techAgreementName":"机械密封","techAgreementQty":1,"deviceModel":"ZGF350-600\nZGF250-600\nZGF200-700","deviceTag":"109-202-PE-PP-101A/B 201A/B 301A/B"},{"id":"sp_01490","techAgreementName":"填料","techAgreementQty":20,"deviceModel":"ZGF350-600\nZGF250-600\nZGF200-700","deviceTag":"109-202-PE-PP-102A/B 202A/B 302A/B"},{"id":"sp_01491","techAgreementName":"进出口密封垫（3个型号各一套）","techAgreementQty":6,"deviceModel":"ZGF350-600\nZGF250-600\nZGF200-700","deviceTag":"109-202-PE-PP-104A/B 204/B 304A/B"},{"id":"sp_01492","techAgreementName":"活塞","techAgreementQty":5,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01493","techAgreementName":"/","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01498","techAgreementName":"接杆油封","techAgreementQty":19,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01499","techAgreementName":"阀组0型圈","techAgreementQty":19,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01500","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01501","techAgreementName":"/","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01502","techAgreementName":"出口缓冲器胶囊","techAgreementQty":2,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01529","techAgreementName":"出口缓冲胶囊","techAgreementQty":2,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01503","techAgreementName":"单向阀组","techAgreementQty":9,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01504","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01505","techAgreementName":"弹簧（阀组上使用）","techAgreementQty":18,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01506","techAgreementName":"/","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01509","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01511","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01519","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01539","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01543","techAgreementName":"充气工具","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01544","techAgreementName":"活塞缸拆卸工具","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01545","techAgreementName":"单向阀组密封件","techAgreementQty":36,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01546","techAgreementName":"轴O型圈","techAgreementQty":12,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01547","techAgreementName":"0型圈","techAgreementQty":12,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01548","techAgreementName":"轴套O型圈","techAgreementQty":24,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01549","techAgreementName":"轴套","techAgreementQty":9,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01550","techAgreementName":"后护板","techAgreementQty":3,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01551","techAgreementName":"叶轮","techAgreementQty":3,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01552","techAgreementName":"前护板","techAgreementQty":3,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01553","techAgreementName":"蜗壳密封圈","techAgreementQty":12,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01554","techAgreementName":"密封环","techAgreementQty":12,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01555","techAgreementName":"蜗壳","techAgreementQty":2,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01556","techAgreementName":"进口垫","techAgreementQty":6,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A","usageNote":"2025.10.01已领出2件用于3系列"},{"id":"sp_01557","techAgreementName":"出口垫","techAgreementQty":6,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A","usageNote":"2025.10.01已领出2件用于3系列"},{"id":"sp_01558","techAgreementName":"间隔套","techAgreementQty":6,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01559","techAgreementName":"机封","techAgreementQty":6,"deviceModel":"8/6SYFC-AHX","deviceTag":"109-203-PE-PP-101A~301A\n109-203-PE-PP-102A~302A"},{"id":"sp_01560","techAgreementName":"叶轮吊装工具","techAgreementQty":2,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A","usageNote":"2026.2月5日已领出一套工具"},{"id":"sp_01561","techAgreementName":"后护板吊装工具","techAgreementQty":2,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01562","techAgreementName":"前护板吊装工具","techAgreementQty":2,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01563","techAgreementName":"蜗壳吊装工具","techAgreementQty":2,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01564","techAgreementName":"间隔套O型圈","techAgreementQty":18,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01565","techAgreementName":"机封O型圈","techAgreementQty":18,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01566","techAgreementName":"轴套O型圈","techAgreementQty":18,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01567","techAgreementName":"轴套","techAgreementQty":12,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01568","techAgreementName":"后护板","techAgreementQty":3,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01569","techAgreementName":"叶轮","techAgreementQty":4,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01570","techAgreementName":"前护板","techAgreementQty":6,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01571","techAgreementName":"蜗壳密封圈","techAgreementQty":18,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01572","techAgreementName":"密封环","techAgreementQty":9,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01573","techAgreementName":"蜗壳","techAgreementQty":3,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01574","techAgreementName":"进口垫","techAgreementQty":9,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A","usageNote":"2025.10.01已领出3件用于3系列"},{"id":"sp_01575","techAgreementName":"出口垫","techAgreementQty":9,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A","usageNote":"2025.10.01已领出3件用于3系列"},{"id":"sp_01576","techAgreementName":"间隔套","techAgreementQty":9,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01577","techAgreementName":"机封（高压）","techAgreementQty":6,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01578","techAgreementName":"蜗壳套密封环","techAgreementQty":18,"deviceModel":"8/6SYFC-AHPP","deviceTag":"109-203-PE-PP-103A~303A\n109-203-PE-PP-104A~304A\n109-203-PE-PP-105A~305A"},{"id":"sp_01579","techAgreementName":"阀锥","techAgreementQty":212,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01580","techAgreementName":"阀座","techAgreementQty":212,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01581","techAgreementName":"导套","techAgreementQty":96,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01582","techAgreementName":"阀座O型圈","techAgreementQty":424,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01583","techAgreementName":"主电机轴承含驱动端和非驱动端","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01584","techAgreementName":"变频器熔断器（配套，16 件）","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01585","techAgreementName":"润滑油泵，含电机","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01586","techAgreementName":"推进液油泵，含电机","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01587","techAgreementName":"滤芯","techAgreementQty":6,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01588","techAgreementName":"阀弹簧","techAgreementQty":36,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01589","techAgreementName":"出口夹紧件/入口夹紧件","techAgreementQty":"36/36","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01590","techAgreementName":"阀座密封圈","techAgreementQty":36,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01591","techAgreementName":"泵隔膜","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01592","techAgreementName":"隔膜盖密封圈","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01593","techAgreementName":"分离器碟片套装","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01594","techAgreementName":"分离器单元螺栓与螺母套装","techAgreementQty":80,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01595","techAgreementName":"隔热片中间导向套","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01596","techAgreementName":"隔热片导向衬套","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01597","techAgreementName":"分离器锁紧盘","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01598","techAgreementName":"分离器导杆","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01599","techAgreementName":"分离器压缩弹簧","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01600","techAgreementName":"分离器垫片","techAgreementQty":90,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01601","techAgreementName":"分离器杆接头","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01602","techAgreementName":"分离器六角螺帽","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01603","techAgreementName":"分离器支撑架","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01604","techAgreementName":"分离器内六角螺钉","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01605","techAgreementName":"三位二通阀","techAgreementQty":5,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01606","techAgreementName":"三位二通阀","techAgreementQty":7,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01607","techAgreementName":"二位二通阀","techAgreementQty":4,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01608","techAgreementName":"二位二通阀","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01609","techAgreementName":"活塞密封环和导环","techAgreementQty":18,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01610","techAgreementName":"进口空气缓冲罐压力变送器","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01611","techAgreementName":"出口空气缓冲罐压力变送器","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01612","techAgreementName":"推进液压力变送器","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01613","techAgreementName":"隔膜限位开关","techAgreementQty":4,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01614","techAgreementName":"润滑油系统过滤器压力开关","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01615","techAgreementName":"润滑油流量开关/推进液流量开关","techAgreementQty":8,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01616","techAgreementName":"触摸屏","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01617","techAgreementName":"24V 电源分配器","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01618","techAgreementName":"安全继电器","techAgreementQty":2,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01619","techAgreementName":"分离器盖密封","techAgreementQty":36,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01620","techAgreementName":"隔膜室排气阀","techAgreementQty":3,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01621","techAgreementName":"夹紧件螺栓","techAgreementQty":72,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01622","techAgreementName":"球阀","techAgreementQty":3,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01623","techAgreementName":"U型密封环","techAgreementQty":48,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01624","techAgreementName":"U型密封环","techAgreementQty":48,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01625","techAgreementName":"活塞缸套","techAgreementQty":1,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01626","techAgreementName":"活塞杆（喷涂）","techAgreementQty":1,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01627","techAgreementName":"主电机温度测点","techAgreementQty":5,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01628","techAgreementName":"主电机风扇（含键）","techAgreementQty":1,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01629","techAgreementName":"变频器柜顶冷却风机","techAgreementQty":3,"deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01630","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01631","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01632","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01633","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01634","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01635","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01636","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01637","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01638","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01639","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01640","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01641","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01642","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01643","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01644","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01645","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01646","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01647","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01648","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01649","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01650","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01651","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01652","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01653","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01654","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01655","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01656","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01657","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01658","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01659","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01660","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01661","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01662","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01663","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01664","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01665","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01666","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01667","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01668","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01669","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01670","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01671","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01672","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01673","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01674","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01675","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01676","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01677","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01678","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01679","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01680","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01681","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01682","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01683","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01684","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01685","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01686","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01687","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01688","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01689","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01690","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01691","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01692","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01693","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01694","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01695","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01696","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01697","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01698","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01699","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01700","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01701","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01702","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01703","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01704","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01705","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01706","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01707","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01708","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01709","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01710","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01711","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01712","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01713","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01714","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01715","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01716","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01717","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01718","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01719","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01720","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01721","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01722","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01723","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01724","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01725","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01726","techAgreementName":"/","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B"},{"id":"sp_01728","techAgreementName":"防冲板","techAgreementQty":1,"deviceModel":"Φ5100×8750","deviceTag":"109-203-PE-FV-101/201/301"},{"id":"sp_01729","techAgreementName":"防冲板","techAgreementQty":1,"deviceModel":"Φ6400×8100","deviceTag":"109-203-PE-FV-102/202/302"},{"id":"sp_01730","techAgreementName":"/","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G","usageNote":"3系列已用4桶208L的"},{"id":"sp_01731","techAgreementName":"/","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01732","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","techAgreementQty":"无详细数量","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01738","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","techAgreementQty":"无详细数量","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01733","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","techAgreementQty":"无详细数量","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01739","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01734","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","techAgreementQty":"无详细数量","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01740","techAgreementName":"10%罐内连接件，每种型号\n规格至少 2 套","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01735","techAgreementName":"机械密封易损件","techAgreementQty":4,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01741","techAgreementName":"机械密封易损件","techAgreementQty":4,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01736","techAgreementName":"集装式机械密封整套","techAgreementQty":2,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01742","techAgreementName":"集装式机械密封整套","techAgreementQty":2,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01737","techAgreementName":"联轴器弹性块","techAgreementQty":21,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01743","techAgreementName":"齿轮箱油封","techAgreementQty":6,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01747","techAgreementName":"齿轮箱油封","techAgreementQty":15,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01744","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01745","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01746","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01748","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01749","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01750","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01751","techAgreementName":"齿轮箱油封","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01752","techAgreementName":"/","deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01753","techAgreementName":"桨叶(德国加工)","techAgreementQty":1,"deviceModel":"HWL 2160NV（132KW/110KW)","deviceTag":"109-203-PE-AG-101A~B\n109-203-PE-AG-201A~B\n109-203-PE-AG-301A~B\n109-203-PE-AG-101C~G\n109-203-PE-AG-201C~G\n109-203-PE-AG-301C~G"},{"id":"sp_01754","techAgreementName":"进气滤芯","techAgreementQty":4,"deviceModel":"WP4331","deviceTag":"109-203-PE-CM-102\n109-203-PE-CM-302"},{"id":"sp_01755","techAgreementName":"机油","techAgreementQty":"2（20L/桶）","deviceModel":"WP4331","deviceTag":"109-203-PE-CM-102\n109-203-PE-CM-302"},{"id":"sp_01761","techAgreementName":"机械密封","techAgreementQty":2,"deviceModel":"NM076BY02S12B","deviceTag":"109-316-1-PE-PP-001A~D"},{"id":"sp_01762","techAgreementName":"0型密封圈","techAgreementQty":4,"deviceModel":"NM076BY02S12B","deviceTag":"109-316-1-PE-PP-001A~D"},{"id":"sp_01763","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01766","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01767","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01768","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01769","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01772","techAgreementName":"联轴器柱销","techAgreementQty":1,"deviceModel":"65ZJLX-A40(35)","deviceTag":"109-202-PE-PP-006A-D"},{"id":"sp_01773","techAgreementName":"联轴器柱销","techAgreementQty":1,"deviceModel":"65ZJLX51-A30（29）","deviceTag":"109-203-PE-PP-117\n109-203-PE-PP-217\n109-203-PE-PP-317"},{"id":"sp_01774","techAgreementName":"联轴器柱销","techAgreementQty":1,"deviceModel":"65ZJLX51-A30（29）","deviceTag":"109-203-PE-PP-118A/B\n109-203-PE-PP-218A/B\n109-203-PE-PP-318A/B"},{"id":"sp_01775","techAgreementName":"联轴器柱销","techAgreementQty":1,"deviceModel":"65ZJLX51-A30（29）","deviceTag":"109-203-PE-PP-119\n109-203-PE-PP-219\n109-203-PE-PP-319"},{"id":"sp_01776","techAgreementName":"C3 密封组合件","techAgreementQty":1,"deviceModel":"150FUH-42S-160/35-C3","deviceTag":"109-202-PE-PP-103A/B\n109-202-PE-PP-203A/B\n109-202-PE-PP-303A/B"},{"id":"sp_01777","techAgreementName":"C3 密封组合件","techAgreementQty":2,"deviceModel":"200FUH-40-350/40-C3\n200FUH-40-300/30-U1/U1-C3","deviceTag":"109-203-PE-PP-108A/B\n109-203-PE-PP-208A/B\n109-203-PE-PP-308A/B\n109-204-PE-PP-008A~C\n109-206-PE-PP-011A~C-012A~C"},{"id":"sp_01412","material":"氟橡胶","techAgreementName":"一级O型圈","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01416","material":"氟橡胶","techAgreementName":"四级O型圈","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01419","material":"氟橡胶","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01422","material":"氟橡胶","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01425","material":"氟橡胶","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01413","material":"T2","techAgreementName":"一级密封垫片￠118x￠111.5x1","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01417","material":"T2","techAgreementName":"四级密封垫片","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01424","material":"T2","techAgreementName":"五级密封垫片","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01430","material":"T2","techAgreementName":"二级密封垫片","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01434","material":"紫铜","techAgreementName":"三级密封垫片","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01418","material":"聚四氟乙烯","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01423","material":"聚四氟乙烯","techAgreementName":"五级O型圈","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01426","material":"聚四氟乙烯","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01429","material":"氟橡胶","techAgreementName":"二级O型圈","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01433","material":"氟橡胶","techAgreementName":"三级O型圈","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01435","material":"氟橡胶","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01438","material":"合金铸铁","techAgreementName":"一级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01441","material":"钢","techAgreementName":"二级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01439","material":"合金铸铁","techAgreementName":"一级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01440","material":"合金铸铁","techAgreementName":"二级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01443","material":"合金铸铁","techAgreementName":"三级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01445","material":"合金铸铁","techAgreementName":"四级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01447","material":"球墨铸铁","techAgreementName":"五级活塞环","techAgreementQty":2,"deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01448","material":"塑料","techAgreementName":"/","deviceModel":"HG2-350W","deviceTag":"109-203-PE-CM-201"},{"id":"sp_01455","material":"Ti.Gr12","techAgreementName":"18\"/Class600/V6TB-RF-XXB180-002AM-B01","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01456","material":"Ti.Gr12","techAgreementName":"14\"/Class600/V6TB-RF-FPB140-002AM-B01","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01457","material":"Ti.Gr12","techAgreementName":"14\"/Class600/V6TB-RF-FPB140-002AM-B01","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01458","material":"Ti.Gr12","techAgreementName":"14\"/Class300/V5TB-RF-FPB140-002AM-B01","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01459","material":"Ti.Gr12","techAgreementName":"备用（裸阀）DN100","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01460","material":"Ti.Gr12","techAgreementName":"备用（裸阀）DN100","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01461","material":"Ti.Gr12","techAgreementName":"备用（裸阀）DN100","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01462","material":"Ti.Gr12","techAgreementName":"备用（裸阀）DN100","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01471","material":"Ti.Gr12","techAgreementName":"备用（裸阀）DN20","techAgreementQty":1,"deviceModel":"Φ5900×38100mm","deviceTag":"109-203-PE-AU-101\n109-203-PE-AU-201\n109-203-PE-AU-301"},{"id":"sp_01494","techAgreementName":"/","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01520","material":"[5535]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01495","techAgreementName":"/","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01521","material":"[316L/PTFE]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01496","material":"[PTFE]","techAgreementName":"隔膜","techAgreementQty":9,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01514","material":"[F4]","techAgreementName":"隔膜","techAgreementQty":9,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01497","material":"[HWB-Ⅳ]","techAgreementName":"活塞密封件（填料）","techAgreementQty":7,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01507","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01534","material":"[45]","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01508","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01510","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01512","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01513","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B"},{"id":"sp_01535","material":"[45]","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01536","material":"[35]","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01537","material":"8","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01538","material":"10","techAgreementName":"专用扳手","techAgreementQty":3,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01515","material":"[夹布丁腈橡胶]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01516","material":"[F4/ZCuSn10Zn2]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01517","material":"[F4/ZCuSn10Zn2]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01518","material":"[F4/ZCuSn10Zn2]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01522","material":"[聚氨酯]","techAgreementName":"接杆油封","techAgreementQty":19,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01523","material":"[Ⅰ-4]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01524","material":"[Ⅰ-4]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01525","material":"[Ⅰ-4]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01526","material":"[F26]","techAgreementName":"阀组0型圈","techAgreementQty":19,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01527","material":"[F26]","techAgreementName":"阀组0型圈","techAgreementQty":19,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01528","material":"[丁腈橡胶]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01530","material":"[3YC7]","techAgreementName":"单向阀组","techAgreementQty":9,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01531","material":"[3YC7]","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01532","material":"[3YC7]","techAgreementName":"弹簧（阀组上使用）","techAgreementQty":18,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01533","material":"[022Cr25Ni7Mo4N]","techAgreementName":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01540","material":"35CrMoA","techAgreementName":"导向套","techAgreementQty":9,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01541","material":"35CrMoA","techAgreementName":"活塞","techAgreementQty":5,"deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01542","material":"2507","techAgreementName":"/","techAgreementQty":"/","deviceModel":"3D7MF50/6.0-BY-VD","deviceTag":"109-203-PE-PP-111A/B\n109-203-PE-PP-211A/B\n109-203-PE-PP-311A/B"},{"id":"sp_01727","material":"2507","techAgreementName":"/","deviceModel":"GMC1500-44E","deviceTag":"109-203-PE-AG-102/202/302"},{"id":"sp_01756","material":"氟橡胶","techAgreementName":"/","deviceModel":"100ZJ-A42(技术协议无此型号）"},{"id":"sp_01757","material":"氟橡胶","techAgreementName":"/","deviceModel":"150DT-A30（技术协议无此型号）"},{"id":"sp_01758","material":"氟橡胶","techAgreementName":"/","deviceModel":"150DT-A30（技术协议无此型号）"},{"id":"sp_01759","material":"聚氨酯","techAgreementName":"/","deviceModel":"石工泵多型号使用"},{"id":"sp_01760","material":"聚氨酯","techAgreementName":"/","deviceModel":"石工泵多型号使用"},{"id":"sp_01764","material":"S14","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01765","material":"S14","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01770","material":"S14","techAgreementName":"/","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"},{"id":"sp_01771","material":"氟橡胶","techAgreementName":"油封","techAgreementQty":42,"deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002"}];
+
+async function enrichRandomPartsV4IfNeeded() {
+  if (!SEED_PARTS_ENRICH_V4 || SEED_PARTS_ENRICH_V4.length === 0) return;
+  const markerId = 'parts_enrich_v4_20260422';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[Enrich V4] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '补全随机备件字段...');
+  try {
+    const BATCH_SIZE = 400;
+    let ok = 0, fail = 0;
+    for (let i = 0; i < SEED_PARTS_ENRICH_V4.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_PARTS_ENRICH_V4.slice(i, i + BATCH_SIZE);
+      chunk.forEach(fix => {
+        const { id, ...updates } = fix;
+        batch.update(doc(db, 'spareparts', id), { ...updates, updatedAt: Date.now() });
+      });
+      try {
+        await batch.commit();
+        ok += chunk.length;
+      } catch(e) {
+        console.error('[Enrich V4] 批次写入失败', e);
+        fail += chunk.length;
+      }
+    }
+    await setDoc(markerRef, {
+      appliedAt: Date.now(),
+      description: '随机备件字段补全（material/techAgreementName/techAgreementQty/deviceModel/deviceTag/usageNote）',
+      ok, fail, total: SEED_PARTS_ENRICH_V4.length,
+    });
+    if (fail === 0) showToast('已补全 ' + ok + ' 台随机备件信息');
+    else showToast('补全完成 ' + ok + ' / ' + (ok+fail) + '，失败 ' + fail);
+    console.log('[Enrich V4] 完成: ok=' + ok + ' fail=' + fail);
+  } catch(e) {
+    console.error('[Enrich V4] 执行失败', e);
+  }
+}
+
+/* ========== V5 随机备件补充 (2026-04-22)：技术协议单位 + 缺货备件 ========== */
+const SEED_PARTS_UNIT_FIXES_V5 = [{"id":"sp_01411","techAgreementUnit":"件"},{"id":"sp_01414","techAgreementUnit":"件"},{"id":"sp_01415","techAgreementUnit":"件"},{"id":"sp_01420","techAgreementUnit":"件"},{"id":"sp_01421","techAgreementUnit":"件"},{"id":"sp_01427","techAgreementUnit":"件"},{"id":"sp_01428","techAgreementUnit":"件"},{"id":"sp_01431","techAgreementUnit":"件"},{"id":"sp_01432","techAgreementUnit":"件"},{"id":"sp_01436","techAgreementUnit":"件"},{"id":"sp_01437","techAgreementUnit":"件"},{"id":"sp_01449","techAgreementUnit":"台"},{"id":"sp_01450","techAgreementUnit":"个"},{"id":"sp_01454","techAgreementUnit":"套"},{"id":"sp_01472","techAgreementUnit":"件"},{"id":"sp_01473","techAgreementUnit":"套"},{"id":"sp_01474","techAgreementUnit":"套"},{"id":"sp_01475","techAgreementUnit":"件"},{"id":"sp_01477","techAgreementUnit":"件"},{"id":"sp_01478","techAgreementUnit":"个"},{"id":"sp_01479","techAgreementUnit":"套"},{"id":"sp_01484","techAgreementUnit":"套"},{"id":"sp_01480","techAgreementUnit":"件"},{"id":"sp_01485","techAgreementUnit":"件"},{"id":"sp_01481","techAgreementUnit":"件"},{"id":"sp_01486","techAgreementUnit":"件"},{"id":"sp_01482","techAgreementUnit":"件"},{"id":"sp_01487","techAgreementUnit":"件"},{"id":"sp_01483","techAgreementUnit":"台"},{"id":"sp_01488","techAgreementUnit":"台"},{"id":"sp_01489","techAgreementUnit":"套"},{"id":"sp_01490","techAgreementUnit":"KG"},{"id":"sp_01491","techAgreementUnit":"件"},{"id":"sp_01492","techAgreementUnit":"件"},{"id":"sp_01498","techAgreementUnit":"件"},{"id":"sp_01499","techAgreementUnit":"件"},{"id":"sp_01502","techAgreementUnit":"件"},{"id":"sp_01529","techAgreementUnit":"件"},{"id":"sp_01503","techAgreementUnit":"套"},{"id":"sp_01505","techAgreementUnit":"件"},{"id":"sp_01509","techAgreementUnit":"套"},{"id":"sp_01511","techAgreementUnit":"套"},{"id":"sp_01543","techAgreementUnit":"套"},{"id":"sp_01544","techAgreementUnit":"套"},{"id":"sp_01545","techAgreementUnit":"组"},{"id":"sp_01546","techAgreementUnit":"件"},{"id":"sp_01547","techAgreementUnit":"件"},{"id":"sp_01548","techAgreementUnit":"件"},{"id":"sp_01549","techAgreementUnit":"件"},{"id":"sp_01550","techAgreementUnit":"件"},{"id":"sp_01551","techAgreementUnit":"件"},{"id":"sp_01552","techAgreementUnit":"件"},{"id":"sp_01553","techAgreementUnit":"件"},{"id":"sp_01554","techAgreementUnit":"件"},{"id":"sp_01555","techAgreementUnit":"件"},{"id":"sp_01556","techAgreementUnit":"件"},{"id":"sp_01557","techAgreementUnit":"件"},{"id":"sp_01558","techAgreementUnit":"件"},{"id":"sp_01559","techAgreementUnit":"件"},{"id":"sp_01560","techAgreementUnit":"套"},{"id":"sp_01561","techAgreementUnit":"套"},{"id":"sp_01562","techAgreementUnit":"套"},{"id":"sp_01563","techAgreementUnit":"套"},{"id":"sp_01564","techAgreementUnit":"件"},{"id":"sp_01565","techAgreementUnit":"件"},{"id":"sp_01566","techAgreementUnit":"件"},{"id":"sp_01567","techAgreementUnit":"件"},{"id":"sp_01568","techAgreementUnit":"件"},{"id":"sp_01569","techAgreementUnit":"件"},{"id":"sp_01570","techAgreementUnit":"件"},{"id":"sp_01571","techAgreementUnit":"件"},{"id":"sp_01572","techAgreementUnit":"件"},{"id":"sp_01573","techAgreementUnit":"件"},{"id":"sp_01574","techAgreementUnit":"件"},{"id":"sp_01575","techAgreementUnit":"件"},{"id":"sp_01576","techAgreementUnit":"件"},{"id":"sp_01577","techAgreementUnit":"件"},{"id":"sp_01578","techAgreementUnit":"件"},{"id":"sp_01579","techAgreementUnit":"件"},{"id":"sp_01580","techAgreementUnit":"件"},{"id":"sp_01581","techAgreementUnit":"件"},{"id":"sp_01582","techAgreementUnit":"件"},{"id":"sp_01583","techAgreementUnit":"件"},{"id":"sp_01584","techAgreementUnit":"套"},{"id":"sp_01585","techAgreementUnit":"件"},{"id":"sp_01586","techAgreementUnit":"件"},{"id":"sp_01587","techAgreementUnit":"件"},{"id":"sp_01588","techAgreementUnit":"件"},{"id":"sp_01589","techAgreementUnit":"件"},{"id":"sp_01590","techAgreementUnit":"件"},{"id":"sp_01591","techAgreementUnit":"件"},{"id":"sp_01592","techAgreementUnit":"件"},{"id":"sp_01593","techAgreementUnit":"件"},{"id":"sp_01594","techAgreementUnit":"件"},{"id":"sp_01595","techAgreementUnit":"件"},{"id":"sp_01597","techAgreementUnit":"件"},{"id":"sp_01598","techAgreementUnit":"件"},{"id":"sp_01599","techAgreementUnit":"件"},{"id":"sp_01600","techAgreementUnit":"件"},{"id":"sp_01601","techAgreementUnit":"件"},{"id":"sp_01602","techAgreementUnit":"件"},{"id":"sp_01603","techAgreementUnit":"件"},{"id":"sp_01604","techAgreementUnit":"件"},{"id":"sp_01605","techAgreementUnit":"件"},{"id":"sp_01606","techAgreementUnit":"件"},{"id":"sp_01607","techAgreementUnit":"件"},{"id":"sp_01608","techAgreementUnit":"件"},{"id":"sp_01609","techAgreementUnit":"件"},{"id":"sp_01610","techAgreementUnit":"件"},{"id":"sp_01611","techAgreementUnit":"件"},{"id":"sp_01612","techAgreementUnit":"件"},{"id":"sp_01613","techAgreementUnit":"件"},{"id":"sp_01614","techAgreementUnit":"件"},{"id":"sp_01615","techAgreementUnit":"件"},{"id":"sp_01616","techAgreementUnit":"件"},{"id":"sp_01617","techAgreementUnit":"件"},{"id":"sp_01618","techAgreementUnit":"件"},{"id":"sp_01619","techAgreementUnit":"件"},{"id":"sp_01620","techAgreementUnit":"件"},{"id":"sp_01621","techAgreementUnit":"颗"},{"id":"sp_01622","techAgreementUnit":"件"},{"id":"sp_01623","techAgreementUnit":"件"},{"id":"sp_01624","techAgreementUnit":"件"},{"id":"sp_01625","techAgreementUnit":"件"},{"id":"sp_01626","techAgreementUnit":"件"},{"id":"sp_01627","techAgreementUnit":"件"},{"id":"sp_01628","techAgreementUnit":"件"},{"id":"sp_01629","techAgreementUnit":"件"},{"id":"sp_01728","techAgreementUnit":"件"},{"id":"sp_01729","techAgreementUnit":"件"},{"id":"sp_01732","techAgreementUnit":"套"},{"id":"sp_01738","techAgreementUnit":"套"},{"id":"sp_01733","techAgreementUnit":"套"},{"id":"sp_01734","techAgreementUnit":"套"},{"id":"sp_01735","techAgreementUnit":"套"},{"id":"sp_01741","techAgreementUnit":"套"},{"id":"sp_01736","techAgreementUnit":"套"},{"id":"sp_01742","techAgreementUnit":"套"},{"id":"sp_01737","techAgreementUnit":"件"},{"id":"sp_01743","techAgreementUnit":"套"},{"id":"sp_01747","techAgreementUnit":"套"},{"id":"sp_01753","techAgreementUnit":"套"},{"id":"sp_01754","techAgreementUnit":"套"},{"id":"sp_01755","techAgreementUnit":"桶"},{"id":"sp_01761","techAgreementUnit":"套"},{"id":"sp_01762","techAgreementUnit":"个"},{"id":"sp_01772","techAgreementUnit":"套"},{"id":"sp_01773","techAgreementUnit":"套"},{"id":"sp_01774","techAgreementUnit":"套"},{"id":"sp_01775","techAgreementUnit":"套"},{"id":"sp_01776","techAgreementUnit":"套"},{"id":"sp_01777","techAgreementUnit":"套"},{"id":"sp_01412","techAgreementUnit":"件"},{"id":"sp_01416","techAgreementUnit":"件"},{"id":"sp_01413","techAgreementUnit":"件"},{"id":"sp_01417","techAgreementUnit":"件"},{"id":"sp_01424","techAgreementUnit":"件"},{"id":"sp_01430","techAgreementUnit":"件"},{"id":"sp_01434","techAgreementUnit":"件"},{"id":"sp_01423","techAgreementUnit":"件"},{"id":"sp_01429","techAgreementUnit":"件"},{"id":"sp_01433","techAgreementUnit":"件"},{"id":"sp_01438","techAgreementUnit":"套"},{"id":"sp_01441","techAgreementUnit":"套"},{"id":"sp_01439","techAgreementUnit":"套"},{"id":"sp_01440","techAgreementUnit":"套"},{"id":"sp_01443","techAgreementUnit":"套"},{"id":"sp_01445","techAgreementUnit":"套"},{"id":"sp_01447","techAgreementUnit":"套"},{"id":"sp_01455","techAgreementUnit":"个"},{"id":"sp_01456","techAgreementUnit":"个"},{"id":"sp_01457","techAgreementUnit":"个"},{"id":"sp_01458","techAgreementUnit":"个"},{"id":"sp_01459","techAgreementUnit":"个"},{"id":"sp_01460","techAgreementUnit":"个"},{"id":"sp_01461","techAgreementUnit":"个"},{"id":"sp_01462","techAgreementUnit":"个"},{"id":"sp_01471","techAgreementUnit":"个"},{"id":"sp_01496","techAgreementUnit":"件"},{"id":"sp_01514","techAgreementUnit":"件"},{"id":"sp_01497","techAgreementUnit":"组"},{"id":"sp_01507","techAgreementUnit":"套"},{"id":"sp_01534","techAgreementUnit":"套"},{"id":"sp_01508","techAgreementUnit":"套"},{"id":"sp_01510","techAgreementUnit":"套"},{"id":"sp_01512","techAgreementUnit":"套"},{"id":"sp_01513","techAgreementUnit":"套"},{"id":"sp_01535","techAgreementUnit":"套"},{"id":"sp_01536","techAgreementUnit":"套"},{"id":"sp_01537","techAgreementUnit":"套"},{"id":"sp_01538","techAgreementUnit":"套"},{"id":"sp_01522","techAgreementUnit":"件"},{"id":"sp_01526","techAgreementUnit":"套"},{"id":"sp_01527","techAgreementUnit":"套"},{"id":"sp_01530","techAgreementUnit":"套"},{"id":"sp_01532","techAgreementUnit":"件"},{"id":"sp_01540","techAgreementUnit":"套"},{"id":"sp_01541","techAgreementUnit":"件"},{"id":"sp_01542","techAgreementUnit":"/"},{"id":"sp_01771","techAgreementUnit":"件"}];
+const SEED_PARTS_MISSING_V5 = [{"id":"sp_tbd_001","source":"random","name":"导向套","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"导向套","techAgreementQty":9,"techAgreementUnit":"套","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B","device":"第二隔室浓硫酸给料泵"},{"id":"sp_tbd_002","source":"random","name":"充气工具","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"充气工具","techAgreementQty":3,"techAgreementUnit":"套","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B","device":"第二隔室浓硫酸给料泵"},{"id":"sp_tbd_003","source":"random","name":"活塞缸拆卸工具","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"活塞缸拆卸工具","techAgreementQty":3,"techAgreementUnit":"套","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B","device":"第二隔室浓硫酸给料泵"},{"id":"sp_tbd_004","source":"random","name":"单向阀组密封件","spec":"","quantity":0,"unit":"组","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"单向阀组密封件","techAgreementQty":36,"techAgreementUnit":"组","deviceModel":"3D6.5MF25/6.0-BY-VD","deviceTag":"109-203-PE-PP-112A/B\n109-203-PE-PP-212A/B\n109-203-PE-PP-312A/B","device":"第二隔室浓硫酸给料泵"},{"id":"sp_tbd_005","source":"random","name":"分离器垫片（不同形式）","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"F3堆场","received":"","remark":"备件套装\n（磨损与维护）\n814.202048.19","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"分离器垫片（不同形式）","techAgreementQty":90,"techAgreementUnit":"件","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B","device":"高压釜给料泵"},{"id":"sp_tbd_006","source":"random","name":"单向阀盖密封","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"F3堆场","received":"","remark":"备件套装\n（磨损与维护）\n814.202048.19","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"单向阀盖密封","techAgreementQty":72,"techAgreementUnit":"件","deviceModel":"TZPM2000HB","deviceTag":"109-203-PE-PP-106A/B\n109-203-PE-PP-206A/B\n109-203-PE-PP-306A/B","device":"高压釜给料泵"},{"id":"sp_tbd_007","source":"random","name":"联轴器弹性块","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"F7堆场","received":"","remark":"箱号16/17","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"联轴器弹性块","techAgreementQty":2,"techAgreementUnit":"套","deviceTag":"109-204-PE-AG-002A~F\n109-206-PE-AG-001A~D\n109B-207B-PE-AG-007\n109-207-PE-AG-008A\n109B-207B-PE-AG-008B\n109-314-PE-AG-003\n109B-314B-PE-AG-004\n109-702-PE-AG-003A/B\n109-701-PE-AG-003A/B\n109-202-PE-AG-002A~D\n109-203-PE-AG-103\n109-203-PE-AG-203\n109-203-PE-AG-303\n109-203-PE-AG-104A/B\n109-203-PE-AG-204A/B\n109-203-PE-AG-304A/B\n109-203-PE-AG-105\n109-203-PE-AG-205\n109-203-PE-AG-305\n109B-212B-PE-AG-004\n109B-212B-PE-AG-005\n109B-205B-PE-AG-005\n109-205-PE-AG-006 A/B\n109-208-PE-AG-003A/B\n109B-208B-PE-AG-003A/B\n109-209-1-PE-AG-002","device":"污水坑搅拌"},{"id":"sp_tbd_008","source":"random","name":"前护板","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"前护板","techAgreementQty":1,"techAgreementUnit":"件","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_009","source":"random","name":"后护板","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"后护板","techAgreementQty":1,"techAgreementUnit":"件","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_010","source":"random","name":"叶轮","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"叶轮","techAgreementQty":1,"techAgreementUnit":"件","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_011","source":"random","name":"蜗壳","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"蜗壳","techAgreementQty":1,"techAgreementUnit":"件","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_012","source":"random","name":"填料箱","spec":"","quantity":0,"unit":"件","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"填料箱","techAgreementQty":1,"techAgreementUnit":"件","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_013","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_014","source":"random","name":"0型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号 KG24-TMI-HPAL-010","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"0型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"300ZJ_x0002_I-A56","deviceTag":"109B-201B-PE-PP-002A~D","device":"原矿浆输送泵"},{"id":"sp_tbd_015","source":"random","name":"弹性块","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC25-FMI-HPAL-001T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性块","techAgreementQty":3,"techAgreementUnit":"只","deviceModel":"80FYUC-35-30/35-1500+300","deviceTag":"109-316-1-PE-PP-002\n109-316-2-PE-PP-004\n109-721-PE-PP-002","device":"原矿絮凝剂制备污水泵\nCCD 及除铁铝絮凝剂制备污泵\n尾渣絮凝剂制备污水泵"},{"id":"sp_tbd_016","source":"random","name":"专用工具","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC25-FMI-HPAL-001T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"专用工具","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"80FYUC-35-30/35-1500+300","deviceTag":"109-316-1-PE-PP-002\n109-316-2-PE-PP-004\n109-721-PE-PP-002","device":"原矿絮凝剂制备污水泵\nCCD 及除铁铝絮凝剂制备污泵\n尾渣絮凝剂制备污水泵"},{"id":"sp_tbd_017","source":"random","name":"垫片","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"垫片","techAgreementQty":2,"techAgreementUnit":"个","deviceModel":"DN650Class600","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_018","source":"random","name":"螺栓螺母","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"螺栓螺母","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"DN650Class600","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_019","source":"random","name":"垫片","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"垫片","techAgreementQty":2,"techAgreementUnit":"个","deviceModel":"DN650Class300","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_020","source":"random","name":"螺栓螺母","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"螺栓螺母","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"DN650Class300","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_021","source":"random","name":"垫片","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"垫片","techAgreementQty":2,"techAgreementUnit":"个","deviceModel":"DN250Class600","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_022","source":"random","name":"螺栓螺母","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-250T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"螺栓螺母","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"DN250Class600","deviceTag":"/","device":"消能孔板"},{"id":"sp_tbd_023","source":"random","name":"断火限位","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-216","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"断火限位","techAgreementQty":1,"techAgreementUnit":"个","deviceModel":"起重量：3T，跨度：14.5m，起升高度：9m\n起重量：5T，跨度：31.5m，起升高度：10m\n起重量：3T，跨度：13.5m，起升高度：9m","deviceTag":"109-316-1-PE-CR-001\n109-316-2-PE-CR-001\n109-721-PE-CR-001","device":"电动单梁桥式起重机\n电动双梁双钩桥式起重机\n电动单梁桥式起重机"},{"id":"sp_tbd_024","source":"random","name":"重锤限位","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-216","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"重锤限位","techAgreementQty":1,"techAgreementUnit":"个","deviceModel":"起重量：3T，跨度：14.5m，起升高度：9m\n起重量：5T，跨度：31.5m，起升高度：10m\n起重量：3T，跨度：13.5m，起升高度：9m","deviceTag":"109-316-1-PE-CR-001\n109-316-2-PE-CR-001\n109-721-PE-CR-001","device":"电动单梁桥式起重机\n电动双梁双钩桥式起重机\n电动单梁桥式起重机"},{"id":"sp_tbd_025","source":"random","name":"多功能遥控拷贝机","spec":"","quantity":0,"unit":"台","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-216","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"多功能遥控拷贝机","techAgreementQty":1,"techAgreementUnit":"台","deviceModel":"起重量：3T，跨度：14.5m，起升高度：9m\n起重量：5T，跨度：31.5m，起升高度：10m\n起重量：3T，跨度：13.5m，起升高度：9m","deviceTag":"109-316-1-PE-CR-001\n109-316-2-PE-CR-001\n109-721-PE-CR-001","device":"电动单梁桥式起重机\n电动双梁双钩桥式起重机\n电动单梁桥式起重机"},{"id":"sp_tbd_026","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLZA150-3500","deviceTag":"109-546-JP-PP-001 A~C\n109-547-JP-PP-001 A~C","device":"雨水回用水泵"},{"id":"sp_tbd_027","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLZA150-3500","deviceTag":"109-546-JP-PP-001 A~C\n109-547-JP-PP-001 A~C","device":"雨水回用水泵"},{"id":"sp_tbd_028","source":"random","name":"联轴器螺栓","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"联轴器螺栓","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLZA150-3500","deviceTag":"109-546-JP-PP-001 A~C\n109-547-JP-PP-001 A~C","device":"雨水回用水泵"},{"id":"sp_tbd_029","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-530","device":"生产补水泵"},{"id":"sp_tbd_030","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-530","device":"生产补水泵"},{"id":"sp_tbd_031","source":"random","name":"柱销及垫圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"柱销及垫圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-530","device":"生产补水泵"},{"id":"sp_tbd_032","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-410(I)","device":"生产供水泵"},{"id":"sp_tbd_033","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-410(I)","device":"生产供水泵"},{"id":"sp_tbd_034","source":"random","name":"柱销及垫圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"柱销及垫圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLOW200-410(I)","device":"生产供水泵"},{"id":"sp_tbd_035","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLGF16-4","device":"生活供水泵"},{"id":"sp_tbd_036","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"SLGF16-4","device":"生活供水泵"},{"id":"sp_tbd_037","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBD4.5/25-SLNC","device":"消防供水泵（电动泵）"},{"id":"sp_tbd_038","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBD4.5/25-SLNC","device":"消防供水泵（电动泵）"},{"id":"sp_tbd_039","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBC4.5/25-SLNC","device":"消防供水泵（柴油泵）"},{"id":"sp_tbd_040","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBC4.5/25-SLNC","device":"消防供水泵（柴油泵）"},{"id":"sp_tbd_041","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBD3.5/1W-32SLG(2)","device":"稳压泵（与稳压装置成套）"},{"id":"sp_tbd_042","source":"random","name":"O型圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号EEEM24-FMI-HPAL-SZ1556","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O型圈","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"XBD3.5/1W-32SLG(2)","device":"稳压泵（与稳压装置成套）"},{"id":"sp_tbd_043","source":"random","name":"法兰垫片/DN500","spec":"","quantity":0,"unit":"片","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"法兰垫片/DN500","techAgreementQty":4,"techAgreementUnit":"片","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_044","source":"random","name":"法兰垫片/DN600","spec":"","quantity":0,"unit":"片","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"法兰垫片/DN600","techAgreementQty":4,"techAgreementUnit":"片","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_045","source":"random","name":"计量泵隔膜片/GM0400、GB0700配套","spec":"","quantity":0,"unit":"片","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"计量泵隔膜片/GM0400、GB0700配套","techAgreementQty":6,"techAgreementUnit":"片","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_046","source":"random","name":"压力表/0-1.6MPa/304","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"压力表/0-1.6MPa/304","techAgreementQty":4,"techAgreementUnit":"只","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_047","source":"random","name":"泵类零部件/机封、过流件等","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"泵类零部件/机封、过流件等","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_048","source":"random","name":"絮凝搅拌机轴承、油封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"絮凝搅拌机轴承、油封","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_049","source":"random","name":"滤板","spec":"","quantity":0,"unit":"㎡","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号BVVE24-FMI-HPAL-116","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"滤板","techAgreementQty":10,"techAgreementUnit":"㎡","deviceModel":"Q=1000m3/h\nQ=750m3/h","deviceTag":"/","device":"218-缓冲沉淀池（平流沉淀池）\n218-V 型滤池"},{"id":"sp_tbd_050","source":"random","name":"机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-089","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"SLGF10-19","deviceTag":"109-202-PE-PP-005\n109-204-PE-PP-014\n109-206-PE-PP-017\n109-208-PE-PP-004\n109-209-1-PE-PP-004\n109-701-PE-PP-004","device":"高压冲洗水泵"},{"id":"sp_tbd_051","source":"random","name":"O 型密封圈","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-089","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O 型密封圈","techAgreementQty":5,"techAgreementUnit":"套","deviceModel":"SLGF10-19","deviceTag":"109-202-PE-PP-005\n109-204-PE-PP-014\n109-206-PE-PP-017\n109-208-PE-PP-004\n109-209-1-PE-PP-004\n109-701-PE-PP-004","device":"高压冲洗水泵"},{"id":"sp_tbd_052","source":"random","name":"配对法兰紧固件","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-089","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"配对法兰紧固件","techAgreementQty":0,"techAgreementUnit":"套","deviceModel":"SLGF10-19","deviceTag":"109-202-PE-PP-005\n109-204-PE-PP-014\n109-206-PE-PP-017\n109-208-PE-PP-004\n109-209-1-PE-PP-004\n109-701-PE-PP-004","device":"高压冲洗水泵"},{"id":"sp_tbd_053","source":"random","name":"法兰密封垫片","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-089","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"法兰密封垫片","techAgreementQty":0,"techAgreementUnit":"套","deviceModel":"SLGF10-19","deviceTag":"109-202-PE-PP-005\n109-204-PE-PP-014\n109-206-PE-PP-017\n109-208-PE-PP-004\n109-209-1-PE-PP-004\n109-701-PE-PP-004","device":"高压冲洗水泵"},{"id":"sp_tbd_054","source":"random","name":"地脚螺栓","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"合同号DC24-FMI-HPAL-089","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"地脚螺栓","techAgreementQty":0,"techAgreementUnit":"套","deviceModel":"SLGF10-19","deviceTag":"109-202-PE-PP-005\n109-204-PE-PP-014\n109-206-PE-PP-017\n109-208-PE-PP-004\n109-209-1-PE-PP-004\n109-701-PE-PP-004","device":"高压冲洗水泵"},{"id":"sp_tbd_055","source":"random","name":"断火限位","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-077","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"断火限位","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"BZD2t, H=5.5m, L=6m\nBZD5t, H=40m，L=8m","deviceTag":"109-203-PE-CR-103A/B~203A/B~303A/B\n109-203-PE-CR-104/204/304","device":"泵用旋转吊臂\n旋转吊臂"},{"id":"sp_tbd_056","source":"random","name":"重锤限位","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-077","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"重锤限位","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"BZD2t, H=5.5m, L=6m\nBZD5t, H=40m，L=8m","deviceTag":"109-203-PE-CR-103A/B~203A/B~303A/B\n109-203-PE-CR-104/204/304","device":"泵用旋转吊臂\n旋转吊臂"},{"id":"sp_tbd_057","source":"random","name":"断火限位","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-079","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"断火限位","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Gn=5t,\nGn=10t,\nGn=10t,","deviceTag":"109-203-PE-CR-101/201/301\n109-203-PE-CR-102/202/303\n109-215-PE-CR-001","device":"电动单梁悬挂起重机\n电动单梁桥式起重机\n电动单梁起重机"},{"id":"sp_tbd_058","source":"random","name":"重锤限位","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-079","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"重锤限位","techAgreementQty":3,"techAgreementUnit":"套","deviceModel":"Gn=5t,\nGn=10t,\nGn=10t,","deviceTag":"109-203-PE-CR-101/201/301\n109-203-PE-CR-102/202/303\n109-215-PE-CR-001","device":"电动单梁悬挂起重机\n电动单梁桥式起重机\n电动单梁起重机"},{"id":"sp_tbd_059","source":"random","name":"紧固件（见说明）按 10%备","spec":"","quantity":0,"unit":"批","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-048","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"紧固件（见说明）按 10%备","techAgreementQty":1,"techAgreementUnit":"批","deviceModel":"/","deviceTag":"/","device":"/"},{"id":"sp_tbd_060","source":"random","name":"O 型圈","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-048","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O 型圈","techAgreementQty":20,"techAgreementUnit":"只","deviceModel":"/","deviceTag":"/","device":"/"},{"id":"sp_tbd_061","source":"random","name":"油封","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-048","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"油封","techAgreementQty":2,"techAgreementUnit":"只","deviceModel":"/","deviceTag":"109-203-PE-AG-101\n109-203-PE-AG-201\n109-203-PE-AG-301","device":"闪蒸密封槽搅拌器"},{"id":"sp_tbd_062","source":"random","name":"机械密封/M7N70","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-020T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封/M7N70","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Q=460m³/h，H=65m，380V\nQ=1300m³/h，H=50m，380V\nQ=20m³/h，H=16m，380V","deviceTag":"/","device":"高压酸浸循环水供水泵\n设备循环水供水泵\n冶炼循环水检修泵"},{"id":"sp_tbd_063","source":"random","name":"机械密封/M7N110","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-020T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封/M7N110","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Q=460m³/h，H=65m，380V\nQ=1300m³/h，H=50m，380V\nQ=20m³/h，H=16m，380V","deviceTag":"/","device":"高压酸浸循环水供水泵\n设备循环水供水泵\n冶炼循环水检修泵"},{"id":"sp_tbd_064","source":"random","name":"机械密封/MGI/25","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"DC24-FMI-HPAL-020T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"机械密封/MGI/25","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"Q=460m³/h，H=65m，380V\nQ=1300m³/h，H=50m，380V\nQ=20m³/h，H=16m，380V","deviceTag":"/","device":"高压酸浸循环水供水泵\n设备循环水供水泵\n冶炼循环水检修泵"},{"id":"sp_tbd_065","source":"random","name":"专用工具","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"FMI-SFSC-F3\n物料代码BJA173985","received":"","remark":"DC24-FMI-HPAL-091T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"专用工具","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"65FYUC-50-50/30-U5-1500","deviceTag":"109-203-PE-PP-120\n109-203-PE-PP-220\n109-203-PE-PP-320","device":"浓硫酸区污水泵"},{"id":"sp_tbd_066","source":"random","name":"弹性块","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"FMI-SFSC-F3\n物料代码BJA173985","received":"","remark":"DC24-FMI-HPAL-091T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性块","techAgreementQty":3,"techAgreementUnit":"只","deviceModel":"65FYUC-50-50/30-U5-1500","deviceTag":"109-203-PE-PP-120\n109-203-PE-PP-220\n109-203-PE-PP-320","device":"浓硫酸区污水泵"},{"id":"sp_tbd_067","source":"random","name":"地脚螺栓","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"FMI-SFSC-F3\n物料代码BJA173985","received":"","remark":"DC24-FMI-HPAL-091T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"地脚螺栓","techAgreementQty":0,"techAgreementUnit":"套","deviceModel":"65FYUC-50-50/30-U5-1500","deviceTag":"109-203-PE-PP-120\n109-203-PE-PP-220\n109-203-PE-PP-320","device":"浓硫酸区污水泵"},{"id":"sp_tbd_068","source":"random","name":"密封垫片及其紧固件","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"FMI-SFSC-F3\n物料代码BJA173985","received":"","remark":"DC24-FMI-HPAL-091T","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"密封垫片及其紧固件","techAgreementQty":0,"techAgreementUnit":"套","deviceModel":"65FYUC-50-50/30-U5-1500","deviceTag":"109-203-PE-PP-120\n109-203-PE-PP-220\n109-203-PE-PP-320","device":"浓硫酸区污水泵"},{"id":"sp_tbd_069","source":"random","name":"Siemens PLC编程电缆","spec":"","quantity":0,"unit":"根","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"Siemens PLC编程电缆","techAgreementQty":1,"techAgreementUnit":"根","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_070","source":"random","name":"控制继电器/MY2N","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"控制继电器/MY2N","techAgreementQty":10,"techAgreementUnit":"个","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_071","source":"random","name":"压力传感器","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"压力传感器","techAgreementQty":2,"techAgreementUnit":"个","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_072","source":"random","name":"螺杆泵机械密封","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"螺杆泵机械密封","techAgreementQty":3,"techAgreementUnit":"套","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_073","source":"random","name":"筛网","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"筛网","techAgreementQty":1,"techAgreementUnit":"个","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_074","source":"random","name":"玻璃视镜","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-014","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"玻璃视镜","techAgreementQty":3,"techAgreementUnit":"个","deviceModel":"WW-PF70B\nWW-PF100B\nWW-PF100C\nWW-PF70A","deviceTag":"/","device":"原矿絮凝剂制备系统\n尾渣絮凝剂制备系统\n浸出及除铁絮凝剂制备系统\nMHP絮凝剂制备系统"},{"id":"sp_tbd_075","source":"random","name":"交叉网线/西门子触摸屏专用","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"EEEM24-FMI-HPAL-SZ093","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"交叉网线/西门子触摸屏专用","techAgreementQty":3,"techAgreementUnit":"个","deviceModel":"GNZ-38","deviceTag":"/","device":"203-褐铁矿浓密机"},{"id":"sp_tbd_076","source":"random","name":"O 型密封圈/110KW 液压站专用","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"EEEM24-FMI-HPAL-SZ093","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"O 型密封圈/110KW 液压站专用","techAgreementQty":3,"techAgreementUnit":"个","deviceModel":"GNZ-38","deviceTag":"/","device":"203-褐铁矿浓密机"},{"id":"sp_tbd_077","source":"random","name":"空气滤清器/QUQ2","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"EEEM24-FMI-HPAL-SZ093","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"空气滤清器/QUQ2","techAgreementQty":3,"techAgreementUnit":"个","deviceModel":"GNZ-38","deviceTag":"/","device":"203-褐铁矿浓密机"},{"id":"sp_tbd_078","source":"random","name":"吸油过滤器/MF08","spec":"","quantity":0,"unit":"个","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"EEEM24-FMI-HPAL-SZ093","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"吸油过滤器/MF08","techAgreementQty":3,"techAgreementUnit":"个","deviceModel":"GNZ-38","deviceTag":"/","device":"203-褐铁矿浓密机"},{"id":"sp_tbd_079","source":"random","name":"弹性块/TK230/260","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-034\n（恒丰泰）","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性块/TK230/260","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"/","deviceTag":"109-201-PE-AG-001A~C\n109-207-PE-AG-001A～C\n109-209-SF-AG-001A/B\n109-209-SF-AG-002","device":"原矿浓密机给料槽搅拌器\n1#~3#一段沉镍钴槽搅拌器\n氢氧化镍钴贮槽搅拌器\n污水地槽搅拌器"},{"id":"sp_tbd_080","source":"random","name":"弹性块/TK230/250","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-034\n（恒丰泰）","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性块/TK230/250","techAgreementQty":2,"techAgreementUnit":"套","deviceModel":"/","deviceTag":"109-201-PE-AG-001A~C\n109-207-PE-AG-001A～C\n109-209-SF-AG-001A/B\n109-209-SF-AG-002","device":"原矿浓密机给料槽搅拌器\n1#~3#一段沉镍钴槽搅拌器\n氢氧化镍钴贮槽搅拌器\n污水地槽搅拌器"},{"id":"sp_tbd_081","source":"random","name":"弹性体/LM200","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-034\n（恒丰泰）","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性体/LM200","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"/","deviceTag":"109-201-PE-AG-001A~C\n109-207-PE-AG-001A～C\n109-209-SF-AG-001A/B\n109-209-SF-AG-002","device":"原矿浓密机给料槽搅拌器\n1#~3#一段沉镍钴槽搅拌器\n氢氧化镍钴贮槽搅拌器\n污水地槽搅拌器"},{"id":"sp_tbd_082","source":"random","name":"弹性体/LM145","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-034\n（恒丰泰）","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"弹性体/LM145","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"/","deviceTag":"109-201-PE-AG-001A~C\n109-207-PE-AG-001A～C\n109-209-SF-AG-001A/B\n109-209-SF-AG-002","device":"原矿浓密机给料槽搅拌器\n1#~3#一段沉镍钴槽搅拌器\n氢氧化镍钴贮槽搅拌器\n污水地槽搅拌器"},{"id":"sp_tbd_083","source":"random","name":"紧固件/方案中各规格","spec":"","quantity":0,"unit":"套","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"BVVE24-FMI-HPAL-034\n（恒丰泰）","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"紧固件/方案中各规格","techAgreementQty":1,"techAgreementUnit":"套","deviceModel":"/","deviceTag":"109-201-PE-AG-001A~C\n109-207-PE-AG-001A～C\n109-209-SF-AG-001A/B\n109-209-SF-AG-002","device":"原矿浓密机给料槽搅拌器\n1#~3#一段沉镍钴槽搅拌器\n氢氧化镍钴贮槽搅拌器\n污水地槽搅拌器"},{"id":"sp_tbd_084","source":"random","name":"油封","spec":"","quantity":0,"unit":"只","supplier":"","purchaseNo":"","purchaseStatus":"","location":"","received":"","remark":"","isImport":0,"stockStatus":"missing","fromTechAgreementOnly":true,"techAgreementName":"油封","techAgreementQty":1,"techAgreementUnit":"只","deviceModel":"/","deviceTag":"109-201-PE-AG-003"}];
+
+async function enrichRandomPartsV5IfNeeded() {
+  const markerId = 'parts_tech_agreement_v5_20260422';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V5] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '添加缺货备件...');
+  const BATCH_SIZE = 400;
+  let ok = 0, fail = 0;
+
+  try {
+    // Part A: update 200 existing parts with techAgreementUnit
+    for (let i = 0; i < SEED_PARTS_UNIT_FIXES_V5.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_PARTS_UNIT_FIXES_V5.slice(i, i + BATCH_SIZE);
+      chunk.forEach(fix => {
+        const { id, ...updates } = fix;
+        batch.update(doc(db, 'spareparts', id), { ...updates, updatedAt: Date.now() });
+      });
+      try { await batch.commit(); ok += chunk.length; }
+      catch(e) { console.error('[V5] 单位补全批次失败', e); fail += chunk.length; }
+    }
+
+    // Part B: add 84 missing parts as NEW docs
+    const now = Date.now();
+    for (let i = 0; i < SEED_PARTS_MISSING_V5.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = SEED_PARTS_MISSING_V5.slice(i, i + BATCH_SIZE);
+      chunk.forEach((p, idx) => {
+        batch.set(doc(db, 'spareparts', p.id), {
+          ...p,
+          createdAt: now - (SEED_PARTS_MISSING_V5.length - i - idx) * 1000,
+          updatedAt: now,
+        });
+      });
+      try { await batch.commit(); ok += chunk.length; }
+      catch(e) { console.error('[V5] 缺货备件批次失败', e); fail += chunk.length; }
+    }
+
+    await setDoc(markerRef, {
+      appliedAt: Date.now(),
+      description: 'V5: 补技术协议单位 + 添加 84 条缺货备件',
+      unitFixes: SEED_PARTS_UNIT_FIXES_V5.length,
+      newMissing: SEED_PARTS_MISSING_V5.length,
+      ok, fail,
+    });
+    if (fail === 0) showToast('已添加 ' + SEED_PARTS_MISSING_V5.length + ' 条缺货备件');
+    else showToast('部分失败：' + ok + '/' + (ok + fail));
+    console.log('[V5] 完成: ok=' + ok + ' fail=' + fail);
+  } catch(e) {
+    console.error('[V5] 执行失败', e);
+  }
+}
+
+/* ========== V6 孤立润滑点修复 + 设备补全 (2026-04-23) ========== */
+const V6_EQ_RENAMES = [{"id":"eq_seed_0004","newTag":"201B-PE-AG-002A"},{"id":"eq_seed_0005","newTag":"201B-PE-AG-002B"},{"id":"eq_seed_0006","newTag":"201B-PE-AG-002C"},{"id":"eq_seed_0347","newTag":"316-1-PE-EP-002A"},{"id":"eq_seed_0348","newTag":"316-1-PE-EP-003A"}];
+const V6_EQ_NEW = [{"tag":"203-PE-PP-102B","name":"中温矿浆预热器给料泵 五二五","type":"离心泵","spec":"ZG250-650+皮带","area":"203","status":"idle","responsible":"郝行龙","motor":"电机型号：6/280KW-380V，皖南/上海 泵型号：ZGG250-650+皮带，流量Q=270~720m³/h，扬程H=60m","gearPump":"双端面机械密封，材质42铬钼合金","specDetail":"泵转速990转/分\n叶轮直径650mm,材料WH15-2\n泵壳材料Q235\n泵进口DN300，出口DN250","supplier":"","remark":"","id":"eq_v6_001"},{"tag":"316-1-PE-EP-002B","name":"混合罐用循环搅拌泵组","type":"螺杆泵","spec":"1W 148 WMSR","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":"","id":"eq_v6_002"},{"tag":"316-1-PE-EP-003B","name":"熟化罐用循环搅拌泵组","type":"螺杆泵","spec":"1W 148 WMSR","area":"316-1","status":"idle","responsible":"郝行龙","motor":"","gearPump":"","specDetail":"","supplier":"","remark":"","id":"eq_v6_003"}];
+const V6_LP_RENAMES = [{"id":"lp_0203","newTag":"203-PE-PP-313A"},{"id":"lp_0510","newTag":"316-1-PE-EP-003A"},{"id":"lp_0511","newTag":"316-1-PE-EP-003B"}];
+const V6_LP_NEW = [{"tag":"203-PE-PP-313B","name":"高压釜搅拌冲洗水泵","point":"泵","area":"203","standardOil":"10W-30 重负荷机油","standardAmount":0.95,"periodHours":2500,"periodDays":100,"lastLubeAt":null,"nextLubeAt":-2200521600000,"status":"待换油","operationType":"oil","id":"lp_v6_001"}];
+
+async function fixOrphanLubeV6IfNeeded() {
+  const markerId = 'eq_lube_fix_v6_20260423';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V6] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '修复孤立润滑点...');
+  const now = Date.now();
+  let ok = 0, fail = 0;
+  try {
+    const batch = writeBatch(db);
+
+    // 1. 设备位号 rename
+    V6_EQ_RENAMES.forEach(r => {
+      batch.update(doc(db, 'equipments', r.id), { tag: r.newTag, updatedAt: now });
+    });
+
+    // 2. 新建设备
+    V6_EQ_NEW.forEach((e, idx) => {
+      batch.set(doc(db, 'equipments', e.id), {
+        ...e,
+        createdAt: now - (V6_EQ_NEW.length - idx) * 1000,
+        updatedAt: now,
+      });
+    });
+
+    // 3. 润滑点位号 rename
+    V6_LP_RENAMES.forEach(r => {
+      batch.update(doc(db, 'lubepoints', r.id), { tag: r.newTag, updatedAt: now });
+    });
+
+    // 4. 新建润滑点
+    V6_LP_NEW.forEach((lp, idx) => {
+      batch.set(doc(db, 'lubepoints', lp.id), {
+        ...lp,
+        createdAt: now - (V6_LP_NEW.length - idx) * 1000,
+        updatedAt: now,
+      });
+    });
+
+    // 5. 写迁移标记
+    batch.set(markerRef, {
+      appliedAt: now,
+      description: 'V6: 修 10 个孤立润滑点 + 拆 2 台设备 + 新增 1 台设备 + 新增 1 个润滑点',
+      eqRenames: V6_EQ_RENAMES.length,
+      eqNew: V6_EQ_NEW.length,
+      lpRenames: V6_LP_RENAMES.length,
+      lpNew: V6_LP_NEW.length,
+    });
+
+    await batch.commit();
+    ok = V6_EQ_RENAMES.length + V6_EQ_NEW.length + V6_LP_RENAMES.length + V6_LP_NEW.length;
+    showToast('已修复孤立润滑点（' + V6_EQ_RENAMES.length + ' 改 + ' + V6_EQ_NEW.length + ' 新设备 + ' + V6_LP_RENAMES.length + ' 改润滑点 + ' + V6_LP_NEW.length + ' 新润滑点）');
+    console.log('[V6] 完成: ok=' + ok);
+  } catch(e) {
+    console.error('[V6] 执行失败', e);
+    showToast('V6 迁移失败：' + (e.message || e));
+  }
+}
+
+/* ========== V7 补 202-PE-PP-005 高压水泵·电机润滑点 (2026-04-23) ==========
+   标准油号 / 周期暂留空，待用户后续补充。会自动归到"待补充油号"tab。 */
+const V7_LP_NEW = [{
+  id: 'lp_v7_001',
+  tag: '202-PE-PP-005',
+  name: '高压水泵',
+  point: '电机',
+  area: '202',
+  standardOil: '',
+  standardAmount: null,
+  periodHours: null,
+  periodDays: null,
+  lastLubeAt: null,
+  nextLubeAt: null,
+  status: '待补充',
+  operationType: 'grease',
+}];
+
+async function addMotorLubeV7IfNeeded() {
+  const markerId = 'add_motor_lp_v7_20260423';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V7] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '补 202 高压水泵润滑点...');
+  const now = Date.now();
+  try {
+    const batch = writeBatch(db);
+    V7_LP_NEW.forEach((lp, idx) => {
+      batch.set(doc(db, 'lubepoints', lp.id), {
+        ...lp,
+        createdAt: now - (V7_LP_NEW.length - idx) * 1000,
+        updatedAt: now,
+      });
+    });
+    batch.set(markerRef, {
+      appliedAt: now,
+      description: 'V7: 补 202-PE-PP-005 高压水泵·电机润滑点（油号/周期待补充）',
+      added: V7_LP_NEW.length,
+    });
+    await batch.commit();
+    showToast('已补 ' + V7_LP_NEW.length + ' 个润滑点（油号/周期待补充）');
+    console.log('[V7] 完成');
+  } catch(e) {
+    console.error('[V7] 执行失败', e);
+    showToast('V7 失败：' + (e.message || e));
+  }
+}
+
+/* ========== V8 补 218/923/546 区设备润滑点 (2026-04-23)
+   107 个润滑点，标准油号/周期/量都留空，全部归到"待补充油号"tab */
+const V8_LP_NEW = [{"id":"lp_v8_001","tag":"923-SP0301","name":"液下渣浆泵","point":"电机","area":"923","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_002","tag":"923-SP0301","name":"液下渣浆泵","point":"轴承室","area":"923","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_003","tag":"923-SP0302","name":"液下渣浆泵","point":"电机","area":"923","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_004","tag":"923-SP0302","name":"液下渣浆泵","point":"轴承室","area":"923","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_005","tag":"218-TBD-PAC加药泵-01","name":"PAC加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_006","tag":"218-TBD-PAC加药泵-02","name":"PAC加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_007","tag":"218-TBD-PAC加药泵-03","name":"PAC加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_008","tag":"218-TBD-PAC加药泵-04","name":"PAC加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_009","tag":"218-TBD-PAC加药泵-05","name":"PAC加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_010","tag":"218-TBD-PAM加药泵-01","name":"PAM加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_011","tag":"218-TBD-PAM加药泵-02","name":"PAM加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_012","tag":"218-TBD-PAM加药泵-03","name":"PAM加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_013","tag":"218-TBD-PAM加药泵-04","name":"PAM加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_014","tag":"218-TBD-PAM加药泵-05","name":"PAM加药泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_015","tag":"218-TBD-PAM搅拌器-01","name":"PAM搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_016","tag":"218-TBD-PAM搅拌器-01","name":"PAM搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_017","tag":"218-TBD-PAM搅拌器-01","name":"PAM搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_018","tag":"218-TBD-PAM搅拌器-02","name":"PAM搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_019","tag":"218-TBD-PAM搅拌器-02","name":"PAM搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_020","tag":"218-TBD-PAM搅拌器-02","name":"PAM搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_021","tag":"218-TBD-PAM搅拌器-03","name":"PAM搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_022","tag":"218-TBD-PAM搅拌器-03","name":"PAM搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_023","tag":"218-TBD-PAM搅拌器-03","name":"PAM搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_024","tag":"218-TBD-pac搅拌器-01","name":"pac搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_025","tag":"218-TBD-pac搅拌器-01","name":"pac搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_026","tag":"218-TBD-pac搅拌器-01","name":"pac搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_027","tag":"218-TBD-pac搅拌器-02","name":"pac搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_028","tag":"218-TBD-pac搅拌器-02","name":"pac搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_029","tag":"218-TBD-pac搅拌器-02","name":"pac搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_030","tag":"218-TBD-刮泥机-01","name":"刮泥机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_031","tag":"218-TBD-刮泥机-02","name":"刮泥机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_032","tag":"218-TBD-刮泥机-03","name":"刮泥机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_033","tag":"218-TBD-反洗泵-01","name":"反洗泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_034","tag":"218-TBD-反洗泵-01","name":"反洗泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_035","tag":"218-TBD-反洗泵-02","name":"反洗泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_036","tag":"218-TBD-反洗泵-02","name":"反洗泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_037","tag":"218-TBD-反洗泵-03","name":"反洗泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_038","tag":"218-TBD-反洗泵-03","name":"反洗泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_039","tag":"218-TBD-回用水泵-01","name":"回用水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_040","tag":"218-TBD-回用水泵-01","name":"回用水泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_041","tag":"218-TBD-回用水泵-02","name":"回用水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_042","tag":"218-TBD-回用水泵-02","name":"回用水泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_043","tag":"218-TBD-回用水泵-03","name":"回用水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_044","tag":"218-TBD-回用水泵-03","name":"回用水泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_045","tag":"218-TBD-回用水泵-04","name":"回用水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_046","tag":"218-TBD-回用水泵-04","name":"回用水泵","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_047","tag":"218-TBD-排泥泵-01","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_048","tag":"218-TBD-排泥泵-02","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_049","tag":"218-TBD-排泥泵-03","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_050","tag":"218-TBD-排泥泵-04","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_051","tag":"218-TBD-排泥泵-05","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_052","tag":"218-TBD-排泥泵-06","name":"排泥泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_053","tag":"218-TBD-潜水搅拌-01","name":"潜水搅拌","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_054","tag":"218-TBD-潜水搅拌-02","name":"潜水搅拌","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_055","tag":"218-TBD-潜水泵-01","name":"潜水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_056","tag":"218-TBD-潜水泵-02","name":"潜水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_057","tag":"218-TBD-电动单梁悬挂起重机-01","name":"电动单梁悬挂起重机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_058","tag":"218-TBD-电动单梁悬挂起重机-01","name":"电动单梁悬挂起重机","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_059","tag":"218-TBD-电动单梁悬挂起重机-02","name":"电动单梁悬挂起重机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_060","tag":"218-TBD-电动单梁悬挂起重机-02","name":"电动单梁悬挂起重机","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_061","tag":"218-TBD-絮凝剂搅拌器-01","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_062","tag":"218-TBD-絮凝剂搅拌器-01","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_063","tag":"218-TBD-絮凝剂搅拌器-01","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_064","tag":"218-TBD-絮凝剂搅拌器-02","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_065","tag":"218-TBD-絮凝剂搅拌器-02","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_066","tag":"218-TBD-絮凝剂搅拌器-02","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_067","tag":"218-TBD-絮凝剂搅拌器-03","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_068","tag":"218-TBD-絮凝剂搅拌器-03","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_069","tag":"218-TBD-絮凝剂搅拌器-03","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_070","tag":"218-TBD-絮凝剂搅拌器-04","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_071","tag":"218-TBD-絮凝剂搅拌器-04","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_072","tag":"218-TBD-絮凝剂搅拌器-04","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_073","tag":"218-TBD-絮凝剂搅拌器-05","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_074","tag":"218-TBD-絮凝剂搅拌器-05","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_075","tag":"218-TBD-絮凝剂搅拌器-05","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_076","tag":"218-TBD-絮凝剂搅拌器-06","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_077","tag":"218-TBD-絮凝剂搅拌器-06","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_078","tag":"218-TBD-絮凝剂搅拌器-06","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_079","tag":"218-TBD-絮凝剂搅拌器-07","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_080","tag":"218-TBD-絮凝剂搅拌器-07","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_081","tag":"218-TBD-絮凝剂搅拌器-07","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_082","tag":"218-TBD-絮凝剂搅拌器-08","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_083","tag":"218-TBD-絮凝剂搅拌器-08","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_084","tag":"218-TBD-絮凝剂搅拌器-08","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_085","tag":"218-TBD-絮凝剂搅拌器-09","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_086","tag":"218-TBD-絮凝剂搅拌器-09","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_087","tag":"218-TBD-絮凝剂搅拌器-09","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_088","tag":"218-TBD-絮凝剂搅拌器-10","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_089","tag":"218-TBD-絮凝剂搅拌器-10","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_090","tag":"218-TBD-絮凝剂搅拌器-10","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_091","tag":"218-TBD-絮凝剂搅拌器-11","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_092","tag":"218-TBD-絮凝剂搅拌器-11","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_093","tag":"218-TBD-絮凝剂搅拌器-11","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_094","tag":"218-TBD-絮凝剂搅拌器-12","name":"絮凝剂搅拌器","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_095","tag":"218-TBD-絮凝剂搅拌器-12","name":"絮凝剂搅拌器","point":"减速机","area":"218","operationType":"oil","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_096","tag":"218-TBD-絮凝剂搅拌器-12","name":"絮凝剂搅拌器","point":"机架轴承","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_097","tag":"218-TBD-罗茨风机-01","name":"罗茨风机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_098","tag":"218-TBD-罗茨风机-01","name":"罗茨风机","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_099","tag":"218-TBD-罗茨风机-02","name":"罗茨风机","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_100","tag":"218-TBD-罗茨风机-02","name":"罗茨风机","point":"轴承室","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_101","tag":"218-TBD-集水坑潜水泵-01","name":"集水坑潜水泵","point":"电机","area":"218","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_102","tag":"546-TBD-雨水回用泵-01","name":"雨水回用泵","point":"电机","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_103","tag":"546-TBD-雨水回用泵-01","name":"雨水回用泵","point":"轴承箱","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_104","tag":"546-TBD-雨水回用泵-02","name":"雨水回用泵","point":"电机","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_105","tag":"546-TBD-雨水回用泵-02","name":"雨水回用泵","point":"轴承箱","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_106","tag":"546-TBD-雨水回用泵-03","name":"雨水回用泵","point":"电机","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"},{"id":"lp_v8_107","tag":"546-TBD-雨水回用泵-03","name":"雨水回用泵","point":"轴承箱","area":"546","operationType":"grease","standardOil":"","standardAmount":null,"periodHours":null,"periodDays":null,"lastLubeAt":null,"nextLubeAt":null,"status":"待补充"}];
+
+async function addAreaLubePointsV8IfNeeded() {
+  const markerId = 'area_lube_v8_20260423';
+  const markerRef = doc(db, 'meta', markerId);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) return;
+  } catch(e) { console.error('[V8] 检查标记失败', e); return; }
+
+  setCloudStatus('syncing', '补 218/923/546 区润滑点...');
+  const now = Date.now();
+  const BATCH_SIZE = 400;
+  let ok = 0, fail = 0;
+  try {
+    for (let i = 0; i < V8_LP_NEW.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = V8_LP_NEW.slice(i, i + BATCH_SIZE);
+      chunk.forEach((lp, idx) => {
+        batch.set(doc(db, 'lubepoints', lp.id), {
+          ...lp,
+          createdAt: now - (V8_LP_NEW.length - i - idx) * 1000,
+          updatedAt: now,
+        });
+      });
+      try { await batch.commit(); ok += chunk.length; }
+      catch(e) { console.error('[V8] 批次失败', e); fail += chunk.length; }
+    }
+    await setDoc(markerRef, {
+      appliedAt: now,
+      description: 'V8: 218/923/546 区共 ' + V8_LP_NEW.length + ' 个润滑点（油号/周期待补充）',
+      added: ok, fail,
+    });
+    if (fail === 0) showToast('已补 ' + ok + ' 个润滑点（油号/周期待补充）');
+    else showToast('补 ' + ok + '/' + (ok+fail) + '，失败 ' + fail);
+    console.log('[V8] 完成: ok=' + ok + ' fail=' + fail);
+  } catch(e) {
+    console.error('[V8] 执行失败', e);
+    showToast('V8 失败：' + (e.message || e));
+  }
+}
+
 // 首次启动：如果云端为空，上传种子数据
 async function seedIfEmpty() {
   setCloudStatus('syncing', '检查云端数据...');
@@ -2555,6 +3181,9 @@ function switchModule(name) {
   }
   if (name === 'parts' && typeof renderPartsList === 'function') {
     renderPartsList();
+  }
+  if (name === 'random' && typeof renderRandomList === 'function') {
+    renderRandomList();
   }
 
   document.querySelector('.content').scrollTop = 0;
@@ -4211,6 +4840,11 @@ function subscribeSpareParts() {
     if (partsMod && partsMod.classList.contains('active')) {
       renderPartsList();
     }
+    // 2026-04-22：随机备件独立模块的实时刷新
+    const randomMod = document.querySelector('.module[data-module="random"]');
+    if (randomMod && randomMod.classList.contains('active') && typeof renderRandomList === 'function') {
+      renderRandomList();
+    }
     if (currentPartId) {
       const partDetailMod = document.querySelector('.module[data-module="parts-detail"]');
       if (partDetailMod && partDetailMod.classList.contains('active')) {
@@ -4270,6 +4904,15 @@ async function seedPartsIfEmpty() {
 let currentLubePointId = null;
 let lubeExecBuffer = null;
 let lubeFilter = 'overdue';  // overdue / due-soon / all
+let lubeOpFilter = 'grease'; // 'grease' (脂润滑) / 'oil' (油润滑) / 'unspecified' (待补充油号) · 2026-04-23
+
+// 按标准油号判断润滑脂/润滑油（比 operationType 准）
+function getLubeKind(lp) {
+  const oil = (lp && lp.standardOil ? String(lp.standardOil) : '').trim();
+  if (!oil) return 'unspecified';
+  if (oil.includes('脂')) return 'grease';
+  return 'oil';
+}
 let lubeSearchText = '';
 let lubePageSize = 50;
 let lubePageNum = 1;
@@ -4300,6 +4943,8 @@ function clearLubeSearch() {
 
 function filterLubePoints() {
   return lubePointsCache.filter(lp => {
+    // 2026-04-23：先按润滑标准油号判断分类（脂润滑 / 油润滑 / 待补充）
+    if (lubeOpFilter && getLubeKind(lp) !== lubeOpFilter) return false;
     const status = getLubeStatus(lp);
     if (lubeFilter === 'overdue' && status !== 'overdue') return false;
     if (lubeFilter === 'due-soon' && status !== 'due-soon') return false;
@@ -4314,7 +4959,8 @@ function filterLubePoints() {
 }
 
 function renderLubeOverview() {
-  const all = lubePointsCache;
+  // 2026-04-23：只统计当前类型的点位（按标准油号分）
+  const all = lubePointsCache.filter(lp => getLubeKind(lp) === lubeOpFilter);
   let overdue = 0, dueSoon = 0, ok = 0;
   all.forEach(lp => {
     const s = getLubeStatus(lp);
@@ -4339,6 +4985,47 @@ function renderLubeOverview() {
       <div class="lube-ov-lbl">全部</div>
     </div>
   `;
+
+  // 2026-04-23：渲染油润滑/脂润滑切换 tab
+  renderLubeOpTabs();
+}
+
+function renderLubeOpTabs() {
+  const greaseCount = lubePointsCache.filter(lp => getLubeKind(lp) === 'grease').length;
+  const oilCount = lubePointsCache.filter(lp => getLubeKind(lp) === 'oil').length;
+  const unspecCount = lubePointsCache.filter(lp => getLubeKind(lp) === 'unspecified').length;
+  const el = document.getElementById('lube-op-tabs');
+  if (!el) return;
+  el.innerHTML = `
+    <button class="lube-op-tab${lubeOpFilter === 'grease' ? ' active' : ''}" onclick="setLubeOp('grease')">
+      <div class="lube-op-tab-icon">🛢️</div>
+      <div class="lube-op-tab-text">
+        <div class="lube-op-tab-name">脂润滑</div>
+        <div class="lube-op-tab-cnt">${greaseCount} 个</div>
+      </div>
+    </button>
+    <button class="lube-op-tab${lubeOpFilter === 'oil' ? ' active' : ''}" onclick="setLubeOp('oil')">
+      <div class="lube-op-tab-icon">⛽</div>
+      <div class="lube-op-tab-text">
+        <div class="lube-op-tab-name">油润滑</div>
+        <div class="lube-op-tab-cnt">${oilCount} 个</div>
+      </div>
+    </button>
+    <button class="lube-op-tab unspec${lubeOpFilter === 'unspecified' ? ' active' : ''}" onclick="setLubeOp('unspecified')">
+      <div class="lube-op-tab-icon">📝</div>
+      <div class="lube-op-tab-text">
+        <div class="lube-op-tab-name">待补充油号</div>
+        <div class="lube-op-tab-cnt">${unspecCount} 个</div>
+      </div>
+    </button>
+  `;
+}
+
+function setLubeOp(op) {
+  if (op !== 'oil' && op !== 'grease' && op !== 'unspecified') return;
+  lubeOpFilter = op;
+  lubePageNum = 1;
+  renderLubeList();
 }
 
 function renderLubeList() {
@@ -4773,6 +5460,8 @@ function clearPartsSearch() {
 
 function filterSpareParts() {
   return sparePartsCache.filter(sp => {
+    // 2026-04-22：随机备件已分家到独立模块，采购备件列表仅显示长周期
+    if (sp.source === 'random') return false;
     if (partsFilter === 'long' && sp.source !== 'long') return false;
     if (partsFilter === 'random' && sp.source !== 'random') return false;
     if (partsFilter === 'low') {
@@ -4804,10 +5493,6 @@ function renderPartsOverview() {
     <div class="parts-ov-card ${partsFilter === 'long' ? 'active' : ''}" onclick="setPartsFilter('long')">
       <div class="parts-ov-num">${long}</div>
       <div class="parts-ov-lbl">长周期</div>
-    </div>
-    <div class="parts-ov-card ${partsFilter === 'random' ? 'active' : ''}" onclick="setPartsFilter('random')">
-      <div class="parts-ov-num">${random}</div>
-      <div class="parts-ov-lbl">随机备件</div>
     </div>
     <div class="parts-ov-card low ${partsFilter === 'low' ? 'active' : ''}" onclick="setPartsFilter('low')">
       <div class="parts-ov-num">${low}</div>
@@ -4864,7 +5549,7 @@ function renderPartCard(sp) {
   const status = getStockStatus(sp);
   const src = sp.source === 'long' ? '长周期' : '随机';
   return `
-    <div class="parts-card" onclick="openPartDetail('${sp.id}')">
+    <div class="parts-card" onclick="openPartFromParts('${sp.id}')">
       <div class="parts-card-left">
         <div class="parts-card-top">
           <span class="parts-src-tag ${sp.source}">${src}</span>
@@ -4888,14 +5573,21 @@ function partsLoadMore() {
 
 /* ------ 备件详情 ------ */
 
+// 2026-04-22: 记录进入详情页前的来源模块（parts 采购 or random 随机）
+let _partBackTo = 'parts';
+
 function backToPartsList() {
   currentPartId = null;
-  switchModule('parts');
+  const target = _partBackTo === 'random' ? 'random' : 'parts';
+  _partBackTo = 'parts';  // reset
+  switchModule(target);
 }
 
 function openPartDetail(id) {
   const sp = sparePartsCache.find(p => p.id === id);
   if (!sp) { showToast('备件不存在'); return; }
+  // 2026-04-22: 如果不是从 openPartFromRandom 调来，默认返回采购 tab
+  if (typeof _partBackTo === 'undefined' || _partBackTo === null) _partBackTo = 'parts';
   currentPartId = id;
   renderPartDetail(sp);
   switchModule('parts-detail');
@@ -4919,17 +5611,45 @@ function renderPartDetail(sp) {
     </div>
   `;
 
-  // Body 详情字段
+  // Body 详情字段 (2026-04-22 扩展：材质/技术协议/设备型号位号/缺货状态/可编辑位置)
+  let techAgreementRow = '';
+  if (sp.techAgreementName || sp.techAgreementQty != null) {
+    const tn = sp.techAgreementName || '—';
+    const tq = sp.techAgreementQty != null ? sp.techAgreementQty : '—';
+    const tu = sp.techAgreementUnit || sp.unit || '';
+    const tqLabel = tq + (tu ? ' ' + tu : '');
+    techAgreementRow = `
+      <div class="parts-info-row" style="background:var(--g-mist);border-radius:8px;padding:10px 12px;margin:6px 0;">
+        <span class="parts-info-lbl" style="color:var(--g-forest);">📄 技术协议</span>
+        <span class="parts-info-val" style="color:var(--ink);">${escapeHtml(tn)} × <strong>${escapeHtml(tqLabel)}</strong></span>
+      </div>`;
+  }
+  const missingBadge = sp.stockStatus === 'missing'
+    ? '<span class="parts-info-val" style="color:#D97935;font-weight:500;">📝 协议待清点</span>'
+    : '';
+  const locationRow = `
+    <div class="parts-info-row">
+      <span class="parts-info-lbl">存放位置</span>
+      <span class="parts-info-val">${sp.location ? escapeHtml(sp.location).replace(/\n/g, '<br>') : '<span class="parts-info-val-empty">未填写</span>'}
+        <button onclick="event.stopPropagation(); editPartLocation('${sp.id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--muted);font-size:11px;cursor:pointer;">✏️ 修改</button>
+      </span>
+    </div>`;
   const infoHtml = `
     <div class="parts-info-grid">
       ${renderInfoRow('规格型号', sp.spec)}
+      ${sp.material ? renderInfoRow('材质', sp.material) : ''}
       ${renderInfoRow('装机设备', sp.device)}
-      ${renderInfoRow('存放位置', sp.location)}
+      ${sp.deviceModel ? renderInfoRow('设备型号', sp.deviceModel) : ''}
+      ${sp.deviceTag ? renderInfoRow('设备位号', sp.deviceTag) : ''}
+      ${locationRow}
+      ${missingBadge ? '<div class="parts-info-row"><span class="parts-info-lbl">库存状态</span>' + missingBadge + '</div>' : ''}
+      ${techAgreementRow}
       ${sp.materialCode ? renderInfoRow('物料编码', sp.materialCode) : ''}
       ${sp.supplier ? renderInfoRow('供应商', sp.supplier) : ''}
       ${sp.purchaseStatus ? renderInfoRow('采购状态', sp.purchaseStatus) : ''}
       ${sp.purchaseNo ? renderInfoRow('采购单号', sp.purchaseNo) : ''}
       ${sp.received ? renderInfoRow('领用情况', sp.received) : ''}
+      ${sp.usageNote ? renderInfoRow('使用备注', sp.usageNote) : ''}
       ${sp.remark ? renderInfoRow('备注', sp.remark) : ''}
     </div>`;
 
@@ -5351,6 +6071,520 @@ function closeWelcome() {
   }
 }
 
+/* ========== 随机备件现场清点 · 2026-04-22 ========== */
+/* 随机备件和采购备件彻底分家，走独立模块 data-module="random" */
+let randomFilter = 'pending';   // pending / counted / diff / all
+let randomLocation = 'all';     // all / <location string>
+let randomSearchText = '';
+let randomPageSize = 30;
+let randomPageNum = 1;
+
+function randomParts() {
+  return (sparePartsCache || []).filter(sp => sp.source === 'random');
+}
+
+function partStatus(sp) {
+  // 未到货（技术协议有但船上没发）
+  if (sp.stockStatus === 'missing' && !sp.countedAt) return 'missing';
+  if (!sp.countedAt) return 'pending';
+  if (sp.countDiff && sp.countDiff !== 0) return 'diff';
+  return 'counted';
+}
+
+function shortLocation(loc) {
+  if (!loc) return '未填位置';
+  // Truncate multi-line locations to the first non-empty line
+  const first = String(loc).split(/\n|\r/).find(s => s.trim()) || '';
+  return first.trim();
+}
+
+function setRandomFilter(f) {
+  randomFilter = f;
+  randomPageNum = 1;
+  renderRandomList();
+}
+function setRandomLocation(loc) {
+  randomLocation = loc;
+  randomPageNum = 1;
+  renderRandomList();
+}
+function onRandomSearchInput() {
+  const v = document.getElementById('random-search').value;
+  randomSearchText = v.trim();
+  randomPageNum = 1;
+  document.getElementById('random-search-clear').classList.toggle('active', !!v);
+  renderRandomList();
+}
+function clearRandomSearch() {
+  document.getElementById('random-search').value = '';
+  randomSearchText = '';
+  document.getElementById('random-search-clear').classList.remove('active');
+  randomPageNum = 1;
+  renderRandomList();
+}
+function loadMoreRandom() {
+  randomPageNum += 1;
+  renderRandomList();
+}
+
+function filterRandomParts() {
+  return randomParts().filter(sp => {
+    const st = partStatus(sp);
+    if (randomFilter === 'pending' && st !== 'pending') return false;
+    if (randomFilter === 'counted' && st !== 'counted') return false;
+    if (randomFilter === 'diff' && st !== 'diff') return false;
+    if (randomFilter === 'missing' && st !== 'missing') return false;
+    if (randomLocation !== 'all') {
+      const loc = shortLocation(sp.location);
+      if (loc !== randomLocation) return false;
+    }
+    if (randomSearchText) {
+      const s = randomSearchText.toLowerCase();
+      const hay = [
+        sp.name, sp.spec, sp.material, sp.device, sp.deviceModel, sp.deviceTag,
+        sp.location, sp.remark, sp.techAgreementName
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  });
+}
+
+function renderRandomProgress() {
+  const all = randomParts();
+  // 分 2 类：船清单 (非 missing) 和 缺货 (missing)
+  const ship = all.filter(p => p.stockStatus !== 'missing');
+  const missing = all.filter(p => p.stockStatus === 'missing' && !p.countedAt);
+  const counted = ship.filter(p => !!p.countedAt).length;
+  const diffs = ship.filter(p => partStatus(p) === 'diff').length;
+  const pct = ship.length > 0 ? Math.round(100 * counted / ship.length) : 0;
+  const el = document.getElementById('random-progress');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="random-progress-head">
+      <div class="random-progress-num">
+        <span>${counted}</span><span class="sep">/</span><span class="total">${ship.length}</span>
+      </div>
+      <div class="random-progress-meta">船清单已清点 <strong>${counted}</strong> · 未清点 <strong>${ship.length - counted}</strong>${diffs > 0 ? ' · <span style="color:#D97935;">差异 <strong style="color:#D97935;">' + diffs + '</strong></span>' : ''}${missing.length > 0 ? ' · <span style="color:#D97935;">协议待清点 <strong style="color:#D97935;">' + missing.length + '</strong></span>' : ''}</div>
+    </div>
+    <div class="random-progress-bar"><div class="random-progress-bar-fill" style="width:${pct}%;"></div></div>
+  `;
+}
+
+function renderRandomFilters() {
+  const all = randomParts();
+  const pendingCount = all.filter(p => partStatus(p) === 'pending').length;
+  const countedCount = all.filter(p => partStatus(p) === 'counted').length;
+  const diffCount = all.filter(p => partStatus(p) === 'diff').length;
+
+  const missingCount = all.filter(p => partStatus(p) === 'missing').length;
+  const statusItems = [
+    { key: 'pending', label: '未清点', count: pendingCount },
+    { key: 'counted', label: '已清点', count: countedCount },
+  ];
+  if (diffCount > 0) statusItems.push({ key: 'diff', label: '有差异', count: diffCount });
+  if (missingCount > 0) statusItems.push({ key: 'missing', label: '协议待清点', count: missingCount });
+  statusItems.push({ key: 'all', label: '全部', count: all.length });
+
+  document.getElementById('random-status-row').innerHTML = statusItems.map(it =>
+    `<button class="random-chip${it.key === randomFilter ? ' active' : ''}" onclick="setRandomFilter('${it.key}')">${it.label}<span class="cnt">${it.count}</span></button>`
+  ).join('');
+
+  // Location chips
+  const locs = {};
+  all.forEach(p => {
+    const l = shortLocation(p.location);
+    locs[l] = (locs[l] || 0) + 1;
+  });
+  const locItems = [{ key: 'all', label: '全部位置', count: all.length }];
+  Object.entries(locs).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => {
+    locItems.push({ key: k, label: k, count: v });
+  });
+  // 2026-04-22 修 bug：JSON.stringify 产生的 " 会和 HTML onclick="" 的 " 冲突
+  // 改成 JS 单引号 + 对反斜杠和单引号做转义
+  const jsEscape = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ');
+  document.getElementById('random-location-row').innerHTML = locItems.map(it =>
+    `<button class="random-chip${it.key === randomLocation ? ' active' : ''}" onclick="setRandomLocation('${jsEscape(it.key)}')">${escapeHtml(it.label)}<span class="cnt">${it.count}</span></button>`
+  ).join('');
+}
+
+function renderRandomList() {
+  renderRandomProgress();
+  renderRandomFilters();
+
+  const filtered = filterRandomParts();
+  // Sort: pending first (and within pending, by location for walk-through),
+  //       then counted, then diffs
+  const statusOrder = { pending: 0, diff: 1, counted: 2 };
+  filtered.sort((a, b) => {
+    const sa = statusOrder[partStatus(a)];
+    const sb = statusOrder[partStatus(b)];
+    if (sa !== sb) return sa - sb;
+    const la = shortLocation(a.location);
+    const lb = shortLocation(b.location);
+    if (la !== lb) return la.localeCompare(lb);
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const total = filtered.length;
+  const shown = Math.min(randomPageSize * randomPageNum, total);
+  const page = filtered.slice(0, shown);
+
+  const sub = document.getElementById('random-section-sub');
+  if (sub) sub.textContent = total + ' 条备件';
+
+  const container = document.getElementById('random-list-container');
+  if (!container) return;
+
+  if (page.length === 0) {
+    container.innerHTML = `
+      <div class="empty-random">
+        <div class="empty-mark">—</div>
+        <div class="empty-title">${randomFilter === 'pending' ? '全部清点完成 🎉' : '暂无匹配'}</div>
+        <div class="empty-hint">${randomFilter === 'pending' ? 'all counted' : 'no matching parts'}</div>
+      </div>`;
+  } else {
+    container.innerHTML = page.map(sp => renderCountCard(sp)).join('');
+  }
+
+  const lm = document.getElementById('random-load-more');
+  if (lm) lm.style.display = shown < total ? '' : 'none';
+}
+
+function renderCountCard(sp) {
+  const status = partStatus(sp);
+  const bookQty = sp.quantity == null ? 0 : sp.quantity;
+  const loc = shortLocation(sp.location);
+  const parts = [];
+  if (sp.spec) parts.push(sp.spec);
+  if (sp.material) parts.push('材质:' + sp.material);
+  const specLine = parts.join(' · ');
+
+  const deviceParts = [];
+  if (sp.device) deviceParts.push(sp.device);
+  if (sp.deviceModel) deviceParts.push('<span class="meta-tag">' + escapeHtml(sp.deviceModel) + '</span>');
+
+  // 技术协议对比行（和船清单不完全一致，都保留以便查验）
+  let techLine = '';
+  if (sp.techAgreementName || sp.techAgreementQty != null) {
+    const tn = sp.techAgreementName || '—';
+    const tq = sp.techAgreementQty != null ? sp.techAgreementQty : '—';
+    techLine = `<div class="count-card-meta"><span class="meta-label">📄 技术协议</span>${escapeHtml(tn)} × ${tq}</div>`;
+  }
+
+  let diffBadge = '';
+  if (sp.countDiff && sp.countDiff !== 0) {
+    const sign = sp.countDiff > 0 ? '+' : '';
+    diffBadge = '<span class="count-card-diff-badge">差异 ' + sign + sp.countDiff + '</span>';
+  }
+
+  // Body differs by status
+  let body;
+  if (status === 'missing') {
+    // 未到货：显示技术协议数，按钮是"仍然缺货"和"实际到货"
+    const tq = sp.techAgreementQty != null ? sp.techAgreementQty : '—';
+    const tu = sp.techAgreementUnit || sp.unit || '件';
+    body = `
+      <div class="count-card-book" style="color:#D97935;">协议约定 <span class="count-card-book-num" style="color:#D97935;">${tq}</span> ${escapeHtml(tu)} · <span style="font-size:11px;">待清点</span></div>
+      <div class="count-input-group" onclick="event.stopPropagation()">
+        <button class="count-recount-btn" onclick="markStillMissing(event, '${sp.id}')">❌ 仍然缺货</button>
+        <button class="count-confirm-btn" onclick="markPartArrived(event, '${sp.id}')">✅ 实际到货</button>
+      </div>
+    `;
+  } else if (status === 'pending') {
+    body = `
+      <div class="count-card-book">船清单 <span class="count-card-book-num">${bookQty}</span> ${escapeHtml(sp.unit || '件')}</div>
+      <div class="count-input-group" onclick="event.stopPropagation()">
+        <button class="count-btn" onclick="adjustCount(event, '${sp.id}', -1)" title="减 1">−</button>
+        <input class="count-input" id="count-input-${sp.id}" type="number" min="0" value="${bookQty}" inputmode="numeric" onclick="event.stopPropagation()">
+        <button class="count-btn" onclick="adjustCount(event, '${sp.id}', 1)" title="加 1">+</button>
+        <button class="count-confirm-btn" onclick="confirmCount(event, '${sp.id}')">✓ 确认</button>
+      </div>
+    `;
+  } else {
+    const when = formatShortTime(sp.countedAt);
+    const who = escapeHtml(sp.countedByName || '—');
+    const countedQty = sp.countedQty == null ? bookQty : sp.countedQty;
+    body = `
+      <div class="count-counted-info">
+        <strong>${who}</strong> · ${when} 清点<br>
+        现场 <strong>${countedQty}</strong> ${escapeHtml(sp.unit || '件')}${diffBadge}
+      </div>
+      <button class="count-recount-btn" onclick="recountPart(event, '${sp.id}')">重新清点</button>
+    `;
+  }
+
+  return `
+    <div class="count-card ${status}" onclick="openPartFromRandom('${sp.id}')">
+      <div class="count-card-head">
+        <div class="count-status-dot">${status === 'counted' ? '✓' : status === 'diff' ? '!' : status === 'missing' ? '✗' : ''}</div>
+        <div class="count-card-title">
+          <div class="count-card-name">${escapeHtml(sp.name || '—')}${status === 'pending' ? diffBadge : ''}</div>
+          ${specLine ? '<div class="count-card-spec">' + escapeHtml(specLine) + '</div>' : ''}
+          <div class="count-card-meta">
+            <span class="meta-label">📍</span>${escapeHtml(loc)}
+            ${deviceParts.length ? '<br><span class="meta-label">🔧</span>' + deviceParts.join(' ') : ''}
+            ${sp.deviceTag ? '<br><span class="meta-label">📌</span><span class="meta-tag">' + escapeHtml(shortLocation(sp.deviceTag)) + '</span>' + (sp.deviceTag.split(/\n|\r/).filter(s=>s.trim()).length > 1 ? ' <span style="color:var(--subtle);">+' + (sp.deviceTag.split(/\n|\r/).filter(s=>s.trim()).length - 1) + '</span>' : '') : ''}
+          </div>
+          ${techLine}
+        </div>
+      </div>
+      <div class="count-card-body">${body}</div>
+    </div>
+  `;
+}
+
+function adjustCount(e, spId, delta) {
+  e.stopPropagation();
+  const input = document.getElementById('count-input-' + spId);
+  if (!input) return;
+  let v = parseInt(input.value, 10);
+  if (isNaN(v)) v = 0;
+  v = Math.max(0, v + delta);
+  input.value = v;
+}
+
+async function confirmCount(e, spId) {
+  e.stopPropagation();
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  const sp = sparePartsCache.find(p => p.id === spId);
+  if (!sp) { showToast('备件不存在'); return; }
+  const input = document.getElementById('count-input-' + spId);
+  if (!input) return;
+  let newQty = parseInt(input.value, 10);
+  if (isNaN(newQty) || newQty < 0) { showToast('数量不能为负'); return; }
+
+  const bookQty = sp.quantity == null ? 0 : sp.quantity;
+  const diff = newQty - bookQty;
+
+  try {
+    // 1. Update part: set quantity + count metadata
+    const updated = {
+      ...sp,
+      quantity: newQty,
+      countedAt: Date.now(),
+      countedBy: user.empno,
+      countedByName: user.name,
+      countedQty: newQty,
+      countedBookQty: bookQty,
+      countDiff: diff,
+      updatedAt: Date.now(),
+    };
+    await cloudSaveSparePart(updated);
+
+    // 2. Write a count history record (for audit trail + export visibility)
+    const histId = 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    await cloudSaveSparePartHistory({
+      id: histId,
+      sparePartId: sp.id,
+      sparePartName: sp.name,
+      type: 'count',
+      quantity: newQty,
+      reason: diff === 0 ? '现场清点·无差异' : ('现场清点·差异 ' + (diff > 0 ? '+' : '') + diff),
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+      bookQty, diff,
+    });
+
+    showToast(diff === 0 ? ('已清点 ' + sp.name) : ('已清点，差异 ' + (diff > 0 ? '+' : '') + diff));
+  } catch (err) {
+    console.error('[Count] 失败', err);
+    showToast('清点失败：' + (err.message || err));
+  }
+}
+
+async function markStillMissing(e, spId) {
+  e.stopPropagation();
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  const sp = sparePartsCache.find(p => p.id === spId);
+  if (!sp) return;
+  if (!confirm('确认「' + sp.name + '」仍然缺货？会记录一次核对。')) return;
+  try {
+    const updated = {
+      ...sp,
+      lastMissingCheckAt: Date.now(),
+      lastMissingCheckBy: user.empno,
+      lastMissingCheckByName: user.name,
+      updatedAt: Date.now(),
+    };
+    await cloudSaveSparePart(updated);
+    const histId = 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    await cloudSaveSparePartHistory({
+      id: histId,
+      sparePartId: sp.id,
+      sparePartName: sp.name,
+      type: 'count',
+      quantity: 0,
+      reason: '现场核对·仍然缺货',
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+    });
+    showToast('已记录：仍然缺货');
+  } catch (err) {
+    console.error('[MarkMissing] 失败', err);
+    showToast('失败：' + (err.message || err));
+  }
+}
+
+async function markPartArrived(e, spId) {
+  e.stopPropagation();
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  const sp = sparePartsCache.find(p => p.id === spId);
+  if (!sp) return;
+  const qtyStr = prompt('「' + sp.name + '」已到货，请输入实际数量：', String(sp.techAgreementQty || 1));
+  if (qtyStr === null) return;
+  const qty = parseInt(qtyStr, 10);
+  if (isNaN(qty) || qty < 0) { showToast('数量需为非负整数'); return; }
+  const loc = prompt('请输入存放位置（可选）：', sp.location || '');
+  if (loc === null) return;  // cancelled
+  try {
+    const updated = {
+      ...sp,
+      stockStatus: 'in-stock',
+      fromTechAgreementOnly: false,
+      quantity: qty,
+      location: loc.trim(),
+      countedAt: Date.now(),
+      countedBy: user.empno,
+      countedByName: user.name,
+      countedQty: qty,
+      countedBookQty: 0,
+      countDiff: qty,  // 技术协议数和 0 的差
+      updatedAt: Date.now(),
+    };
+    await cloudSaveSparePart(updated);
+    const histId = 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    await cloudSaveSparePartHistory({
+      id: histId,
+      sparePartId: sp.id,
+      sparePartName: sp.name,
+      type: 'count',
+      quantity: qty,
+      reason: '补登到货·' + qty + ' ' + (sp.unit || '件'),
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+    });
+    showToast('已补登到货 ' + qty + ' ' + (sp.unit || '件'));
+  } catch (err) {
+    console.error('[MarkArrived] 失败', err);
+    showToast('失败：' + (err.message || err));
+  }
+}
+
+/* 2026-04-22: 修改备件存放位置（详情页按钮调用） */
+async function editPartLocation(spId) {
+  const sp = sparePartsCache.find(p => p.id === spId);
+  if (!sp) { showToast('备件不存在'); return; }
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  const current = sp.location || '';
+  const input = prompt('请输入新的存放位置（可多行，用换行分隔）：\n\n当前：' + (current || '（未填）'), current);
+  if (input === null) return;
+  const newLoc = input.trim();
+  if (newLoc === current.trim()) { showToast('位置未变化'); return; }
+  try {
+    await cloudSaveSparePart({ ...sp, location: newLoc, updatedAt: Date.now() });
+    // 同时在历史里留一条位置变更记录
+    const histId = 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    await cloudSaveSparePartHistory({
+      id: histId,
+      sparePartId: sp.id,
+      sparePartName: sp.name,
+      type: 'count',
+      quantity: sp.quantity || 0,
+      reason: '修改位置：' + (current || '（无）') + ' → ' + (newLoc || '（清空）'),
+      operatorId: user.empno,
+      operatorName: user.name,
+      createdAt: Date.now(),
+    });
+    showToast('位置已更新');
+  } catch (err) {
+    console.error('[EditLocation] 失败', err);
+    showToast('失败：' + (err.message || err));
+  }
+}
+
+async function recountPart(e, spId) {
+  e.stopPropagation();
+  const sp = sparePartsCache.find(p => p.id === spId);
+  if (!sp) return;
+  if (!confirm('重新清点「' + sp.name + '」？会清除上次清点记录')) return;
+  try {
+    const updated = { ...sp };
+    // Reset count fields (using null to clear on Firestore)
+    updated.countedAt = null;
+    updated.countedBy = null;
+    updated.countedByName = null;
+    updated.countedQty = null;
+    updated.countedBookQty = null;
+    updated.countDiff = null;
+    updated.updatedAt = Date.now();
+    await cloudSaveSparePart(updated);
+    showToast('已重置，请重新清点');
+  } catch (err) {
+    console.error('[Recount] 失败', err);
+    showToast('重置失败：' + (err.message || err));
+  }
+}
+
+function openPartFromRandom(id) {
+  // Record that we came from "random" so back button returns here
+  _partBackTo = 'random';
+  openPartDetail(id);
+}
+
+function openPartFromParts(id) {
+  _partBackTo = 'parts';
+  openPartDetail(id);
+}
+
+async function exportRandomXlsx() {
+  const all = randomParts().slice();
+  if (!all.length) { showToast('暂无随机备件数据'); return; }
+  all.sort((a, b) => {
+    const la = shortLocation(a.location);
+    const lb = shortLocation(b.location);
+    if (la !== lb) return la.localeCompare(lb);
+    return (a.name || '').localeCompare(b.name || '');
+  });
+  const rows = [[
+    '序号','船清单·备件名称','规格型号','材质','船清单·数量','现场清点数量','差异','单位',
+    '使用设备','设备型号','设备位号','存放位置','技术协议·备件名称','技术协议·数量',
+    '清点人','清点时间','状态','备注'
+  ]];
+  all.forEach((p, i) => {
+    const status = partStatus(p);
+    const statusCn = status === 'pending' ? '未清点' : (status === 'diff' ? '有差异' : (status === 'missing' ? '协议待清点' : '已清点'));
+    rows.push([
+      i + 1,
+      p.name || '',
+      p.spec || '',
+      p.material || '',
+      p.quantity == null ? '' : p.quantity,
+      p.countedQty == null ? '' : p.countedQty,
+      p.countDiff == null ? '' : p.countDiff,
+      p.unit || '',
+      p.device || '',
+      p.deviceModel || '',
+      p.deviceTag || '',
+      p.location || '',
+      p.techAgreementName || '',
+      p.techAgreementQty == null ? '' : p.techAgreementQty,
+      p.countedByName || '',
+      p.countedAt ? _fmtTs(p.countedAt) : '',
+      statusCn,
+      p.remark || '',
+    ]);
+  });
+  await _exportSheets([['随机备件', rows]], '随机备件_' + _today() + '.xlsx');
+}
+
 /* ========== 导出 Excel 功能 (2026-04-21) ========== */
 let _xlsxLib = null;
 async function loadXlsxLib() {
@@ -5565,6 +6799,20 @@ async function exportPartsXlsx() {
 }
 
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
+window.setRandomFilter = setRandomFilter;
+window.setRandomLocation = setRandomLocation;
+window.onRandomSearchInput = onRandomSearchInput;
+window.clearRandomSearch = clearRandomSearch;
+window.loadMoreRandom = loadMoreRandom;
+window.adjustCount = adjustCount;
+window.confirmCount = confirmCount;
+window.recountPart = recountPart;
+window.markStillMissing = markStillMissing;
+window.markPartArrived = markPartArrived;
+window.editPartLocation = editPartLocation;
+window.openPartFromRandom = openPartFromRandom;
+window.openPartFromParts = openPartFromParts;
+window.exportRandomXlsx = exportRandomXlsx;
 window.exportEquipmentsXlsx = exportEquipmentsXlsx;
 window.exportLubeXlsx = exportLubeXlsx;
 window.exportPartsXlsx = exportPartsXlsx;
@@ -5617,6 +6865,7 @@ window.filterEqPickerList = filterEqPickerList;
 window.renderDeviceRecords = renderDeviceRecords;
 // 润滑相关
 window.setLubeFilter = setLubeFilter;
+window.setLubeOp = setLubeOp;
 window.onLubeSearchInput = onLubeSearchInput;
 window.clearLubeSearch = clearLubeSearch;
 window.lubeLoadMore = lubeLoadMore;
@@ -5666,6 +6915,16 @@ async function init() {
     await fixEquipmentTagsV2IfNeeded();
     // 2026-04-22 补：应用 Excel 位号补全（TBD → 正式位号）
     await applyTagFixesV3IfNeeded();
+    // 2026-04-22 补：随机备件 Excel 字段补全（材质/技术协议/设备位号等）
+    await enrichRandomPartsV4IfNeeded();
+    // 2026-04-22 补：随机备件技术协议单位 + 添加 84 条缺货备件
+    await enrichRandomPartsV5IfNeeded();
+    // 2026-04-23 补：修 10 个孤立润滑点 + 设备位号修正 + 设备/润滑点补全
+    await fixOrphanLubeV6IfNeeded();
+    // 2026-04-23 补：202 高压水泵·电机润滑点（油号/周期待补充）
+    await addMotorLubeV7IfNeeded();
+    // 2026-04-23 补：218/923/546 区设备润滑点（107 个，油号/周期待补充）
+    await addAreaLubePointsV8IfNeeded();
 
     // 开启实时订阅（用户、设备、工单、润滑、备件）
     subscribeUsers();
