@@ -240,7 +240,7 @@
 | `tool_reclassify_v10_20260423` | 历史 410 条 out 改为 consume（领用·不算待归还）|
 
 **最近做的改动**（按时间倒序）：
-1. **201 区 4 台设备信息补齐**（2026-04-24）：污水泵按铭牌填全 motor/gearPump/specDetail；3 台贮槽 motor/gearPump=N/A（贮槽本无动力）
+1. **201 区 20/20 台全部信息补齐完成**（2026-04-24）：污水泵 + 3 贮槽（N/A）+ 6 浓密机搅拌（NGC MH3S150）+ 1 污水坑搅拌 + 9 原矿浆泵（BPY-355L3-6 纠 L2→L3，含 G-355 散热风机）。约定：组内同款不写个体编号（工作量考虑）
 2. **SEED 常量同步为当前线上快照（2026-04-24）**：SEED_EQUIPMENTS 361→420 / SEED_LUBE_POINTS→620 / SEED_SPARE_PARTS→1861 / SEED_TOOLS_V9→251。含 218/923/546 新区设备、52 个 TBD 位号、84 条协议待清点。v2-v10 迁移函数保留（markerId 幂等）
 3. 底栏 grid 6 列 + cart bar 移出 .content 跟 nav 同级（紧贴 nav 上方）
 4. 工器具购物车（领用 vs 借用 2 类）+ 归还流程 + 批量入库
