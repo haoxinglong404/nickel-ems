@@ -115,6 +115,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .eq-card-name { font-size:15px; color:var(--ink); font-weight:500; margin-bottom:6px; word-break:break-all; }
 .eq-card-meta { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); font-family:var(--font-mono); }
 .eq-card-meta-sep { color:var(--line); }
+.eq-card-extra { display:none; }
 .eq-card-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .eq-card-status-dot { width:8px; height:8px; border-radius:50%; }
 .eq-card-arrow { color:var(--subtle); font-size:20px; font-weight:300; }
@@ -1518,6 +1519,40 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
     /* 8. 浮动 FAB：原本 bottom:80px 给底栏让位，宽屏无底栏可以下移 */
     .fab { bottom: 40px; right: 40px; }
+
+    /* 9. 设备卡片宽屏信息密度：加中间参数列 */
+    .eq-card-left { flex: 0 0 360px; }
+    .eq-card-extra {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      padding: 0 12px;
+      border-left: 1px solid var(--line-soft);
+      align-self: stretch;
+      justify-content: center;
+    }
+    .eq-card-extra-row {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--muted);
+      line-height: 1.45;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .eq-card-extra-label {
+      color: var(--g-deep);
+      font-weight: 500;
+      margin-right: 6px;
+    }
+    .eq-card-extra-empty {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--subtle);
+      font-style: italic;
+    }
   }
 
 
@@ -3922,6 +3957,18 @@ function renderEquipmentList() {
   } else {
     list.innerHTML = page.map(e=>{
       const st = STATUS_MAP[e.status] || STATUS_MAP.idle;
+      const firstLine = v => (v||'').split('\n')[0].trim();
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const rows = [];
+      const m = firstLine(e.motor);
+      const sd = firstLine(e.specDetail);
+      const gp = firstLine(e.gearPump);
+      if (m) rows.push({label:'电机', text:m});
+      if (sd) rows.push({label:'规格', text:sd});
+      if (gp && rows.length<2) rows.push({label:'减速', text:gp});
+      const extra = rows.length
+        ? rows.slice(0,2).map(r=>`<div class="eq-card-extra-row" title="${esc(r.text)}"><span class="eq-card-extra-label">${r.label}</span>${esc(r.text)}</div>`).join('')
+        : `<div class="eq-card-extra-empty">— 参数待补充 —</div>`;
       return `
         <div class="eq-card" onclick="openDetail('${e.id}')">
           <div class="eq-card-left">
@@ -3934,6 +3981,7 @@ function renderEquipmentList() {
               ${e.spec?`<span class="eq-card-meta-sep">·</span><span>${e.spec}</span>`:''}
             </div>
           </div>
+          <div class="eq-card-extra">${extra}</div>
           <div class="eq-card-right">
             <span class="eq-card-status-dot" style="background:${st.color};"></span>
             <span class="eq-card-arrow">›</span>
