@@ -69,7 +69,7 @@
 | spareparts | `techAgreementName` / `techAgreementQty` / `techAgreementUnit` | 技术协议数据 |
 | spareparthistory | `type` | `in`（入库）/ `out`（领用）/ `count`（清点） |
 | spareparthistory | `reverted` / `isCounter` | 撤销标记，别用其他字段名 |
-| tools | `quantity` / `totalIn` / `totalOut` / `totalConsume` / `totalReturn` | 库存 + 4 类累计 |
+| tools | `quantity` / `totalIn` / `totalOut` | 库存 + 累计入/出（`totalConsume`/`totalReturn` 为前端按需计算，不存库）|
 | toolhistory | `type` | `in`（入库）/ `out`（**借用**·要还）/ `consume`（**领用**·消耗）/ `return`（归还）|
 | toolhistory | `slipId` | 同次提交的多条共享单号（如 `CN20260423-XXXX`）|
 | toolhistory | `consumed: true` | V10 把历史 isImport=true 的 out 标记为消耗 |
@@ -111,7 +111,7 @@
 
 1. **每次修改 `index.html` 都要**：
    - 用 `node --check` 验证 JS 语法（提取 `<script type="module">` 内容）
-   - 修改后文件大小不能异常变化（正常 950KB ~ 1.2MB）
+   - 修改后文件大小不能异常变化（正常 1.55MB ~ 1.80MB，seed 常量占大头）
    - 验证所有 `onclick` 调用的函数都通过 `window.fn = fn` 暴露
 
 2. **改 HTML 结构时必须**：
@@ -240,15 +240,16 @@
 | `tool_reclassify_v10_20260423` | 历史 410 条 out 改为 consume（领用·不算待归还）|
 
 **最近做的改动**（按时间倒序）：
-1. 底栏 grid 6 列 + cart bar 移出 .content 跟 nav 同级（紧贴 nav 上方）
-2. 工器具购物车（领用 vs 借用 2 类）+ 归还流程 + 批量入库
-3. 备件 nav 合并为单"备件"（内含 2 tab） + 数据导出（含 SheetJS CDN 懒加载）
-4. 宽屏布局（≥1024px 左侧 240px 镍钴绿侧栏）
-5. V4-V10 七次数据迁移
+1. **SEED 常量同步为当前线上快照（2026-04-24）**：SEED_EQUIPMENTS 361→420 / SEED_LUBE_POINTS→620 / SEED_SPARE_PARTS→1861 / SEED_TOOLS_V9→251。含 218/923/546 新区设备、52 个 TBD 位号、84 条协议待清点。v2-v10 迁移函数保留（markerId 幂等）。备份：`index.html.bak-before-seed-sync`
+2. 底栏 grid 6 列 + cart bar 移出 .content 跟 nav 同级（紧贴 nav 上方）
+3. 工器具购物车（领用 vs 借用 2 类）+ 归还流程 + 批量入库
+4. 备件 nav 合并为单"备件"（内含 2 tab） + 数据导出（含 SheetJS CDN 懒加载）
+5. 宽屏布局（≥1024px 左侧 240px 镍钴绿侧栏）
+6. V4-V10 七次数据迁移
 
 **已知待办**：
 - ⚠️ Firestore 测试模式规则 ~2026-05-19 到期，需升级（高优先级）
-- 📝 218 区 55 台 TBD 临时位号待用户分配正式位号
+- 📝 218 区 52 台 TBD 临时位号待用户分配正式位号（含 spec 字段缺失 48 条）
 - 📝 156 个润滑点待补充标准油号 + 周期
 - 📸 图片上传（设备故障照片）
 - 📬 消息通知 / 数据看板
