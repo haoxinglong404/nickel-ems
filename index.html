@@ -8941,6 +8941,18 @@ window.__emsStats = function() {
   return { total: LP.length, real: realLube.length, placeholder: placeholder.length, history: LH.length };
 };
 
+window.__emsUsers = function() {
+  const U = (typeof usersCache !== 'undefined' ? usersCache : []) || [];
+  console.log('========== EMS 用户列表 ==========');
+  console.table(U.map(u => ({
+    工号: u.empno,
+    姓名: u.name,
+    当前角色: u.role,
+    状态: u.active === false ? '禁用' : '启用'
+  })));
+  return U;
+};
+
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click', ()=>switchModule(item.dataset.nav));
