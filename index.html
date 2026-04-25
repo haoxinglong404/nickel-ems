@@ -8908,7 +8908,7 @@ window.closeWelcome = closeWelcome;
 window.__emsStats = function() {
   const LP = lubePointsCache || [];
   const LH = lubeHistoryCache || [];
-  const EQ = equipmentsCache || [];
+  const EQ = (typeof eqCache !== 'undefined' ? eqCache : []) || [];
   // 有真实 lastLubeAt（晚于 2020-01-01）
   const CUTOFF = new Date('2020-01-01').getTime();
   const realLube = LP.filter(p => p.lastLubeAt && p.lastLubeAt > CUTOFF);
