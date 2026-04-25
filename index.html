@@ -3606,12 +3606,42 @@ async function seedIfEmpty() {
 
 /* ========== 常量 ========== */
 const ROLES = {
-  admin:{label:'Admin · 管理员'},
-  reader:{label:'Reader · 只读/报修'},
-  reporter:{label:'Reporter · 提报人'},
-  approver:{label:'Approver · 审批人'},
-  tech:{label:'Technician · 维修人'},
+  admin:                  { label:'管理员',    short:'管' },
+  manager:                { label:'经理',      short:'经' },
+  'maintenance-director': { label:'检修主任',  short:'修主' },
+  'maintenance-leader':   { label:'检修班长',  short:'修长' },
+  'maintenance-worker':   { label:'检修员工',  short:'修员' },
+  'production-director':  { label:'生产主任',  short:'产主' },
+  'production-leader':    { label:'生产班长',  short:'产长' },
+  'production-worker':    { label:'生产员工',  short:'产员' },
+  // 向后兼容：旧角色仍可识别（数据迁移过渡期间）
+  reader:    { label:'只读（已废弃）',  short:'读', deprecated:true },
+  reporter:  { label:'提报人（已废弃）', short:'报', deprecated:true },
+  approver:  { label:'审批人（已废弃）', short:'批', deprecated:true },
+  tech:      { label:'维修员（已废弃）', short:'修', deprecated:true },
 };
+
+/* ---- 角色权限辅助 ---- */
+const ROLE_PROD = ['production-worker','production-leader','production-director'];
+const ROLE_MAINT = ['maintenance-worker','maintenance-leader','maintenance-director'];
+const ROLE_DIRECTORS = ['production-director','maintenance-director'];
+const ROLE_LEADERS = ['production-leader','maintenance-leader'];
+
+function hasRole(u, ...roles) { return !!(u && roles.includes(u.role)); }
+function isAdmin(u) { return hasRole(u, 'admin'); }
+function isManager(u) { return hasRole(u, 'manager'); }
+function isProduction(u) { return !!u && ROLE_PROD.includes(u.role); }
+function isMaintenance(u) { return !!u && ROLE_MAINT.includes(u.role); }
+
+function canApproveWO(u) { return hasRole(u, 'maintenance-director','manager','admin'); }
+function canTakeWO(u) { return isMaintenance(u) || isAdmin(u); }
+function canVerifyWO(u) { return isProduction(u) || isAdmin(u); }
+function canAssignWO(u) { return hasRole(u, 'maintenance-leader','maintenance-director','manager','admin'); }
+function canExportData(u) { return hasRole(u, 'production-director','maintenance-director','manager','admin'); }
+function canBatchImportTools(u) { return hasRole(u, 'maintenance-leader','maintenance-director','admin'); }
+function canEditEquipment(u) { return isAdmin(u); }
+function canManageUsers(u) { return isAdmin(u); }
+function canHardDelete(u) { return isAdmin(u); }
 const STATUS_MAP = {
   running:  { label:'运行中', color:'var(--s-running)' },
   stopped:  { label:'停机',   color:'var(--s-stopped)' },
@@ -3621,6 +3651,11 @@ const STATUS_MAP = {
 };
 const EQ_TYPES = ['离心泵','变容积泵','搅拌器','密封系统','压力容器','贮槽','地坑泵','非标静设备','起重设备','螺杆泵','空压机','液压设备','浓密机','成套设备','其他'];
 
+const COMMON_MENU = [
+  {icon:'bell',name:'消息通知',action:'todo'},
+  {icon:'lock',name:'设置 / 修改密码',action:'setPassword'},
+  {icon:'info',name:'关于本系统',action:'about'},
+];
 const MENU_BY_ROLE = {
   admin: [
     {icon:'users',name:'用户与权限管理',action:'goto:users'},
@@ -3629,10 +3664,43 @@ const MENU_BY_ROLE = {
     {icon:'lock',name:'设置 / 修改密码',action:'setPassword'},
     {icon:'info',name:'关于本系统',action:'about'},
   ],
-  reader:[{icon:'bell',name:'消息通知',action:'todo'},{icon:'lock',name:'设置 / 修改密码',action:'setPassword'},{icon:'info',name:'关于本系统',action:'about'}],
-  reporter:[{icon:'list',name:'我提报的工单',action:'todo'},{icon:'bell',name:'消息通知',action:'todo'},{icon:'lock',name:'设置 / 修改密码',action:'setPassword'},{icon:'info',name:'关于本系统',action:'about'}],
-  approver:[{icon:'check',name:'我审批的工单',action:'todo'},{icon:'bell',name:'消息通知',action:'todo'},{icon:'lock',name:'设置 / 修改密码',action:'setPassword'},{icon:'info',name:'关于本系统',action:'about'}],
-  tech:[{icon:'tool',name:'我的维修任务',action:'todo'},{icon:'bell',name:'消息通知',action:'todo'},{icon:'lock',name:'设置 / 修改密码',action:'setPassword'},{icon:'info',name:'关于本系统',action:'about'}],
+  manager: [
+    {icon:'check',name:'我审批的工单',action:'todo'},
+    {icon:'database',name:'数据导出',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'production-director': [
+    {icon:'list',name:'生产部门工单',action:'todo'},
+    {icon:'database',name:'数据导出',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'maintenance-director': [
+    {icon:'check',name:'我审批的工单',action:'todo'},
+    {icon:'database',name:'数据导出',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'production-leader': [
+    {icon:'list',name:'本班组工单',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'maintenance-leader': [
+    {icon:'tool',name:'本班组维修任务',action:'todo'},
+    {icon:'list',name:'指派任务',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'production-worker': [
+    {icon:'list',name:'我提报的工单',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  'maintenance-worker': [
+    {icon:'tool',name:'我的维修任务',action:'todo'},
+    ...COMMON_MENU,
+  ],
+  // 旧角色兼容
+  reader: [...COMMON_MENU],
+  reporter:[{icon:'list',name:'我提报的工单',action:'todo'},...COMMON_MENU],
+  approver:[{icon:'check',name:'我审批的工单',action:'todo'},...COMMON_MENU],
+  tech:[{icon:'tool',name:'我的维修任务',action:'todo'},...COMMON_MENU],
 };
 const ICON_SVG = {
   users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -3813,10 +3881,10 @@ function switchModule(name) {
   if (name === 'tools' && typeof renderToolsList === 'function') {
     renderToolsList();
     renderCartBar();
-    // 2026-04-23：admin 才显示批量入库按钮
+    // 2026-04-23：检修班长及以上 才显示批量入库按钮
     const u = getCurrentUser();
     const btn = document.getElementById('tools-batch-in-btn');
-    if (btn) btn.style.display = (u && u.role === 'admin') ? '' : 'none';
+    if (btn) btn.style.display = canBatchImportTools(u) ? '' : 'none';
   }
   // 2026-04-23：购物车 bar 只在工器具模块显示
   const cartBar = document.getElementById('tools-cart-bar');
@@ -4335,11 +4403,14 @@ function showSheet(type, arg) {
     const isSelf = user.empno === localStorage.getItem(SESSION_KEY);
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user.name}</div><div class="sheet-sub">工号 ${user.empno}</div>
       ${user.role!=='admin'?`<div class="sheet-form-group"><div class="sheet-form-label">修改角色</div><div class="role-picker" id="role-picker">
-        <div class="role-opt ${user.role==='reader'?'selected':''}" data-role="reader" onclick="pickRole('reader')">只读 / 报修</div>
-        <div class="role-opt ${user.role==='reporter'?'selected':''}" data-role="reporter" onclick="pickRole('reporter')">提报人</div>
-        <div class="role-opt ${user.role==='approver'?'selected':''}" data-role="approver" onclick="pickRole('approver')">审批人</div>
-        <div class="role-opt ${user.role==='tech'?'selected':''}" data-role="tech" onclick="pickRole('tech')">维修人</div>
-          <div class="role-opt ${user.role==='admin'?'selected':''}" data-role="admin" onclick="pickRole('admin')">管理员</div>
+        <div class="role-opt ${user.role==='production-worker'?'selected':''}" data-role="production-worker" onclick="pickRole('production-worker')">生产员工</div>
+        <div class="role-opt ${user.role==='production-leader'?'selected':''}" data-role="production-leader" onclick="pickRole('production-leader')">生产班长</div>
+        <div class="role-opt ${user.role==='production-director'?'selected':''}" data-role="production-director" onclick="pickRole('production-director')">生产主任</div>
+        <div class="role-opt ${user.role==='maintenance-worker'?'selected':''}" data-role="maintenance-worker" onclick="pickRole('maintenance-worker')">检修员工</div>
+        <div class="role-opt ${user.role==='maintenance-leader'?'selected':''}" data-role="maintenance-leader" onclick="pickRole('maintenance-leader')">检修班长</div>
+        <div class="role-opt ${user.role==='maintenance-director'?'selected':''}" data-role="maintenance-director" onclick="pickRole('maintenance-director')">检修主任</div>
+        <div class="role-opt ${user.role==='manager'?'selected':''}" data-role="manager" onclick="pickRole('manager')">经理</div>
+        <div class="role-opt ${user.role==='admin'?'selected':''}" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
       <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>
       ${!isSelf?`<button class="sheet-btn danger" onclick="confirmDeleteUser('${user.empno}')">删除账号</button>`:''}`:
@@ -4366,7 +4437,7 @@ function showSheet(type, arg) {
     setTimeout(() => renderEqPickerList(''), 10);
   } else if (type==='assignTech') {
     // 指派师傅 sheet
-    const techs = loadUsers().filter(u => u.role === 'tech');
+    const techs = loadUsers().filter(u => canTakeWO(u) && !isAdmin(u));
     if (techs.length === 0) {
       content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">指派师傅</div>
         <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">暂无维修师傅账号<br>请管理员先添加师傅账号</div>
@@ -4651,26 +4722,26 @@ function getCurrentUser() {
 // 计算"我的待办"：根据角色不同含义不同
 function isMyTodo(wo, user) {
   if (!user) return false;
-  const role = user.role;
   // 我提报的且未关单 → 始终是我的待办（让提报人能跟踪自己的工单）
   if (wo.reporterId === user.empno && wo.status !== 'done' && wo.status !== 'rejected') {
     return true;
   }
   // 按状态和角色匹配
   if (wo.status === 'pending-approval') {
-    return role === 'approver' || role === 'admin';
+    return canApproveWO(user);
   }
   if (wo.status === 'approved') {
-    return role === 'tech' || role === 'admin';
+    return canTakeWO(user);
   }
   if (wo.status === 'in-progress') {
     return wo.technicianId === user.empno;
   }
   if (wo.status === 'pending-confirm') {
-    return wo.reporterId === user.empno || role === 'admin';
+    // 验收：提报人本人 + 生产线 + 管理员
+    return wo.reporterId === user.empno || canVerifyWO(user);
   }
   if (wo.status === 'reopened') {
-    return wo.technicianId === user.empno || role === 'tech' || role === 'admin';
+    return wo.technicianId === user.empno || canTakeWO(user);
   }
   return false;
 }
@@ -4946,29 +5017,30 @@ function renderWoActions(wo, user) {
     bodyEl.classList.remove('has-actions');
     return;
   }
-  const role = user.role;
   let buttons = '';
 
-  if (wo.status === 'pending-approval' && (role === 'approver' || role === 'admin')) {
+  if (wo.status === 'pending-approval' && canApproveWO(user)) {
     buttons = `
       <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
       <button class="wo-act-btn success" onclick="approveWorkorder()">批准</button>`;
   } else if (wo.status === 'approved') {
-    if (role === 'tech') {
+    if (canTakeWO(user)) {
+      // 检修线 / 管理员：可直接接单
       buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">接单</button>`;
-    } else if (role === 'admin' || role === 'approver') {
+    } else if (canAssignWO(user)) {
+      // 班长以上但非检修人员：派单
       buttons = `<button class="wo-act-btn primary" onclick="assignWorkorder()">指派师傅</button>`;
     }
   } else if (wo.status === 'in-progress' && wo.technicianId === user.empno) {
     buttons = `<button class="wo-act-btn success" onclick="completeWorkorder()">完工</button>`;
-  } else if (wo.status === 'in-progress' && role === 'admin') {
+  } else if (wo.status === 'in-progress' && isAdmin(user)) {
     // 管理员可代师傅填完工
     buttons = `<button class="wo-act-btn primary" onclick="completeWorkorder()">代填完工</button>`;
-  } else if (wo.status === 'pending-confirm' && (wo.reporterId === user.empno || role === 'admin')) {
+  } else if (wo.status === 'pending-confirm' && (wo.reporterId === user.empno || canVerifyWO(user))) {
     buttons = `
       <button class="wo-act-btn danger" onclick="reopenWorkorder()">退回重修</button>
       <button class="wo-act-btn success" onclick="confirmWorkorder()">确认关单</button>`;
-  } else if (wo.status === 'reopened' && (role === 'tech' || role === 'admin')) {
+  } else if (wo.status === 'reopened' && canTakeWO(user)) {
     buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">重新接单</button>`;
   }
 
@@ -6547,7 +6619,7 @@ async function revertSparePartHistory(historyId) {
   if (!user) { showToast('请先登录'); return; }
 
   // 权限：本人 或 管理员
-  if (h.operatorId !== user.empno && user.role !== 'admin') {
+  if (h.operatorId !== user.empno && !isAdmin(user)) {
     showToast('只能撤销自己的记录');
     return;
   }
@@ -6609,7 +6681,7 @@ async function hardDeletePartHistory(historyId) {
   if (!h) { showToast('记录不存在'); return; }
 
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') {
+  if (!canHardDelete(user)) {
     showToast('只有管理员可以硬删除');
     return;
   }
@@ -8267,7 +8339,7 @@ async function submitBatchIn() {
   const okRows = batchInRows.filter(r => r.status === 'ok');
   if (okRows.length === 0) { showToast('没有可入库的行'); return; }
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') { showToast('仅管理员可批量入库'); return; }
+  if (!canBatchImportTools(user)) { showToast('仅检修班长及以上可批量入库'); return; }
 
   const d = new Date();
   const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
@@ -8514,7 +8586,7 @@ async function revertToolHistory(historyId) {
 
 async function hardDeleteToolHistory(historyId) {
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') { showToast('仅管理员可硬删'); return; }
+  if (!canHardDelete(user)) { showToast('仅管理员可硬删'); return; }
   if (!confirm('彻底删除这条历史记录？不可恢复（不会回滚库存）')) return;
   try {
     await cloudDeleteToolHistory(historyId);
