@@ -2949,7 +2949,6 @@ const SEED_IMPORTED_WORKORDERS = [{"id":"wo_imp_20260417_001","code":"WO20260417
 let woCache = [];
 let woUnsub = null;
 
-function loadWorkorders() { return woCache; }
 
 const WO_STATUS_MAP = {
   'pending-approval': { label: '待审批',   color: 'var(--s-repair)' },
@@ -3644,10 +3643,7 @@ function canApproveWO(u) { return hasRole(u, 'maintenance-director','manager','a
 function canTakeWO(u) { return isMaintenance(u) || isAdmin(u); }
 function canVerifyWO(u) { return isProduction(u) || isAdmin(u); }
 function canAssignWO(u) { return hasRole(u, 'maintenance-leader','maintenance-director','manager','admin'); }
-function canExportData(u) { return hasRole(u, 'production-director','maintenance-director','manager','admin'); }
 function canBatchImportTools(u) { return hasRole(u, 'maintenance-leader','maintenance-director','admin'); }
-function canEditEquipment(u) { return isAdmin(u); }
-function canManageUsers(u) { return isAdmin(u); }
 function canHardDelete(u) { return isAdmin(u); }
 const STATUS_MAP = {
   running:  { label:'运行中', color:'var(--s-running)' },
@@ -4596,9 +4592,6 @@ let lubeHistoryCache = [];
 let lubePointsUnsub = null;
 let lubeHistoryUnsub = null;
 
-function loadLubePoints() { return lubePointsCache; }
-function loadLubeHistory() { return lubeHistoryCache; }
-
 // 计算润滑状态：overdue / due-soon / ok
 function getLubeStatus(lp) {
   // 优先识别"未初始润滑"状态：status 字段标记 或 lastLubeAt/nextLubeAt 为空
@@ -5529,9 +5522,6 @@ let sparePartsCache = [];
 let sparePartsHistoryCache = [];
 let sparePartsUnsub = null;
 let sparePartsHistoryUnsub = null;
-
-function loadSpareParts() { return sparePartsCache; }
-function loadSparePartsHistory() { return sparePartsHistoryCache; }
 
 function getStockStatus(sp) {
   const q = sp.quantity || 0;
