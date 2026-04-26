@@ -753,7 +753,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   /* 顶部概览卡片：总数/逾期/即将到期 */
   .lube-overview {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin-bottom: 16px;
   }
@@ -772,6 +772,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
   .lube-ov-card.overdue  { background: #FCEBEB; }
   .lube-ov-card.overdue.active { background: #B85C5C; color: var(--paper); }
+  .lube-ov-card.pending-init  { background: #EEEAE2; }
+  .lube-ov-card.pending-init.active { background: var(--muted); color: var(--paper); }
+  .lube-ov-card.pending-init .lube-ov-num { color: var(--muted); }
+  .lube-ov-card.pending-init.active .lube-ov-num { color: var(--paper); }
+  .lube-ov-card.pending-init .lube-ov-lbl { color: var(--muted); }
+  .lube-ov-card.pending-init.active .lube-ov-lbl { color: var(--paper); }
   .lube-ov-num {
     font-family: var(--font-serif);
     font-size: 28px;
@@ -852,9 +858,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     letter-spacing: 0.05em;
     font-weight: 500;
   }
-  .lube-status-tag.overdue  { background: #FCEBEB; color: #B85C5C; }
-  .lube-status-tag.due-soon { background: #FAEEDA; color: #854F0B; }
-  .lube-status-tag.ok       { background: var(--g-mist); color: var(--g-forest); }
+  .lube-status-tag.overdue       { background: #FCEBEB; color: #B85C5C; }
+  .lube-status-tag.due-soon      { background: #FAEEDA; color: #854F0B; }
+  .lube-status-tag.ok            { background: var(--g-mist); color: var(--g-forest); }
+  .lube-status-tag.pending-init  { background: #EEEAE2; color: var(--muted); }
   .lube-days {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -4594,7 +4601,9 @@ function loadLubeHistory() { return lubeHistoryCache; }
 
 // 计算润滑状态：overdue / due-soon / ok
 function getLubeStatus(lp) {
-  if (!lp.nextLubeAt) return 'ok';
+  // 优先识别"未初始润滑"状态：status 字段标记 或 lastLubeAt/nextLubeAt 为空
+  if (lp.status === '未初始润滑') return 'pending-init';
+  if (!lp.nextLubeAt) return 'pending-init';
   const now = Date.now();
   const diff = lp.nextLubeAt - now;
   const oneDay = 24 * 60 * 60 * 1000;
@@ -5677,6 +5686,7 @@ function filterLubePoints() {
     const status = getLubeStatus(lp);
     if (lubeFilter === 'overdue' && status !== 'overdue') return false;
     if (lubeFilter === 'due-soon' && status !== 'due-soon') return false;
+    if (lubeFilter === 'pending-init' && status !== 'pending-init') return false;
     // all 不过滤
     if (lubeSearchText) {
       const s = lubeSearchText.toLowerCase();
@@ -5690,11 +5700,12 @@ function filterLubePoints() {
 function renderLubeOverview() {
   // 2026-04-23：只统计当前类型的点位（按标准油号分）
   const all = lubePointsCache.filter(lp => getLubeKind(lp) === lubeOpFilter);
-  let overdue = 0, dueSoon = 0, ok = 0;
+  let overdue = 0, dueSoon = 0, ok = 0, pendingInit = 0;
   all.forEach(lp => {
     const s = getLubeStatus(lp);
     if (s === 'overdue') overdue++;
     else if (s === 'due-soon') dueSoon++;
+    else if (s === 'pending-init') pendingInit++;
     else ok++;
   });
 
@@ -5708,6 +5719,10 @@ function renderLubeOverview() {
     <div class="lube-ov-card ${lubeFilter === 'due-soon' ? 'active' : ''}" onclick="setLubeFilter('due-soon')">
       <div class="lube-ov-num">${dueSoon}</div>
       <div class="lube-ov-lbl">即将</div>
+    </div>
+    <div class="lube-ov-card pending-init ${lubeFilter === 'pending-init' ? 'active' : ''}" onclick="setLubeFilter('pending-init')">
+      <div class="lube-ov-num">${pendingInit}</div>
+      <div class="lube-ov-lbl">未初始</div>
     </div>
     <div class="lube-ov-card ${lubeFilter === 'all' ? 'active' : ''}" onclick="setLubeFilter('all')">
       <div class="lube-ov-num">${all.length}</div>
@@ -5804,10 +5819,12 @@ function renderLubeList() {
 function renderLubeCard(lp) {
   const status = getLubeStatus(lp);
   const days = daysUntilLube(lp);
-  const statusLabel = { overdue: '逾期', 'due-soon': '即将', ok: '正常' }[status] || '';
+  const statusLabel = { overdue: '逾期', 'due-soon': '即将', ok: '正常', 'pending-init': '未初始' }[status] || '';
 
   let daysText = '';
-  if (days !== null) {
+  if (status === 'pending-init') {
+    daysText = '未初始润滑';
+  } else if (days !== null) {
     if (days < 0) daysText = `逾期 ${Math.abs(days)} 天`;
     else if (days === 0) daysText = '今日到期';
     else daysText = `剩 ${days} 天`;
