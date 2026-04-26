@@ -49,14 +49,20 @@
 | `workorder` | 工单列表 | 底部导航 |
 | `workorder-create` | 提报工单 | FAB 浮动按钮 |
 | `workorder-detail` | 工单详情 | 点击工单卡片 |
-| `lube` | 润滑点列表 | 底部导航 |
+| `lube` | 润滑点列表（3 tab：脂/油/待补充） | 底部导航 |
 | `lube-detail` | 润滑点详情 | 点击润滑点卡片 |
 | `lube-execute` | 登记润滑执行 | 详情页"登记"按钮 |
-| `parts` | 备件列表 | 底部导航 |
+| `parts` | 备件列表（采购 tab） | 底部导航 |
+| `random-parts` | 随机备件列表 | 备件页顶部 tab |
 | `parts-detail` | 备件详情 | 点击备件卡片 |
 | `parts-txn` | 领用/入库表单 | 详情页"领用/入库"按钮 |
+| `tools` | 工器具列表 | 底部导航 |
+| `tools-detail` | 工器具详情 | 点击工器具卡片 |
+| `tools-cart` | 购物车（领用/借用合一） | 工器具页购物车 bar |
 | `profile` | 我的 | 底部导航 |
 | `users` | 用户管理（管理员） | 我的 → 用户管理 |
+
+**底部导航 6 项**：设备 / 工单 / 备件 / 工器具 / 润滑 / 我的（grid `repeat(6,1fr)`）
 
 **`switchModule(name)` 函数做的事**：
 
@@ -133,24 +139,39 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
 {
   empno: string,        // 工号，等于 doc id
   name: string,
-  role: 'admin' | 'reader' | 'reporter' | 'approver' | 'tech',
+  role: 'admin'
+      | 'manager'
+      | 'maintenance-director' | 'maintenance-leader' | 'maintenance-worker'
+      | 'production-director'  | 'production-leader'  | 'production-worker',
   password?: string,    // 明文（管理员有密码，其他无）
   createdAt: number,
+  updatedAt?: number,
 }
 ```
+
+权限通过 helper 函数判断（不要直接对比字符串）：
+- `isAdmin(u)` / `isManager(u)` / `isProduction(u)` / `isMaintenance(u)`
+- `canApproveWO(u)` / `canTakeWO(u)` / `canVerifyWO(u)` / `canAssignWO(u)`
+- `canExportData(u)` / `canBatchImportTools(u)` / `canHardDelete(u)`
 
 #### `equipments`
 ```typescript
 {
-  id: string,           // eq_seed_0001 格式
+  id: string,           // eq_seed_0001 / eq_new_XXX / eq_v6_XXX
   tag: string,          // 位号，如 201-PE-AG-001A
   name: string,
   type: string,
-  area: string,         // 201 / 202 / 203 / 316-1
-  status: 'running' | 'idle' | 'maintenance',
+  area: string,         // 201 / 202 / 203 / 218 / 316-1 / 546 / 923
+  status: 'running' | 'idle' | 'repair' | 'stopped' | 'scrap',
   responsible: string,
   spec: string,
-  // ... 其他技术参数
+  motor?: string,       // 主电机铭牌（多行文本）
+  specDetail?: string,  // 设备主体规格
+  gearPump?: string,    // 减速机/泵头
+  supplier?: string,
+  remark?: string,
+  createdAt: number,
+  updatedAt: number,
 }
 ```
 
@@ -202,23 +223,38 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
 ```typescript
 // lubepoints
 {
-  id: string,           // lp_XXXX
-  equipmentTag: string,
-  partName: string,     // 部位（如"电机驱动端"）
-  action: 'grease' | 'oil_change',  // 加脂 / 换油
-  oilType: string,
-  cycle: number,        // 周期（天）
-  lastExecAt?: number,  // 上次执行时间戳
+  id: string,                    // lp_XXXX / lp_v6_001 / lp_v7_001 / lp_v8_NNN
+  tag: string,                   // 设备位号
+  name: string,                  // 设备名
+  point: string,                 // 部位（如"减速机" / "电机"）
+  area: string,
+  operationType: 'oil' | 'grease',  // 油 / 脂（但显示分类按 standardOil 是否含"脂"判断）
+  standardOil: string,
+  standardAmount: number,
+  periodHours?: number,
+  periodDays: number,            // 周期（天）
+  lastLubeAt?: number,           // 最后润滑时间戳（null = 未初始润滑）
+  nextLubeAt?: number,           // 下次润滑时间戳
+  status: '已润滑' | '未初始润滑' | '已逾期' | '即将到期',
+  createdAt: number,
+  updatedAt: number,
 }
 
 // lubehistory
 {
-  id: string,
+  id: string,                    // lh_时间戳_随机
   lubePointId: string,
-  executorId: string,
-  executorName: string,
-  execAt: number,
-  notes?: string,
+  tag: string, name: string, point: string,
+  operationType: 'oil' | 'grease',
+  standardOil: string, standardAmount: number,
+  actualOil: string, actualAmount: number,
+  note?: string,
+  operatorId: string,            // 工号（未注册的可为空）
+  operatorName: string,
+  lubeAt: number,                // 润滑实际时间
+  createdAt: number,
+  updatedAt: number,
+  imported?: boolean,            // 从飞书 Excel 迁移导入的标记
 }
 ```
 
@@ -248,7 +284,7 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
   id: string,           // ph_时间戳_随机
   sparePartId: string,
   sparePartName: string,
-  type: 'in' | 'out',
+  type: 'in' | 'out' | 'count',  // 入 / 出 / 现场清点
   quantity: number,
   reason: string,       // 用途 or 来源
   operatorId: string,
@@ -261,6 +297,43 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
   
   isCounter?: boolean,  // 这条是不是反向记录
   revertsHistoryId?: string,  // 如果是反向记录，指向原记录
+}
+```
+
+#### `tools` & `toolhistory`（v0.9 新增工器具）
+```typescript
+// tools
+{
+  id: string,           // tl_seed_XXXX
+  name: string,
+  spec: string,
+  unit: string,
+  quantity: number,     // 当前库存
+  totalIn: number,      // 累计入库
+  totalOut: number,     // 累计出库
+  // 注：totalConsume / totalReturn 是前端按需计算，不存库
+  location?: string,
+  remark?: string,
+  createdAt: number,
+  updatedAt: number,
+}
+
+// toolhistory
+{
+  id: string,           // th_seed_XXXX / th_时间戳_随机
+  toolId: string,
+  toolName: string,
+  type: 'in' | 'out' | 'consume' | 'return',
+  // in=入库 · out=借用（要还）· consume=领用（消耗）· return=归还
+  quantity: number,
+  receiver?: string,    // 借用人 / 领用人
+  returnedBy?: string,  // 归还人（return 时填）
+  slipId?: string,      // 同次提交的多条共享单号（CN20260423-XXXX）
+  consumed?: boolean,   // V10：把历史 isImport=true 的 out 标记为消耗
+  note?: string,
+  operatorId: string,
+  operatorName: string,
+  createdAt: number,
 }
 ```
 
@@ -282,9 +355,10 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
 
 ### 设备模块 (equipment)
 
-- 分页加载（`eqPageSize`、`eqPageNum`），避免一次渲染 361 个
-- 按区域 tab 筛选
+- 分页加载（`eqPageSize`、`eqPageNum`），避免一次渲染 420 个
+- 按区域 tab 筛选（7 个区：201/202/203/218/316-1/546/923）
 - 搜索按位号/名称/专业/类型/责任人
+- **宽屏（≥1024px）卡片中间列**显示电机/规格首行预览 + hover tooltip
 - 详情页懒加载图片（目前无图片，保留架构）
 
 ### 工单模块 (workorder)
@@ -301,24 +375,36 @@ onSnapshot 监听器触发（**所有在线客户端**都收到）
 
 ### 润滑模块 (lube)
 
-- 首次启动自动导入 511 个点 + 每个点的"最后润滑时间"
+- 首次启动自动导入 620 个点 + 每个点的"最后润滑时间"
 - **无审批**，执行即入库
-- 三卡筛选：逾期 / 即将到期 / 全部
-- 逾期计算：`(now - lastExecAt) > cycle * 86400_000`
+- 4 卡筛选：逾期 / 即将到期 / **未初始** / 全部
+- 顶部 3 tab：🛢️ 脂润滑 / ⛽ 油润滑 / 📝 待补充油号（按 standardOil 是否含"脂"分）
+- 逾期计算：`(now - nextLubeAt) > 0`
+- **未初始润滑** 状态：v0.9 新增，替代之前的"逾期 46077 天"占位显示，UI 显示灰色徽章
+- 已导入 194 条真实历史（lubehistory），剩余 426 个点标 `status='未初始润滑'`
 
 ### 备件模块 (parts)
 
-- 四卡筛选：全部 / 长周期 / 随机 / 低库存（≤ 3）
+- 顶部 2 tab：📦 采购（采购备件）/ 🎲 随机
 - 领用/入库会**同时**写 `spareparthistory` 和 `spareparts.quantity`（通过两次 setDoc）
 - 撤销：生成反向记录 + 标记原记录 `reverted: true`
 - 硬删除：直接 deleteDoc + 按规则调整库存
+- 包含 84 条 `sp_tbd_*` 协议待清点备件（`stockStatus='missing'`）
+
+### 工器具模块 (tools) · v0.9 新增
+
+- 251 件工器具，购物车式批量出入库
+- **双轨**：📦 借用（要还，type=out）+ 🛍️ 领用（消耗，type=consume）
+- 卡片 2 按钮："+ 加入领用单" / "+ 加入借用单"
+- 顶部 3 按钮：归还 / 批量入库（检修班长以上）/ 导出
+- 同次提交的多条历史共享 `slipId`（如 `CN20260423-XXXX`）
 
 ### 用户管理 (users)
 
 - 只有管理员可见
 - 自我保护：不能降级/删除自己
 - 最后一管理员保护：如果要降级/删除最后一个 admin，拒绝
-- 5 种角色选项：admin / reader / reporter / approver / tech
+- 8 种角色选项：管理员 / 经理 / 检修主任 / 检修班长 / 检修员工 / 生产主任 / 生产班长 / 生产员工
 
 ---
 
@@ -343,9 +429,10 @@ CSS 直接内联在 `<style>` 里，按以下顺序组织：
 所有初始数据都以 `SEED_XXX` 常量内联在 HTML 里：
 
 ```javascript
-const SEED_EQUIPMENTS = [...];         // 361 条
-const SEED_LUBE_POINTS = [...];        // 511 条
-const SEED_SPARE_PARTS = [...];        // 1777 条
+const SEED_EQUIPMENTS = [...];         // 420 条（v0.9）
+const SEED_LUBE_POINTS = [...];        // 620 条（v0.9）
+const SEED_SPARE_PARTS = [...];        // 1861 条（含 84 协议待清点）
+const SEED_TOOLS_V9 = [...];           // 251 工器具 + 410 出入库历史
 const SEED_IMPORTED_WORKORDERS = [...]; // 6 条
 ```
 
@@ -368,10 +455,12 @@ const SEED_IMPORTED_WORKORDERS = [...]; // 6 条
 
 ### 加新角色
 
-1. 在 `ROLES` 常量里加定义
+1. 在 `ROLES` 常量里加定义（label + short）
 2. 在 `MENU_BY_ROLE` 里加菜单
 3. 审视权限矩阵（见 CLAUDE.md）
-4. 更新用户管理界面的角色选项
+4. 更新用户管理界面的 `pickRole` 选项
+5. 在 `ROLE_PROD` / `ROLE_MAINT` 等权限组数组里加成员（如适用）
+6. 加 helper 函数（如需新粒度权限），如 `canDoXxx(u)`
 
 ### 加新模块
 
