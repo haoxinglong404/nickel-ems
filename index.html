@@ -8993,55 +8993,6 @@ window.hardDeletePartHistory = hardDeletePartHistory;
 window.showWelcome = showWelcome;
 window.closeWelcome = closeWelcome;
 
-/* ========== F12 调试辅助：查数据分布 ========== */
-window.__emsStats = function() {
-  const LP = lubePointsCache || [];
-  const LH = lubeHistoryCache || [];
-  const EQ = (typeof eqCache !== 'undefined' ? eqCache : []) || [];
-  // 有真实 lastLubeAt（晚于 2020-01-01）
-  const CUTOFF = new Date('2020-01-01').getTime();
-  const realLube = LP.filter(p => p.lastLubeAt && p.lastLubeAt > CUTOFF);
-  const placeholder = LP.filter(p => !p.lastLubeAt || p.lastLubeAt <= CUTOFF);
-  // 按月分布
-  const byMonth = {};
-  realLube.forEach(p => {
-    const d = new Date(p.lastLubeAt);
-    const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    byMonth[ym] = (byMonth[ym]||0) + 1;
-  });
-  // 按区分布
-  const byArea = {};
-  realLube.forEach(p => {
-    const ar = p.area || '(无)';
-    byArea[ar] = (byArea[ar]||0) + 1;
-  });
-  console.log('========== EMS 润滑数据快照 ==========');
-  console.table([{
-    '润滑点总数': LP.length,
-    '有真实润滑日期': realLube.length,
-    '占位/从未润滑': placeholder.length,
-    'lubehistory 操作记录': LH.length,
-    '设备总数': EQ.length
-  }]);
-  console.log('按月份分布（真实润滑日期）:');
-  console.table(byMonth);
-  console.log('按区域分布（真实润滑日期）:');
-  console.table(byArea);
-  return { total: LP.length, real: realLube.length, placeholder: placeholder.length, history: LH.length };
-};
-
-window.__emsUsers = function() {
-  const U = (typeof usersCache !== 'undefined' ? usersCache : []) || [];
-  console.log('========== EMS 用户列表 ==========');
-  console.table(U.map(u => ({
-    工号: u.empno,
-    姓名: u.name,
-    当前角色: u.role,
-    状态: u.active === false ? '禁用' : '启用'
-  })));
-  return U;
-};
-
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click', ()=>switchModule(item.dataset.nav));
