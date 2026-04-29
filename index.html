@@ -238,8 +238,9 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .u-role.tech { background:#EAF3DE; color:#27500A; }
 
 /* 底部导航 */
-.bottom-nav { background:var(--paper); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(6,1fr); flex-shrink:0; padding-bottom:env(safe-area-inset-bottom,0); }
-.nav-item { padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--subtle); position:relative; transition:color .2s; }
+.bottom-nav { background:var(--paper); border-top:1px solid var(--line); display:flex; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex-shrink:0; padding-bottom:env(safe-area-inset-bottom,0); position:relative; }
+.bottom-nav::-webkit-scrollbar { display:none; }
+.nav-item { padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--subtle); position:relative; transition:color .2s; flex:0 0 calc(100% / 5.5); min-width:64px; }
 .nav-item.active { color:var(--g-forest); }
 .nav-item.active::before { content:""; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--g-deep); }
 .nav-icon { width:20px; height:20px; }
@@ -1005,8 +1006,101 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
 
 
+  /* ════════ 巡检模块 (2026-04-29 v11) ════════ */
+  /* 巡检卡片：复用 lube-card 框架，加状态徽章颜色 */
+  .lube-status-tag.due       { background: #FAEEDA; color: #854F0B; }
+  .lube-ov-card.due          { background: #FAEEDA; }
+  .lube-ov-card.due.active   { background: #B88B0E; color: var(--paper); }
+
+  /* 巡检详情·检查项卡片 */
+  .ins-check-row {
+    padding: 14px 16px;
+    background: var(--surface);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    transition: border-color .15s, background .15s;
+  }
+  .ins-check-row.abnormal { border-color: #B85C5C; background: #FCEBEB; }
+  .ins-check-row.normal { border-color: var(--g-primary); }
+  .ins-check-name {
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .ins-check-toggle { display: flex; gap: 8px; }
+  .ins-check-btn {
+    flex: 1;
+    padding: 10px 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
+    transition: all .15s;
+    user-select: none;
+  }
+  .ins-check-btn:hover { border-color: var(--g-primary); }
+  .ins-check-btn.normal-on {
+    background: var(--g-primary);
+    color: white;
+    border-color: var(--g-primary);
+  }
+  .ins-check-btn.abn-on {
+    background: #B85C5C;
+    color: white;
+    border-color: #B85C5C;
+  }
+  /* "设备停机未运行" — 单 yes 按钮 */
+  .ins-check-btn.stopped-on {
+    background: #6B6A66;
+    color: white;
+    border-color: #6B6A66;
+  }
+  .ins-check-row.stopped {
+    background: var(--surface);
+    border-color: var(--muted);
+  }
+  /* 选中停机后，其他项灰显（按钮禁用）*/
+  .ins-check-row.dim {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .ins-check-row.dim .ins-check-btn { cursor: not-allowed; }
+  .ins-check-btn[disabled] { cursor: not-allowed; opacity: 0.7; }
+  .ins-check-note {
+    margin-top: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid #B85C5C;
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    resize: vertical;
+    display: none;
+  }
+  .ins-check-row.abnormal .ins-check-note { display: block; }
+
+  /* 巡检概览总结 */
+  .ins-summary-bar {
+    display: flex;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--g-mist);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--g-forest);
+  }
+
+
   /* ════════ 备件模块 ════════ */
-  
+
   /* 概览筛选 */
   .parts-overview {
     display: grid;
@@ -1470,7 +1564,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     /* 3. 左侧栏（由原 bottom-nav 变身）*/
     .bottom-nav {
       order: -1;
-      width: 240px;
+      width: 220px;
       height: 100vh;
       flex-shrink: 0;
       display: flex;
@@ -1479,20 +1573,22 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       background: #173404;
       border-top: none;
       border-right: 1px solid rgba(255,255,255,.08);
-      padding: 28px 12px;
-      padding-bottom: 28px;
-      gap: 4px;
+      padding: 14px 10px;
+      gap: 2px;
+      overflow-x: hidden;  /* 覆盖窄屏的 overflow-x:auto */
     }
 
     /* 4. 侧栏内导航项：横向布局 */
     .bottom-nav .nav-item {
+      flex: 0 0 auto;        /* 覆盖窄屏的 flex:0 0 calc(100%/5.5) */
       flex-direction: row;
       justify-content: flex-start;
-      gap: 14px;
-      padding: 12px 14px;
-      border-radius: 10px;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
       color: rgba(255,255,255,.72);
       transition: background .15s, color .15s;
+      min-width: 0;          /* 允许内容收缩 */
     }
     .bottom-nav .nav-item:hover {
       background: rgba(255,255,255,.06);
@@ -2660,6 +2756,41 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
     </section>
 
+    <!-- 设备巡检 (2026-04-29 v11) -->
+    <section class="module" data-module="inspect">
+      <div class="section-header">
+        <div class="section-label">Inspection · 设备巡检</div>
+        <h1 class="section-title">Daily Check</h1>
+        <div class="section-sub" id="inspect-section-sub">—</div>
+      </div>
+      <div class="lube-op-tabs" id="inspect-tabs">
+        <button class="lube-op-tab active" onclick="switchInspectTab('todo')">📋 待巡检</button>
+        <button class="lube-op-tab" onclick="switchInspectTab('abnormal')">⚠️ 异常</button>
+        <button class="lube-op-tab" onclick="switchInspectTab('history')">📜 历史</button>
+      </div>
+      <div class="lube-overview" id="inspect-overview"></div>
+      <div class="lube-search-bar">
+        <input class="eq-search-input" id="inspect-search" placeholder="搜索位号、设备名…" oninput="renderInspectOverview()">
+        <div class="eq-search-clear" id="inspect-search-clear" onclick="clearInspectSearch()">×</div>
+        <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="wo-filter-bar" id="inspect-filter-row"></div>
+      <div class="eq-list-meta">
+        <div class="eq-list-count" id="inspect-list-count">—</div>
+      </div>
+      <div id="inspect-list-container"></div>
+    </section>
+
+    <!-- 巡检执行表单 -->
+    <section class="module" data-module="inspect-detail">
+      <div class="lube-detail-hero" id="inspect-detail-hero"></div>
+      <div class="edit-form" id="inspect-detail-body"></div>
+      <div class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" onclick="cancelInspect()">取消</button>
+        <button class="edit-btn edit-btn-save" onclick="submitInspect()">完成巡检</button>
+      </div>
+    </section>
+
     <section class="module" data-module="profile">
       <div class="section-header"><div class="section-label">Profile · 我的</div><h1 class="section-title">Account</h1><div class="section-sub" id="profile-sub">—</div></div>
       <div class="profile-hero">
@@ -2709,6 +2840,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
+    <div class="nav-item" data-nav="inspect"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span class="nav-label">巡检</span></div>
     <div class="nav-item" data-nav="workorder"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg><span class="nav-label">工单</span></div>
     <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">备件</span></div>
     <div class="nav-item" data-nav="tools"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 7l-1-1-3 3 1 1 3-3z"/><path d="M5 19l7-7"/><path d="M16.5 7.5L17 7l3 3-.5.5-3-3z"/><path d="M3 21l3-3 1 1-3 3z"/></svg><span class="nav-label">工器具</span></div>
@@ -2784,6 +2916,32 @@ const SEED_LUBE_POINTS = [{"nextLubeAt":1792454400000,"name":"原矿浓密机给
 
 /* ========== 数据层 ========== */
 const SESSION_KEY = 'ems_session_v06';
+
+/* ========== 巡检模板 (2026-04-29 v11) ==========
+   17 个模板，每个对应一种 equipment.type
+   key 字段用作 Firestore doc id（id="tpl_<key>"）*/
+const SEED_INSPECTION_TEMPLATES = [
+  {key:'centrifugal_pump', name:'离心泵',     cycleDays:7,  items:['设备停机未运行','电机温度（<70℃）','振动 / 异响','漏液 / 滴漏','电流（如有显示）','轴承箱温度']},
+  {key:'agitator',         name:'搅拌器',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','减速机油位','减速机渗漏','机架轴承温度']},
+  {key:'plunger_pump',     name:'柱塞泵',     cycleDays:7,  items:['设备停机未运行','电机温度','振动 / 异响','漏液（阀片/接头）','排出压力']},
+  {key:'sealing_system',   name:'密封系统',   cycleDays:7,  items:['设备停机未运行','液位（密封液站补液罐）','密封液压力','漏液','冷却水流量']},
+  {key:'pit_pump',         name:'地坑泵',     cycleDays:14, items:['设备停机未运行','电机温度','异响','电机、轴承震动','出水正常','电流（如有）','轴承温度']},
+  {key:'diaphragm_pump',   name:'隔膜泵',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','漏液','油液位','管接头是否渗漏']},
+  {key:'screw_pump',       name:'螺杆泵',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','漏液（机封/接头）']},
+  {key:'fan',              name:'风机',       cycleDays:7,  items:['设备停机未运行','电机温度','振动 / 异响','油位（罗茨适用）','轴承温度']},
+  {key:'thickener',        name:'浓密机',     cycleDays:7,  items:['设备停机未运行','电机温度','小减速机温度','中心传动减速机油位','减速机渗漏','马达温度','油管有无剐蹭，磨损']},
+  {key:'hydraulic',        name:'液压设备',   cycleDays:7,  items:['设备停机未运行','油泵温度/异响','油箱油位','油管漏点']},
+  {key:'compressor',       name:'空压机',     cycleDays:7,  items:['设备停机未运行','异响 / 振动','油温油位','排污状态','管接头有无渗漏']},
+  {key:'feeder',           name:'给料器',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响']},
+  {key:'crane',            name:'起重机',     cycleDays:30, items:['设备停机未运行','钢丝绳磨损/锈蚀','限位器/制动器','滑触线','控制手柄/无线遥控','大车/小车行走机构']},
+  {key:'pressure_vessel',  name:'压力容器',   cycleDays:30, items:['设备停机未运行','外观腐蚀','接管/法兰漏点','安全阀状态','压力表/温度计']},
+  {key:'storage_tank',     name:'贮槽',       cycleDays:30, items:['设备停机未运行','外观腐蚀','接管漏点']},
+  {key:'non_standard',     name:'非标静设备', cycleDays:30, items:['设备停机未运行','震动/异响','外观腐蚀','接管漏点']},
+  {key:'package_unit',     name:'成套设备',   cycleDays:30, items:['设备停机未运行','整体运行状态','异常报警','主要部件外观']},
+];
+// type 字段值 → 模板 key（保持等长映射，方便维护）
+const INSPECT_TYPE_TO_TPL = Object.fromEntries(SEED_INSPECTION_TEMPLATES.map(t => [t.name, t.key]));
+const INSPECT_MARKER = 'inspect_init_v11_20260429';
 
 /* ==========================================================
    云端数据层：Firestore Collections
@@ -3842,7 +4000,8 @@ function switchModule(name) {
   const isPartsDetail = name==='parts-detail';
   const isPartsTxn = name==='parts-txn';
   const isToolDetail = name==='tool-detail';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isToolDetail;
+  const isInspectDetail = name==='inspect-detail';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isToolDetail || isInspectDetail;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -3871,6 +4030,7 @@ function switchModule(name) {
   // 2026-04-23：随机备件并入"备件"导航
   if (navKey === 'random') navKey = 'parts';
   if (navKey === 'tool-detail') navKey = 'tools';
+  if (navKey === 'inspect-detail') navKey = 'inspect';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const ni2 = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (ni2) ni2.classList.add('active');
@@ -3895,6 +4055,9 @@ function switchModule(name) {
     const u = getCurrentUser();
     const btn = document.getElementById('tools-batch-in-btn');
     if (btn) btn.style.display = canBatchImportTools(u) ? '' : 'none';
+  }
+  if (name === 'inspect' && typeof renderInspectOverview === 'function') {
+    renderInspectOverview();
   }
   // 2026-04-23：购物车 bar 只在工器具模块显示
   const cartBar = document.getElementById('tools-cart-bar');
@@ -4712,6 +4875,114 @@ async function seedLubeIfEmpty() {
       await batch.commit();
     }
     showToast('已上传 ' + SEED_LUBE_POINTS.length + ' 个润滑点');
+  }
+}
+
+/* ==========================================================
+   巡检数据层 (2026-04-29 v11)
+   ========================================================== */
+let inspectTplCache = [];     // 17 个巡检模板
+let inspectHistCache = [];    // 全部巡检历史记录
+let inspectTplUnsub = null;
+let inspectHistUnsub = null;
+
+function subscribeInspectTemplates() {
+  if (inspectTplUnsub) inspectTplUnsub();
+  inspectTplUnsub = onSnapshot(collection(db, 'inspecttemplates'), (snap) => {
+    inspectTplCache = snap.docs.map(d => d.data());
+    const mod = document.querySelector('.module[data-module="inspect"]');
+    if (mod && mod.classList.contains('active')) renderInspectOverview();
+  }, (err) => console.error('[Firebase] 订阅巡检模板失败', err));
+}
+
+function subscribeInspectHistory() {
+  if (inspectHistUnsub) inspectHistUnsub();
+  inspectHistUnsub = onSnapshot(collection(db, 'inspecthistory'), (snap) => {
+    inspectHistCache = snap.docs.map(d => d.data());
+    inspectHistCache.sort((a, b) => (b.inspectAt || 0) - (a.inspectAt || 0));
+    const mod = document.querySelector('.module[data-module="inspect"]');
+    if (mod && mod.classList.contains('active')) renderInspectOverview();
+  }, (err) => console.error('[Firebase] 订阅巡检历史失败', err));
+}
+
+async function cloudSaveInspectHistory(record) {
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'inspecthistory', record.id), {
+      ...record,
+      updatedAt: Date.now(),
+    });
+    setCloudStatus('online', '已同步');
+  } catch (err) {
+    console.error('[Firebase] 保存巡检记录失败', err);
+    setCloudStatus('error', '同步失败：' + err.message);
+    throw err;
+  }
+}
+
+// 首次启动：如果 inspecttemplates 为空，上传 17 个种子模板
+async function seedInspectionTemplatesIfEmpty() {
+  // marker 幂等保护
+  const markerSnap = await getDoc(doc(db, 'meta', INSPECT_MARKER));
+  if (markerSnap.exists()) return;
+  const snap = await getDocs(collection(db, 'inspecttemplates'));
+  if (snap.empty) {
+    console.log('[Seed] 云端 inspecttemplates 为空，上传 ' + SEED_INSPECTION_TEMPLATES.length + ' 个模板');
+    setCloudStatus('syncing', '首次上传巡检模板...');
+    const batch = writeBatch(db);
+    SEED_INSPECTION_TEMPLATES.forEach(t => {
+      batch.set(doc(db, 'inspecttemplates', 'tpl_' + t.key), {
+        id: 'tpl_' + t.key,
+        ...t,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    await batch.commit();
+    showToast('已上传 ' + SEED_INSPECTION_TEMPLATES.length + ' 个巡检模板');
+  }
+  // 写入 marker（幂等）
+  await setDoc(doc(db, 'meta', INSPECT_MARKER), {
+    id: INSPECT_MARKER,
+    desc: '巡检模块初始化',
+    at: Date.now(),
+  });
+}
+
+/* 工具：根据 equipment.type 找模板 */
+function getInspectTemplateForEquipment(eq) {
+  if (!eq) return null;
+  const tplKey = INSPECT_TYPE_TO_TPL[eq.type];
+  if (!tplKey) return null;
+  return inspectTplCache.find(t => t.key === tplKey) || SEED_INSPECTION_TEMPLATES.find(t => t.key === tplKey);
+}
+
+/* 工具：某台设备最近一次巡检（任何状态）*/
+function getLatestInspectFor(equipmentId) {
+  return inspectHistCache.find(h => h.equipmentId === equipmentId) || null;
+}
+
+/* 工具：计算下次巡检时间 */
+function calcNextInspectAt(lastInspectAt, cycleDays) {
+  if (!lastInspectAt) return 0; // 0 = 未初始巡检
+  return lastInspectAt + cycleDays * 24 * 3600 * 1000;
+}
+
+/* 工具：巡检状态颜色 */
+function getInspectStatus(eq) {
+  const tpl = getInspectTemplateForEquipment(eq);
+  if (!tpl) return { code: 'no-tpl', label: '无模板', tone: 'gray' };
+  const last = getLatestInspectFor(eq.id);
+  if (!last) return { code: 'pending-init', label: '未初始巡检', tone: 'gray' };
+  const next = calcNextInspectAt(last.inspectAt, tpl.cycleDays);
+  const now = Date.now();
+  if (now < next) {
+    const daysLeft = Math.ceil((next - now) / (24 * 3600 * 1000));
+    return { code: 'ok', label: daysLeft + ' 天后到期', tone: 'green', next, daysLeft };
+  } else {
+    const overdue = Math.floor((now - next) / (24 * 3600 * 1000));
+    if (overdue <= 3) return { code: 'due', label: '到期', tone: 'yellow', next, overdue };
+    return { code: 'overdue', label: '逾期 ' + overdue + ' 天', tone: 'red', next, overdue };
   }
 }
 
@@ -6165,6 +6436,438 @@ function renderDeviceLubePoints(eqId) {
     if (tab === 'lube' && currentEqId) renderDeviceLubePoints(currentEqId);
   };
 })();
+
+
+/* ==========================================================
+   巡检 UI 层 (2026-04-29 v11)
+   ========================================================== */
+
+let currentInspectEqId = null;     // 当前正在巡检的设备 ID
+let inspectExecBuffer = null;      // 表单缓冲：{equipmentId, items: [{name, status, note}]}
+let inspectFilter = 'todo';        // 'todo' / 'abnormal' / 'history'
+let inspectSearchText = '';
+let inspectAreaFilter = '';        // '' = 全部
+let inspectTypeFilter = '';        // '' = 全部
+
+function switchInspectTab(tab) {
+  inspectFilter = tab;
+  document.querySelectorAll('#inspect-tabs .lube-op-tab').forEach((b, i) => {
+    const map = ['todo', 'abnormal', 'history'];
+    b.classList.toggle('active', map[i] === tab);
+  });
+  renderInspectOverview();
+}
+
+function clearInspectSearch() {
+  document.getElementById('inspect-search').value = '';
+  inspectSearchText = '';
+  renderInspectOverview();
+}
+
+function toggleInspectFilter(kind, val) {
+  if (kind === 'area') inspectAreaFilter = (inspectAreaFilter === val) ? '' : val;
+  if (kind === 'type') inspectTypeFilter = (inspectTypeFilter === val) ? '' : val;
+  renderInspectOverview();
+}
+
+function renderInspectFilterRow() {
+  // 仅 todo tab 显示筛选条；其他 tab 不需要（按 inspectAt 时间排）
+  const row = document.getElementById('inspect-filter-row');
+  if (!row) return;
+  if (inspectFilter !== 'todo') { row.innerHTML = ''; return; }
+
+  const eqs = loadEquipments().filter(eq => INSPECT_TYPE_TO_TPL[eq.type]);
+  const areas = {};  eqs.forEach(e => { if (e.area) areas[e.area] = (areas[e.area] || 0) + 1; });
+  const types = {};  eqs.forEach(e => { types[e.type] = (types[e.type] || 0) + 1; });
+  const AREA_ORDER = { '201': 0, '202': 1, '203': 2, '316-1': 3, '218': 4, '923': 5, '546': 6 };
+  const sortedAreas = Object.entries(areas).sort((a, b) => (AREA_ORDER[a[0]] ?? 99) - (AREA_ORDER[b[0]] ?? 99));
+  const sortedTypes = Object.entries(types).sort((a, b) => b[1] - a[1]); // 数量降序
+
+  let html = '';
+  // 区域 pills
+  html += `<button class="eq-filter-btn${inspectAreaFilter === '' ? ' active' : ''}" onclick="toggleInspectFilter('area','')">全部区域<span style="margin-left:4px;opacity:.6;font-size:11px;">${eqs.length}</span></button>`;
+  sortedAreas.forEach(([k, v]) => {
+    const active = inspectAreaFilter === k ? ' active' : '';
+    html += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('area','${k}')">区域 ${k}<span style="margin-left:4px;opacity:.6;font-size:11px;">${v}</span></button>`;
+  });
+  html += '<div style="flex-shrink:0;color:var(--line);padding:8px 0;">|</div>';
+  // 类型 pills
+  html += `<button class="eq-filter-btn${inspectTypeFilter === '' ? ' active' : ''}" onclick="toggleInspectFilter('type','')">全部类型<span style="margin-left:4px;opacity:.6;font-size:11px;">${eqs.length}</span></button>`;
+  sortedTypes.forEach(([k, v]) => {
+    const active = inspectTypeFilter === k ? ' active' : '';
+    html += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('type','${k}')">${k}<span style="margin-left:4px;opacity:.6;font-size:11px;">${v}</span></button>`;
+  });
+  row.innerHTML = html;
+}
+
+function renderInspectOverview() {
+  renderInspectFilterRow();  // 渲染区域/类型筛选条
+  const eqs = loadEquipments();
+  const searchEl = document.getElementById('inspect-search');
+  inspectSearchText = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const tab = inspectFilter;
+
+  // 概览卡片：4 列（全部/逾期/未初始/正常）
+  const ov = document.getElementById('inspect-overview');
+  if (ov) {
+    let countAll = 0, countOverdue = 0, countDue = 0, countOk = 0, countPending = 0, countAbn = 0;
+    eqs.forEach(eq => {
+      if (!INSPECT_TYPE_TO_TPL[eq.type]) return;
+      countAll++;
+      const st = getInspectStatus(eq);
+      if (st.code === 'overdue') countOverdue++;
+      else if (st.code === 'due') countDue++;
+      else if (st.code === 'pending-init') countPending++;
+      else if (st.code === 'ok') countOk++;
+    });
+    inspectHistCache.forEach(h => { if (h.abnormalCount > 0) countAbn++; });
+
+    const cardHtml = (lbl, num, cls) =>
+      `<div class="lube-ov-card ${cls}" onclick="switchInspectTab('todo')"><div class="lube-ov-num">${num}</div><div class="lube-ov-lbl">${lbl}</div></div>`;
+    ov.innerHTML = ''
+      + cardHtml('全部待巡检', countAll,     '')
+      + cardHtml('逾期',       countOverdue, 'overdue')
+      + cardHtml('到期',       countDue,     'due')
+      + cardHtml('未初始',     countPending, 'pending-init');
+  }
+
+  // 列表
+  const container = document.getElementById('inspect-list-container');
+  const countEl = document.getElementById('inspect-list-count');
+  if (!container) return;
+
+  if (tab === 'history') {
+    // 历史 tab：直接列 inspecthistory 全量（最新在前）
+    let list = inspectHistCache.slice();
+    if (inspectSearchText) {
+      list = list.filter(h => {
+        const hay = (h.equipmentTag + ' ' + h.equipmentName + ' ' + (h.inspectorName || '')).toLowerCase();
+        return hay.includes(inspectSearchText);
+      });
+    }
+    countEl.textContent = `历史记录 ${list.length} 条`;
+    container.innerHTML = list.length ? list.map(renderInspectHistCard).join('') : emptyHtml('暂无历史记录');
+    return;
+  }
+
+  if (tab === 'abnormal') {
+    // 异常 tab：列出最近 30 天有异常的巡检记录
+    const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+    let list = inspectHistCache.filter(h => h.abnormalCount > 0 && h.inspectAt >= cutoff);
+    if (inspectSearchText) {
+      list = list.filter(h => {
+        const hay = (h.equipmentTag + ' ' + h.equipmentName + ' ' + (h.abnormalSummary || '')).toLowerCase();
+        return hay.includes(inspectSearchText);
+      });
+    }
+    countEl.textContent = `近 30 天异常 ${list.length} 条`;
+    container.innerHTML = list.length ? list.map(renderInspectHistCard).join('') : emptyHtml('近 30 天没有异常');
+    return;
+  }
+
+  // 默认 todo tab：所有有模板的设备，按 (overdue desc, daysLeft asc) 排序
+  let cards = eqs.filter(eq => INSPECT_TYPE_TO_TPL[eq.type]);
+  // 应用区域/类型筛选
+  if (inspectAreaFilter) cards = cards.filter(eq => eq.area === inspectAreaFilter);
+  if (inspectTypeFilter) cards = cards.filter(eq => eq.type === inspectTypeFilter);
+  if (inspectSearchText) {
+    cards = cards.filter(eq => {
+      const hay = (eq.tag + ' ' + (eq.name || '') + ' ' + (eq.spec || '')).toLowerCase();
+      return hay.includes(inspectSearchText);
+    });
+  }
+  cards = cards.map(eq => ({ eq, status: getInspectStatus(eq) }));
+  // 排序：按区域工艺流程顺序 (201→202→203→316-1→218→923→546)，区域内按位号
+  const AREA_ORDER = { '201': 0, '202': 1, '203': 2, '316-1': 3, '218': 4, '923': 5, '546': 6 };
+  cards.sort((a, b) => {
+    const aa = AREA_ORDER[a.eq.area] ?? 99;
+    const bb = AREA_ORDER[b.eq.area] ?? 99;
+    if (aa !== bb) return aa - bb;
+    return (a.eq.tag || '').localeCompare(b.eq.tag || '', 'en', { numeric: true });
+  });
+  countEl.textContent = `共 ${cards.length} 台设备`;
+  container.innerHTML = cards.length ? cards.map(renderInspectCard).join('') : emptyHtml('没有匹配的设备');
+
+  function emptyHtml(msg) {
+    return `<div class="empty" style="padding:32px 20px;"><div class="empty-mark">—</div><div class="empty-title">${msg}</div></div>`;
+  }
+}
+
+function renderInspectCard({ eq, status }) {
+  const tplName = eq.type;
+  const last = getLatestInspectFor(eq.id);
+  const lastInfo = last ? formatRelTime(last.inspectAt) : '从未巡检';
+  let statusCls = 'pending-init';
+  if (status.code === 'overdue') statusCls = 'overdue';
+  else if (status.code === 'due') statusCls = 'due';
+  else if (status.code === 'ok') statusCls = 'ok';
+  return `
+    <div class="lube-card" onclick="openInspectDetail('${eq.id}')">
+      <div class="lube-card-left">
+        <div class="lube-card-top">
+          <span class="lube-card-tag">${eq.tag}</span>
+        </div>
+        <div class="lube-card-point">${eq.name || ''}</div>
+        <div class="lube-card-meta">
+          <span>${tplName}</span>
+          <span class="lube-card-meta-sep">·</span>
+          <span>上次：${lastInfo}</span>
+        </div>
+      </div>
+      <div class="lube-card-right">
+        <span class="lube-status-tag ${statusCls}">${status.label}</span>
+      </div>
+    </div>`;
+}
+
+function renderInspectHistCard(h) {
+  const ts = h.inspectAt ? formatRelTime(h.inspectAt) : '—';
+  let abnCls, abnLbl;
+  if (h.stopped) {
+    abnCls = 'pending-init';
+    abnLbl = '设备停机';
+  } else if (h.abnormalCount > 0) {
+    abnCls = 'overdue';
+    abnLbl = `异常 ${h.abnormalCount} 项`;
+  } else {
+    abnCls = 'ok';
+    abnLbl = '全部正常';
+  }
+  const inspector = h.inspectorName || h.inspectorId || '—';
+  const note = h.abnormalSummary ? `<div class="lube-card-meta" style="color:#B85C5C;margin-top:4px;">${h.abnormalSummary.substring(0, 80)}${h.abnormalSummary.length > 80 ? '…' : ''}</div>` : '';
+  // 仅 admin 可见删除按钮
+  const user = getCurrentUser();
+  const delBtn = canHardDelete(user)
+    ? `<button onclick="event.stopPropagation();hardDeleteInspectHistory('${h.id}')" style="margin-top:6px;background:white;color:#C77700;border:1px solid #E4E0D8;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">删除</button>`
+    : '';
+  return `
+    <div class="lube-card">
+      <div class="lube-card-left">
+        <div class="lube-card-top">
+          <span class="lube-card-tag">${h.equipmentTag}</span>
+        </div>
+        <div class="lube-card-point">${h.equipmentName || ''}</div>
+        <div class="lube-card-meta">
+          <span>${ts}</span>
+          <span class="lube-card-meta-sep">·</span>
+          <span>${inspector}</span>
+        </div>
+        ${note}
+      </div>
+      <div class="lube-card-right">
+        <span class="lube-status-tag ${abnCls}">${abnLbl}</span>
+        ${delBtn}
+      </div>
+    </div>`;
+}
+
+async function hardDeleteInspectHistory(historyId) {
+  const user = getCurrentUser();
+  if (!canHardDelete(user)) {
+    showToast('只有管理员可以删除巡检记录');
+    return;
+  }
+  const h = inspectHistCache.find(x => x.id === historyId);
+  if (!h) { showToast('记录不存在'); return; }
+  if (!confirm(`确认删除这条巡检记录？\n${h.equipmentTag} · ${h.equipmentName}\n${formatRelTime(h.inspectAt)} · ${h.inspectorName || ''}\n\n（不可恢复）`)) return;
+  try {
+    setCloudStatus('syncing', '删除中...');
+    await deleteDoc(doc(db, 'inspecthistory', historyId));
+    setCloudStatus('online', '已同步');
+    showToast('已删除');
+    // onSnapshot 会自动触发刷新
+  } catch (err) {
+    setCloudStatus('error', '同步失败：' + err.message);
+    showToast('删除失败：' + err.message);
+  }
+}
+
+function formatRelTime(ts) {
+  if (!ts) return '—';
+  const diff = Date.now() - ts;
+  const day = Math.floor(diff / (24 * 3600 * 1000));
+  if (day < 0) return '未来';
+  if (day === 0) return '今天';
+  if (day === 1) return '昨天';
+  if (day < 30) return day + ' 天前';
+  if (day < 365) return Math.floor(day / 30) + ' 月前';
+  return Math.floor(day / 365) + ' 年前';
+}
+
+function openInspectDetail(eqId) {
+  currentInspectEqId = eqId;
+  const eq = loadEquipments().find(e => e.id === eqId);
+  if (!eq) { showToast('设备未找到'); return; }
+  const tpl = getInspectTemplateForEquipment(eq);
+  if (!tpl) { showToast('该设备类型暂无巡检模板'); return; }
+
+  inspectExecBuffer = {
+    equipmentId: eq.id,
+    equipmentTag: eq.tag,
+    equipmentName: eq.name || '',
+    templateId: 'tpl_' + tpl.key,
+    templateName: tpl.name,
+    items: tpl.items.map(name => ({ name, status: '', note: '' })),
+    overallNote: '',
+  };
+  renderInspectDetail();
+  switchModule('inspect-detail');
+}
+
+function renderInspectDetail() {
+  if (!inspectExecBuffer) return;
+  const eq = loadEquipments().find(e => e.id === inspectExecBuffer.equipmentId);
+  const tpl = getInspectTemplateForEquipment(eq);
+
+  // hero
+  const hero = document.getElementById('inspect-detail-hero');
+  if (hero) {
+    const last = getLatestInspectFor(inspectExecBuffer.equipmentId);
+    hero.innerHTML = `
+      <div onclick="cancelInspect()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
+      <div class="lube-detail-hero-tag">${eq.tag}</div>
+      <h2 class="lube-detail-hero-name">${eq.name || ''}</h2>
+      <div class="lube-detail-hero-point">${eq.type || ''} · 模板：${tpl.name} · 周期 ${tpl.cycleDays} 天</div>
+      ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);">上次巡检：${formatRelTime(last.inspectAt)} · ${last.inspectorName || ''}</div>` : ''}
+    `;
+  }
+
+  // body：检查项列表 + 备注
+  const body = document.getElementById('inspect-detail-body');
+  if (!body) return;
+  body.innerHTML = `
+    <div class="edit-group-label">检查项 (共 ${inspectExecBuffer.items.length} 项)</div>
+    <div id="inspect-items-list">
+      ${inspectExecBuffer.items.map((it, i) => renderInspectItemRow(it, i)).join('')}
+    </div>
+    <div class="edit-field" style="margin-top:24px;">
+      <div class="edit-field-label">总体备注（可选）</div>
+      <textarea class="edit-textarea" id="inspect-overall-note" placeholder="补充说明..." oninput="inspectExecBuffer.overallNote = this.value">${inspectExecBuffer.overallNote || ''}</textarea>
+    </div>
+  `;
+}
+
+function renderInspectItemRow(it, idx) {
+  // 特殊项："设备停机未运行" — 只有"是"一个选项，选中后跳过其他项
+  if (it.name === '设备停机未运行') {
+    const isStopped = it.status === 'stopped';
+    return `
+      <div class="ins-check-row ${isStopped ? 'stopped' : ''}" id="ins-row-${idx}">
+        <div class="ins-check-name">${idx + 1}. ${it.name}</div>
+        <div class="ins-check-toggle">
+          <button class="ins-check-btn ${isStopped ? 'stopped-on' : ''}" onclick="toggleInspectStopped(${idx})">
+            ${isStopped ? '✓ 是 · 设备停机（其他项可跳过）' : '是 · 设备停机未运行'}
+          </button>
+        </div>
+      </div>`;
+  }
+  // 普通项：正常/异常
+  const stopped = inspectExecBuffer && inspectExecBuffer.items[0] && inspectExecBuffer.items[0].status === 'stopped';
+  const cls = it.status === 'abnormal' ? 'abnormal' : (it.status === 'normal' ? 'normal' : '');
+  const disabled = stopped ? 'disabled' : '';
+  const dim = stopped ? 'dim' : '';
+  return `
+    <div class="ins-check-row ${cls} ${dim}" id="ins-row-${idx}">
+      <div class="ins-check-name">${idx + 1}. ${it.name}</div>
+      <div class="ins-check-toggle">
+        <button class="ins-check-btn ${it.status === 'normal' ? 'normal-on' : ''}" ${disabled} onclick="setInspectItemStatus(${idx},'normal')">✅ 正常</button>
+        <button class="ins-check-btn ${it.status === 'abnormal' ? 'abn-on' : ''}" ${disabled} onclick="setInspectItemStatus(${idx},'abnormal')">⚠️ 异常</button>
+      </div>
+      <textarea class="ins-check-note" placeholder="异常情况说明..." oninput="inspectExecBuffer.items[${idx}].note = this.value">${it.note || ''}</textarea>
+    </div>`;
+}
+
+function setInspectItemStatus(idx, status) {
+  if (!inspectExecBuffer || !inspectExecBuffer.items[idx]) return;
+  // 如果已经勾"停机"，普通项不能再点
+  const stopped = inspectExecBuffer.items[0] && inspectExecBuffer.items[0].status === 'stopped';
+  if (stopped && idx > 0) return;
+  inspectExecBuffer.items[idx].status = status;
+  const row = document.getElementById('ins-row-' + idx);
+  if (row) row.outerHTML = renderInspectItemRow(inspectExecBuffer.items[idx], idx);
+}
+
+function toggleInspectStopped(idx) {
+  if (!inspectExecBuffer || !inspectExecBuffer.items[idx]) return;
+  const wasStopped = inspectExecBuffer.items[idx].status === 'stopped';
+  if (wasStopped) {
+    inspectExecBuffer.items[idx].status = '';
+  } else {
+    inspectExecBuffer.items[idx].status = 'stopped';
+    // 清除其他项的状态和备注
+    for (let i = 1; i < inspectExecBuffer.items.length; i++) {
+      inspectExecBuffer.items[i].status = '';
+      inspectExecBuffer.items[i].note = '';
+    }
+  }
+  // 整体重新渲染（其他项要重新切换 dim 状态）
+  const list = document.getElementById('inspect-items-list');
+  if (list) {
+    list.innerHTML = inspectExecBuffer.items.map((it, i) => renderInspectItemRow(it, i)).join('');
+  }
+}
+
+async function submitInspect() {
+  if (!inspectExecBuffer) return;
+  const items = inspectExecBuffer.items;
+  const firstItem = items[0];
+  const isStopped = firstItem && firstItem.name === '设备停机未运行' && firstItem.status === 'stopped';
+
+  if (!isStopped) {
+    // 校验：除"设备停机未运行"外其他项必须打了状态
+    const rest = items.filter(it => it.name !== '设备停机未运行');
+    const unchecked = rest.filter(it => !it.status);
+    if (unchecked.length > 0) {
+      showToast(`还有 ${unchecked.length} 项未打钩`);
+      return;
+    }
+    const abnEmpty = rest.filter(it => it.status === 'abnormal' && !(it.note || '').trim());
+    if (abnEmpty.length > 0) {
+      showToast(`有 ${abnEmpty.length} 项异常未填说明`);
+      return;
+    }
+  }
+
+  const user = getCurrentUser();
+  const abnormals = items.filter(it => it.status === 'abnormal');
+  const record = {
+    id: 'ih_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    equipmentId: inspectExecBuffer.equipmentId,
+    equipmentTag: inspectExecBuffer.equipmentTag,
+    equipmentName: inspectExecBuffer.equipmentName,
+    templateId: inspectExecBuffer.templateId,
+    templateName: inspectExecBuffer.templateName,
+    inspectAt: Date.now(),
+    inspectorId: (user && user.empno) || '',
+    inspectorName: (user && user.name) || '',
+    items: items.map(it => ({ name: it.name, status: it.status, note: it.note || '' })),
+    stopped: isStopped,
+    abnormalCount: isStopped ? 0 : abnormals.length,
+    abnormalSummary: isStopped ? '' : abnormals.map(it => `[${it.name}] ${it.note}`).join(' / '),
+    overallNote: inspectExecBuffer.overallNote || '',
+    createdAt: Date.now(),
+  };
+
+  try {
+    await cloudSaveInspectHistory(record);
+    if (isStopped) {
+      showToast('已记录·设备停机未运行');
+    } else {
+      showToast(abnormals.length > 0 ? `已保存（${abnormals.length} 项异常）` : '已保存');
+    }
+    inspectExecBuffer = null;
+    currentInspectEqId = null;
+    switchModule('inspect');
+  } catch (err) {
+    showToast('保存失败：' + err.message);
+  }
+}
+
+function cancelInspect() {
+  inspectExecBuffer = null;
+  currentInspectEqId = null;
+  switchModule('inspect');
+}
 
 
 /* ==========================================================
@@ -8916,6 +9619,18 @@ window.exportEquipmentsXlsx = exportEquipmentsXlsx;
 window.exportLubeXlsx = exportLubeXlsx;
 window.exportPartsXlsx = exportPartsXlsx;
 window.switchModule = switchModule;  // 2026-04-23: 暴露给备件 tab 等内联 onclick
+
+// 巡检模块（2026-04-29 v11）
+window.switchInspectTab = switchInspectTab;
+window.clearInspectSearch = clearInspectSearch;
+window.renderInspectOverview = renderInspectOverview;
+window.openInspectDetail = openInspectDetail;
+window.setInspectItemStatus = setInspectItemStatus;
+window.toggleInspectStopped = toggleInspectStopped;
+window.submitInspect = submitInspect;
+window.cancelInspect = cancelInspect;
+window.toggleInspectFilter = toggleInspectFilter;
+window.hardDeleteInspectHistory = hardDeleteInspectHistory;
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
 window.showSheet = showSheet;
@@ -9033,8 +9748,10 @@ async function init() {
     await seedToolsV9IfNeeded();
     // 2026-04-23：V10 把历史导入的 out 改为 consume（领用，不算待归还）
     await reclassifyImportedToolsV10IfNeeded();
+    // 2026-04-29：V11 巡检模板初始化（17 个）
+    await seedInspectionTemplatesIfEmpty();
 
-    // 开启实时订阅（用户、设备、工单、润滑、备件）
+    // 开启实时订阅（用户、设备、工单、润滑、备件、工器具、巡检）
     subscribeUsers();
     subscribeEquipments();
     subscribeWorkorders();
@@ -9044,6 +9761,8 @@ async function init() {
     subscribeSparePartsHistory();
     subscribeTools();
     subscribeToolsHistory();
+    subscribeInspectTemplates();
+    subscribeInspectHistory();
 
     // 等首批数据到位再继续（最多等 3 秒）
     await new Promise(r => setTimeout(r, 800));
