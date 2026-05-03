@@ -2861,6 +2861,9 @@ import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
   writeBatch, onSnapshot, serverTimestamp, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // 您的 Firebase 项目配置
 const firebaseConfig = {
@@ -2874,6 +2877,20 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+
+// 匿名认证：所有 Firestore 读写需通过 Firebase Auth。init() 会先 await authReady
+// 之后再触发任何 cloudSave/onSnapshot/seed* 调用
+const authReady = signInAnonymously(auth)
+  .then(cred => {
+    console.log('[Auth] 匿名登录成功 uid=' + cred.user.uid);
+    return cred.user;
+  })
+  .catch(err => {
+    console.error('[Auth] 匿名登录失败', err);
+    if (typeof setCloudStatus === 'function') setCloudStatus('error', '认证失败：' + err.message);
+    throw err;
+  });
 
 // 启用离线持久化（断网也能用，恢复网络自动同步）
 enableIndexedDbPersistence(db).catch((err) => {
@@ -9725,6 +9742,9 @@ document.querySelectorAll('.nav-item').forEach(item=>{
 async function init() {
   setCloudStatus('connecting', '连接云端中...');
   try {
+    // 等待匿名认证完成（Firestore 规则要求 request.auth != null）
+    await authReady;
+
     // 首次启动：如果云端为空则上传种子数据
     await seedIfEmpty();
 
@@ -9786,7 +9806,11 @@ async function init() {
   } catch (err) {
     console.error('[Init] 启动失败', err);
     setCloudStatus('error', '连接失败：' + err.message);
-    alert('云端连接失败：\n' + err.message + '\n\n请检查网络，或联系管理员。\n\n如果是首次使用，请确认 Firestore 已创建并处于"测试模式"。');
+    const isAuthErr = err && (err.code || '').startsWith('auth/');
+    const hint = isAuthErr
+      ? '\n\n[认证失败] 请联系管理员检查 Firebase Console → Authentication → Sign-in method → 匿名 是否已启用。'
+      : '\n\n请检查网络，或联系管理员。';
+    alert('云端连接失败：\n' + err.message + hint);
   }
 }
 

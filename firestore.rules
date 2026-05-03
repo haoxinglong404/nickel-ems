@@ -1,0 +1,98 @@
+rules_version = '2';
+
+// ============================================================
+// Nickel Plant EMS · Firestore 安全规则
+// ============================================================
+// 部署日期：2026-05-03
+// 模型：匿名认证 + 集合白名单
+//
+// 设计理念：
+//   - 必须通过 Firebase Auth（应用启动 signInAnonymously）才能读写
+//   - 仅 12 个已知集合开放，其他路径一律拒绝（挡探测/笔误）
+//   - 不在规则层做角色权限——客户端 JS 已按 8 角色控制 UI
+//   - 客户端 API Key 在 Console 中应配置 HTTP Referrer 限制
+//     仅允许 GitHub Pages 部署域名调用，挡住外部站点伪造
+//
+// 与之前"测试模式"的差异：
+//   - 旧：allow read, write: if request.time < timestamp.date(2026, 5, 19);
+//   - 新：必须 request.auth != null
+//
+// 部署后回归点：
+//   - 应用启动应在 1 秒内显示登录界面（authReady promise resolve）
+//   - 任何写操作（提交工单/登记润滑等）成功落库
+//   - F12 控制台无 PERMISSION_DENIED 报错
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 用户账号（id = 工号字符串）
+    match /users/{empno} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 设备台账（422 台）
+    match /equipments/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 工单
+    match /workorders/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 润滑点（620 个）
+    match /lubepoints/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 润滑执行记录
+    match /lubehistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 备件（1861 条）
+    match /spareparts/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 备件出入库记录
+    match /spareparthistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 工器具台账（251 件）
+    match /tools/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 工器具出入库历史
+    match /toolhistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 巡检模板（17 个）
+    match /inspecttemplates/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 巡检执行记录
+    match /inspecthistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 一次性迁移幂等标记
+    match /meta/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 其他路径一律拒绝（白名单）
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
