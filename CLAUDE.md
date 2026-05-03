@@ -244,7 +244,7 @@
 | `inspect_init_v11_20260429` | 上传 17 个巡检模板（按 equipment.type 关联）|
 
 **最近做的改动**（按时间倒序）：
-1. **Firestore 安全规则升级 · 匿名认证 + 集合白名单**（2026-05-03）：测试模式 5/19 到期前的预防性升级。**代码**：index.html 加 firebase-auth.js import + `signInAnonymously()` 在应用启动自动执行 + `init()` 第一行 `await authReady` 阻塞所有 Firestore 操作直到认证成功。**规则**：新增 `firestore.rules` 文件 · 12 集合白名单（users/equipments/workorders/lubepoints/lubehistory/spareparts/spareparthistory/tools/toolhistory/inspecttemplates/inspecthistory/meta）· 全部要求 `request.auth != null` · 兜底 `match /{path=**} { allow read,write: if false; }`。**部署状态**：代码已上线（commits 4273333+c7a65d2）；Firebase Console 已启用 Anonymous Sign-in；但 **firestore.rules 未发布** —— 用户决定让代码先在线 1-2 天再部署规则，避免一刀切。**用户指南**：`FIRESTORE_SECURITY_DEPLOY.md` 4 步部署流程 + 回滚方案。**附带修复**：`woBuffer` 旧 bug —— 模块作用域 `let woBuffer` 不在 window 上，导致工单表单内联 `oninput="woBuffer.x=this.value"` 全部静默失败，用户填的联系方式没存进去 → 提交时报"请填写联系方式"。修法：`Object.defineProperty(window,'woBuffer',{get/set})` 桥接，模块内代码不动。**经验**：Firebase 规则不会自动生效，必须 Console 发布；测试模式过期当天会全员瞬间断连
+1. **Firestore 安全规则升级 · 匿名认证 + 集合白名单**（2026-05-03 · **当天全部完成**）：测试模式 5/19 到期前一次性闭环。**代码**：index.html 加 firebase-auth.js import + `signInAnonymously()` 在应用启动自动执行 + `init()` 第一行 `await authReady` 阻塞所有 Firestore 操作直到认证成功。**规则**：`firestore.rules` 12 集合白名单（users/equipments/workorders/lubepoints/lubehistory/spareparts/spareparthistory/tools/toolhistory/inspecttemplates/inspecthistory/meta）· 全部要求 `request.auth != null` · 兜底 `match /{path=**} { allow read,write: if false; }`。**部署链路**：commits 4273333+c7a65d2 push main → GitHub Pages 自动部署（不是 CLAUDE.md 之前误写的"用户手动上传"）→ Firebase Console 启 Anonymous → Console 发布 rules（用户在 F12 验证 uid + 写一笔工单成功后才发布）。**用户指南**：`FIRESTORE_SECURITY_DEPLOY.md` 4 步部署流程 + 回滚方案。**附带修复 1**：`woBuffer` 旧 bug —— 模块作用域 `let woBuffer` 不在 window 上，工单表单内联 `oninput="woBuffer.x=this.value"` 全部静默失败 → 提交时报"请填写联系方式"。修法：`Object.defineProperty(window,'woBuffer',{get/set})` 桥接（同样的桥接套路适用任何 oninput="moduleVar.x = ..." 的旧代码）。**附带修复 2**：CLAUDE.md "🔧 直接操作云端的技巧" 段落更新——以后改云端必须走 F12 浏览器会话（自带 anonymous Firebase Auth token），Python urllib + API key 会被规则拒。**经验**：① 规则发布瞬间生效，部署前要让代码在线 1-2 小时让所有人浏览器拿到新版本（避免缓存里的旧代码被规则拒）；② 部署后立刻在已登录浏览器试一笔写入再走人；③ 若规则发布后报 PERMISSION_DENIED 立刻把规则换成 `allow if true` 回滚（30 秒）
 2. **巡检模块 v11 上线**（2026-04-29）：完整设备巡检功能。**数据**：17 个 type→模板（离心泵/搅拌器/柱塞泵/密封系统/地坑泵/隔膜泵/螺杆泵/风机/浓密机/液压设备/空压机/给料器/起重机/压力容器/贮槽/非标静设备/成套设备）·新增 2 个 Firestore 集合 inspecttemplates+inspecthistory · marker `inspect_init_v11_20260429`。**UI**：底栏改横滑 flex（7 项），顺序：设备→巡检→工单→备件→工器具→润滑→我的；宽屏左侧栏间距收紧（padding 28→14·gap 4→2·item padding 12→8·width 240→220）并修复了 narrow 模式 flex-basis 渗透 wide 的 bug；巡检主页 3 tab（待巡检/异常/历史）+ 4 概览卡（全部/逾期/到期/未初始）+ 区域/类型筛选 pills（仅待巡检 tab）+ 搜索；设备列表按区域工艺顺序排序（201→202→203→316-1→218→923→546）。**特殊项**：每模板首项"设备停机未运行"是单按钮"是"，点选后自动清空其他项+灰显，提交跳过其他项校验，记录带 stopped:true 标记。**权限**：admin 可删历史。**用户定制**：用户用 `巡检模板核对.html`（仿 `设备分类核对.html` 模式）逐项调整后导出 markdown，再批量 PATCH 云端 + 同步本地 SEED。**踩坑**：第一版用 `user.id` 写 inspectorId 字段失败（Firestore 不接受 undefined），系统实际是 `user.empno`，已改 `(user && user.empno) || ''` 兜底
 2. **设备 type 字段标准化第二轮（巡检模块前置）**（2026-04-29）：再调 17 条。**11 台从离心泵迁地坑泵**（潜水/排污类单独分类）：218 排泥泵 6 + 218 污水池潜水泵 2 + 218 集水坑潜水泵 1 + 923 液下渣浆泵 2。**6 台从空压机修正为起重机**（203-PE-CR-101/201/301 LX5t-5m + 203-PE-CR-102/202/302 LD10t-9.5m，原来 type 录错）。雨水回用泵 546-JP-PP-001A/B/C（未装机）保留离心泵。**最终 17 类 type**：离心泵 101 / 搅拌器 69 / 柱塞泵 39 / 密封系统 36 / 地坑泵 32 / 压力容器 31 / 隔膜泵 28 / 贮槽 27 / 起重机 18 / 螺杆泵 12 / 非标静设备 12 / 风机 3 / 浓密机 3 / 液压设备 3 / 空压机 3 / 成套设备 4 / 给料器 1
 2. **设备 type 字段标准化（巡检模块前置工作）**（2026-04-29）：71 台 type 字段调整。**变容积泵 57 台拆分**（按用户指定）：18 台→隔膜泵（高压釜给料泵 6 + 第一/二隔室浓硫酸给料泵 12）·39 台→柱塞泵（密封液循环泵 18 + 预热器给料泵密封液给料泵 12 + 高压釜搅拌冲洗水泵 6+3）。**3 处重复命名合并**：起重设备→起重机（10）·空气压缩机→空压机（2）·罗茨风机由"空气压缩机"纠正为"风机"（2，原因：脚本 if/elif 顺序匹配先吃掉了空气压缩机分支，需第二轮 PATCH 修正）。**最终 type 分布 17 类**：离心泵 112/搅拌器 69/柱塞泵 39/密封系统 36/压力容器 31/隔膜泵 28/贮槽 27/地坑泵 21/螺杆泵 12/起重机 12/非标静设备 12/空压机 9/风机 3/浓密机 3/液压设备 3/成套设备 4/给料器 1。本次为下一步"设备巡检模块"按设备类型配置巡检模板做准备
@@ -274,18 +274,24 @@
 6. 宽屏布局（≥1024px 左侧 240px 镍钴绿侧栏）
 7. V4-V10 七次数据迁移
 
-**🔧 直接操作云端的技巧**（测试模式规则 2026-05-19 前可用）：
-当前 Firestore 测试模式允许无鉴权读写，可以直接用 Python urllib 调 REST API 批量更新，不必让用户开 F12：
-```python
-# 查: POST https://firestore.googleapis.com/v1/projects/nickel-ems/databases/(default)/documents:runQuery?key=<apiKey>
-# 改: PATCH .../equipments/{docId}?updateMask.fieldPaths=motor&key=<apiKey>
+**🔧 直接操作云端的技巧**（**2026-05-03 后改用 F12 浏览器会话**）：
+~~Python urllib + API key~~ 不再可用——规则已发布要求 `request.auth != null`，光 API key 没 Firebase Auth token 会被拒/超时。
+**现行做法**：让用户在 EMS F12 控制台跑 JS（浏览器已带匿名认证 token）：
+```js
+// 在 EMS 网页 F12 console 里跑
+(async () => {
+  const a = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js');
+  const m = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
+  const db = m.getFirestore(a.getApp());
+  // 查: m.getDocs(m.query(m.collection(db, 'workorders'), m.where('field', '==', x)))
+  // 改: m.updateDoc(m.doc(db, 'equipments', id), { motor: '...' })
+  // 删: m.deleteDoc(m.doc(db, 'workorders', id))
+})();
 ```
-apiKey 在 `index.html` 里 `firebaseConfig`。批量改完立即 verify 读回。
-数据流程：① 改云端 ② 同步本地 SEED_EQUIPMENTS ③ commit + push。
-**⚠️ 2026-05-19 规则到期后**，此方法将失效，需切回 F12 控制台脚本（登录态自带凭证）。
+数据流程：① 给用户 F12 脚本 ② 用户跑完确认 ③ 同步本地 SEED ④ commit + push。
+**特殊例外**：DELETE 单条文档 + GET 单条文档（非 runQuery）有时仍能用 API key 工作（限流不严），但不要依赖。
 
 **已知待办**：
-- ⚠️ **firestore.rules 还未在 Console 发布**（代码已上线 + Anonymous 已启用，规则等用户拍板部署日。worktree 里有 `firestore.rules` + `FIRESTORE_SECURITY_DEPLOY.md`）
 - 📝 218 区 52 台 TBD 临时位号待用户分配正式位号（含 spec 字段缺失 48 条）
 - 📝 156 个润滑点待补充标准油号 + 周期
 - 📸 图片上传（设备故障照片）
