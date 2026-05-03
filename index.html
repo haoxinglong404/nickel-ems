@@ -5012,6 +5012,12 @@ function getInspectStatus(eq) {
 
 let currentWoId = null;
 let woBuffer = null;    // 创建/编辑时的临时数据
+// 暴露到 window，让表单内联 oninput="woBuffer.xxx = ..." 能找到（模块作用域 let 不在 window 上）
+Object.defineProperty(window, 'woBuffer', {
+  get() { return woBuffer; },
+  set(v) { woBuffer = v; },
+  configurable: true,
+});
 let woFilter = 'todo';  // 当前筛选：todo / pending-approval / in-progress / done / all / mine
 
 /* ------ 工单列表 ------ */
