@@ -4559,15 +4559,18 @@ function showSheet(type, arg) {
     const user = findUser(session);
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user?user.name:'账号'}</div><div class="sheet-sub">工号 ${user?user.empno:'—'} · ${user?ROLES[user.role].label:'—'}</div><button class="sheet-btn danger" onclick="logout()">退出登录</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='addUser') {
-    selectedRole = 'reader';
+    selectedRole = 'production-worker';
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">添加新账号</div><div class="sheet-sub">为团队成员创建登录账号</div>
       <div class="sheet-form-group"><div class="sheet-form-label">姓名</div><input class="sheet-input" id="add-name" placeholder="例如：陈工" maxlength="20"></div>
       <div class="sheet-form-group"><div class="sheet-form-label">工号</div><input class="sheet-input" id="add-empno" type="tel" inputmode="numeric" placeholder="数字工号" maxlength="15"></div>
       <div class="sheet-form-group"><div class="sheet-form-label">初始角色</div><div class="role-picker" id="role-picker">
-        <div class="role-opt selected" data-role="reader" onclick="pickRole('reader')">只读 / 报修</div>
-        <div class="role-opt" data-role="reporter" onclick="pickRole('reporter')">提报人</div>
-        <div class="role-opt" data-role="approver" onclick="pickRole('approver')">审批人</div>
-        <div class="role-opt" data-role="tech" onclick="pickRole('tech')">维修人</div>
+        <div class="role-opt selected" data-role="production-worker" onclick="pickRole('production-worker')">生产员工</div>
+        <div class="role-opt" data-role="production-leader" onclick="pickRole('production-leader')">生产班长</div>
+        <div class="role-opt" data-role="production-director" onclick="pickRole('production-director')">生产主任</div>
+        <div class="role-opt" data-role="maintenance-worker" onclick="pickRole('maintenance-worker')">检修员工</div>
+        <div class="role-opt" data-role="maintenance-leader" onclick="pickRole('maintenance-leader')">检修班长</div>
+        <div class="role-opt" data-role="maintenance-director" onclick="pickRole('maintenance-director')">检修主任</div>
+        <div class="role-opt" data-role="manager" onclick="pickRole('manager')">经理</div>
         <div class="role-opt" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
       <button class="sheet-btn primary" onclick="confirmAddUser()">创建账号</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
