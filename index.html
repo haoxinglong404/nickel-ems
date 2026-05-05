@@ -9523,14 +9523,15 @@ async function exportLubeXlsx() {
     ]);
   });
 
-  const histRows = [['序号','执行时间','位号','设备名称','实际油号','实际量','操作人','备注']];
+  const histRows = [['序号','执行时间','位号','设备名称','润滑点','实际油号','实际量','操作人','备注']];
   history.sort((a, b) => (b.lubeAt || 0) - (a.lubeAt || 0));
   history.forEach((h, i) => {
     histRows.push([
       i + 1,
       _fmtTs(h.lubeAt || h.createdAt),
-      h.lubePointTag || '',
-      h.lubePointName || '',
+      h.tag || '',
+      h.name || '',
+      h.point || '',
       h.actualOil || '',
       h.actualAmount || '',
       h.operatorName || '',
