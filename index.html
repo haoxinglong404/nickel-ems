@@ -6216,7 +6216,7 @@ function renderLubeDetail(lp) {
         <div class="lube-hist-item">
           <div class="lube-hist-top">
             <span class="lube-hist-date">${dateStr}</span>
-            <span class="lube-hist-op">${h.operationType === 'grease' ? '加脂' : '换油'}</span>
+            <span class="lube-hist-op">${(h.actualOil || '').includes('脂') ? '加脂' : '换油'}</span>
           </div>
           <div class="lube-hist-meta">
             <strong>${escapeHtml(h.actualOil || '—')}</strong> · ${h.actualAmount || '—'}${unit}
