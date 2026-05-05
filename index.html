@@ -6128,7 +6128,7 @@ function renderLubeCard(lp) {
     daysText = '未记录';
   }
 
-  const amount = lp.standardAmount ? (lp.standardAmount + (lp.operationType === 'grease' ? 'kg' : 'L')) : '';
+  const amount = lp.standardAmount ? (lp.standardAmount + (lp.operationType === 'grease' ? 'g' : 'L')) : '';
 
   return `
     <div class="lube-card" onclick="openLubeDetail('${lp.id}')">
@@ -6191,7 +6191,7 @@ function renderLubeDetail(lp) {
     daysText = '未设置下次时间';
   }
 
-  const unit = lp.operationType === 'grease' ? 'kg' : 'L';
+  const unit = lp.operationType === 'grease' ? 'g' : 'L';
   const opLabel = lp.operationType === 'grease' ? '加脂' : '换油';
 
   document.getElementById('lube-detail-hero').innerHTML = `
@@ -6297,7 +6297,7 @@ function openLubeExec() {
 
 function renderLubeExecForm(lp) {
   const b = lubeExecBuffer;
-  const unit = lp.operationType === 'grease' ? 'kg' : 'L';
+  const unit = lp.operationType === 'grease' ? 'g' : 'L';
   const opLabel = lp.operationType === 'grease' ? '加脂' : '换油';
 
   document.getElementById('lube-exec-body').innerHTML = `
@@ -6414,7 +6414,7 @@ function renderDeviceLubePoints(eqId) {
           <div class="lube-op-dot ${lp.operationType || 'grease'}"></div>
           <div class="device-lube-item-left">
             <div class="device-lube-item-point">${escapeHtml(lp.point || '')} · ${escapeHtml(lp.standardOil || '')}</div>
-            <div class="device-lube-item-meta">${lp.standardAmount || '—'}${lp.operationType === 'grease' ? 'kg' : 'L'} · ${lp.periodDays ? lp.periodDays + '天' : '—'}</div>
+            <div class="device-lube-item-meta">${lp.standardAmount || '—'}${lp.operationType === 'grease' ? 'g' : 'L'} · ${lp.periodDays ? lp.periodDays + '天' : '—'}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <span class="lube-status-tag ${status}">${status === 'overdue' ? '逾期' : status === 'due-soon' ? '即将' : '正常'}</span>
