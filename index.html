@@ -354,7 +354,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     text-transform: uppercase;
     font-weight: 500;
   }
-  .wo-status-tag.pending-approval { background: #FAEEDA; color: #854F0B; }
+  .wo-status-tag.pending-approval              { background: #FAEEDA; color: #854F0B; }
+  .wo-status-tag.pending-maintenance-approval  { background: #FCE5C7; color: #6B3F0A; }
   .wo-status-tag.approved         { background: #E6F1FB; color: #0C447C; }
   .wo-status-tag.in-progress      { background: #F0F5E8; color: #3A5424; }
   .wo-status-tag.pending-confirm  { background: #EEEDFE; color: #3C3489; }
@@ -3127,13 +3128,14 @@ let woUnsub = null;
 
 
 const WO_STATUS_MAP = {
-  'pending-approval': { label: '待审批',   color: 'var(--s-repair)' },
-  'approved':         { label: '已批准',   color: '#2B8AD9' },
-  'rejected':         { label: '已驳回',   color: 'var(--s-scrap)' },
-  'in-progress':      { label: '维修中',   color: 'var(--g-deep)' },
-  'pending-confirm':  { label: '待确认',   color: '#7565E9' },
-  'done':             { label: '已完成',   color: 'var(--s-running)' },
-  'reopened':         { label: '已重开',   color: '#C13B76' },
+  'pending-approval':             { label: '待生产审批', color: 'var(--s-repair)' },
+  'pending-maintenance-approval': { label: '待机修审批', color: '#B17800' },
+  'approved':                     { label: '已批准',     color: '#2B8AD9' },
+  'rejected':                     { label: '已驳回',     color: 'var(--s-scrap)' },
+  'in-progress':                  { label: '维修中',     color: 'var(--g-deep)' },
+  'pending-confirm':              { label: '待确认',     color: '#7565E9' },
+  'done':                         { label: '已完成',     color: 'var(--s-running)' },
+  'reopened':                     { label: '已重开',     color: '#C13B76' },
 };
 
 const URGENCY_MAP = {
@@ -3815,9 +3817,11 @@ function isManager(u) { return hasRole(u, 'manager'); }
 function isProduction(u) { return !!u && ROLE_PROD.includes(u.role); }
 function isMaintenance(u) { return !!u && ROLE_MAINT.includes(u.role); }
 
-function canApproveWO(u) { return hasRole(u, 'maintenance-director','manager','admin'); }
+function canApproveProductionWO(u) { return hasRole(u, 'production-director','admin'); }
+function canApproveMaintenanceWO(u) { return hasRole(u, 'maintenance-director','admin'); }
+function canApproveWO(u) { return canApproveProductionWO(u) || canApproveMaintenanceWO(u); } // 兼容旧调用
 function canTakeWO(u) { return isMaintenance(u) || isAdmin(u); }
-function canVerifyWO(u) { return isProduction(u) || isAdmin(u); }
+function canVerifyWO(u) { return isProduction(u) || isManager(u) || isAdmin(u); }
 function canAssignWO(u) { return hasRole(u, 'maintenance-leader','maintenance-director','manager','admin'); }
 function canBatchImportTools(u) { return hasRole(u, 'maintenance-leader','maintenance-director','admin'); }
 function canHardDelete(u) { return isAdmin(u); }
@@ -5019,7 +5023,7 @@ Object.defineProperty(window, 'woBuffer', {
   set(v) { woBuffer = v; },
   configurable: true,
 });
-let woFilter = 'todo';  // 当前筛选：todo / pending-approval / in-progress / done / all / mine
+let woFilter = 'all';  // 当前筛选：all / todo / pending-approval / in-progress / done · 默认全部让所有人都能看到
 
 /* ------ 工单列表 ------ */
 
@@ -5036,10 +5040,15 @@ function isMyTodo(wo, user) {
   }
   // 按状态和角色匹配
   if (wo.status === 'pending-approval') {
-    return canApproveWO(user);
+    // 经理 / 管理员 也算（可直批），生产主任正常审批
+    return canApproveProductionWO(user) || isManager(user);
+  }
+  if (wo.status === 'pending-maintenance-approval') {
+    return canApproveMaintenanceWO(user) || isManager(user);
   }
   if (wo.status === 'approved') {
-    return canTakeWO(user);
+    // 检修人员可接单, 班长以上可派单
+    return canTakeWO(user) || canAssignWO(user);
   }
   if (wo.status === 'in-progress') {
     return wo.technicianId === user.empno;
@@ -5063,7 +5072,7 @@ function renderWoFilterBar() {
   const user = getCurrentUser();
   const all = woCache;
   const todoCount = user ? all.filter(w => isMyTodo(w, user)).length : 0;
-  const pendingCount = all.filter(w => w.status === 'pending-approval').length;
+  const pendingCount = all.filter(w => w.status === 'pending-approval' || w.status === 'pending-maintenance-approval').length;
   const progressCount = all.filter(w => w.status === 'in-progress' || w.status === 'approved' || w.status === 'pending-confirm' || w.status === 'reopened').length;
   const doneCount = all.filter(w => w.status === 'done').length;
 
@@ -5087,7 +5096,7 @@ function filterWorkorders() {
   if (!user) return [];
   const all = woCache;
   if (woFilter === 'todo')  return all.filter(w => isMyTodo(w, user));
-  if (woFilter === 'pending-approval') return all.filter(w => w.status === 'pending-approval');
+  if (woFilter === 'pending-approval') return all.filter(w => w.status === 'pending-approval' || w.status === 'pending-maintenance-approval');
   if (woFilter === 'in-progress')      return all.filter(w => ['approved','in-progress','pending-confirm','reopened'].includes(w.status));
   if (woFilter === 'done')             return all.filter(w => w.status === 'done');
   return all;
@@ -5106,6 +5115,7 @@ function renderWorkOrderList() {
         <div class="empty-mark">—</div>
         <div class="empty-title">${woFilter === 'todo' ? '暂无待办' : '暂无工单'}</div>
         <div class="empty-hint">${woFilter === 'todo' ? 'nothing to do right now' : 'no work orders'}</div>
+        ${woFilter === 'todo' ? `<button class="wo-act-btn primary" style="margin-top:20px;" onclick="setWoFilter('all')">看全部工单</button>` : ''}
       </div>`;
     return;
   }
@@ -5202,20 +5212,30 @@ function renderWoDetail(wo) {
       <div class="wo-tl-title">① 提报故障</div>
       <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} · ${formatFullTime(wo.reportedAt)}</div>
     </div>`;
-  // 2. 审批
-  if (wo.status === 'rejected') {
+  // 2. 生产主任审批
+  if (wo.status === 'rejected' && !wo.productionApprovedAt) {
+    // 在生产审批阶段就被驳回
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot" style="border-color:var(--s-scrap);background:var(--s-scrap);"></span>
-        <div class="wo-tl-title">② 已驳回</div>
+        <div class="wo-tl-title">② 生产主任驳回</div>
         <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
         ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
       </div>`;
-  } else if (wo.approvedAt) {
+  } else if (wo.productionApprovedAt) {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">② 审批通过</div>
+        <div class="wo-tl-title">② 生产主任批准</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.productionApproverName || '—')} · ${formatFullTime(wo.productionApprovedAt)}</div>
+        ${wo.productionApprovalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.productionApprovalComment)}</div>` : ''}
+      </div>`;
+  } else if (wo.approvedAt && !wo.maintenanceApprovedAt) {
+    // 兼容老数据：旧版只有一级审批
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot done"></span>
+        <div class="wo-tl-title">② 审批通过（旧版）</div>
         <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
         ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
       </div>`;
@@ -5223,34 +5243,61 @@ function renderWoDetail(wo) {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">② 等待审批</div>
-        <div class="wo-tl-meta">待领导审批</div>
+        <div class="wo-tl-title">② 等待生产主任审批</div>
+        <div class="wo-tl-meta">—</div>
       </div>`;
   }
-  // 3. 接单
-  if (wo.status !== 'pending-approval' && wo.status !== 'rejected') {
+
+  // 3. 机修主任审批（只有在生产审批通过/旧数据已批准 后才展示）
+  if (wo.status === 'rejected' && wo.productionApprovedAt) {
+    // 在机修审批阶段被驳回
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot" style="border-color:var(--s-scrap);background:var(--s-scrap);"></span>
+        <div class="wo-tl-title">③ 机修主任驳回</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
+        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
+      </div>`;
+  } else if (wo.maintenanceApprovedAt) {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot done"></span>
+        <div class="wo-tl-title">③ 机修主任批准</div>
+        <div class="wo-tl-meta">${escapeHtml(wo.maintenanceApproverName || '—')} · ${formatFullTime(wo.maintenanceApprovedAt)}</div>
+        ${wo.maintenanceApprovalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.maintenanceApprovalComment)}</div>` : ''}
+      </div>`;
+  } else if (wo.status === 'pending-maintenance-approval') {
+    timelineHtml += `
+      <div class="wo-tl-item">
+        <span class="wo-tl-dot pending"></span>
+        <div class="wo-tl-title">③ 等待机修主任审批</div>
+        <div class="wo-tl-meta">—</div>
+      </div>`;
+  }
+  // 4. 接单
+  if (wo.status !== 'pending-approval' && wo.status !== 'pending-maintenance-approval' && wo.status !== 'rejected') {
     if (wo.technicianId) {
       timelineHtml += `
         <div class="wo-tl-item">
           <span class="wo-tl-dot done"></span>
-          <div class="wo-tl-title">③ 已接单</div>
+          <div class="wo-tl-title">④ 已接单</div>
           <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.claimedAt)}</div>
         </div>`;
     } else if (wo.status === 'approved') {
       timelineHtml += `
         <div class="wo-tl-item">
           <span class="wo-tl-dot pending"></span>
-          <div class="wo-tl-title">③ 等待接单</div>
+          <div class="wo-tl-title">④ 等待接单</div>
           <div class="wo-tl-meta">维修师傅可点击"接单"</div>
         </div>`;
     }
   }
-  // 4. 完工
+  // 5. 完工
   if (wo.completedAt) {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">④ 维修完工</div>
+        <div class="wo-tl-title">⑤ 维修完工</div>
         <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.completedAt)}</div>
         ${wo.repairDetail ? `<div class="wo-tl-comment">${escapeHtml(wo.repairDetail)}</div>` : ''}
       </div>`;
@@ -5258,30 +5305,30 @@ function renderWoDetail(wo) {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">④ 维修中</div>
+        <div class="wo-tl-title">⑤ 维修中</div>
         <div class="wo-tl-meta">等待师傅完工</div>
       </div>`;
   }
-  // 5. 确认
+  // 6. 确认
   if (wo.status === 'done') {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">⑤ 已确认关单</div>
+        <div class="wo-tl-title">⑥ 已确认关单</div>
         <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || wo.reporterName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
       </div>`;
   } else if (wo.status === 'pending-confirm') {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">⑤ 等待确认</div>
+        <div class="wo-tl-title">⑥ 等待确认</div>
         <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} 需确认维修效果</div>
       </div>`;
   } else if (wo.status === 'reopened') {
     timelineHtml += `
       <div class="wo-tl-item">
         <span class="wo-tl-dot" style="border-color:#C13B76;background:#C13B76;"></span>
-        <div class="wo-tl-title">⑤ 已重开（需重新维修）</div>
+        <div class="wo-tl-title">⑥ 已重开（需重新维修）</div>
         <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
       </div>`;
   }
@@ -5327,18 +5374,32 @@ function renderWoActions(wo, user) {
   }
   let buttons = '';
 
-  if (wo.status === 'pending-approval' && canApproveWO(user)) {
-    buttons = `
-      <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
-      <button class="wo-act-btn success" onclick="approveWorkorder()">批准</button>`;
-  } else if (wo.status === 'approved') {
-    if (canTakeWO(user)) {
-      // 检修线 / 管理员：可直接接单
-      buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">接单</button>`;
-    } else if (canAssignWO(user)) {
-      // 班长以上但非检修人员：派单
-      buttons = `<button class="wo-act-btn primary" onclick="assignWorkorder()">指派师傅</button>`;
+  if (wo.status === 'pending-approval') {
+    if (isManager(user) || isAdmin(user)) {
+      // 经理 / 管理员：直批（跳过两级）
+      buttons = `
+        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
+        <button class="wo-act-btn success" onclick="approveWorkorder()">经理直批</button>`;
+    } else if (canApproveProductionWO(user)) {
+      buttons = `
+        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
+        <button class="wo-act-btn success" onclick="approveWorkorder()">生产主任批准</button>`;
     }
+  } else if (wo.status === 'pending-maintenance-approval') {
+    if (isManager(user) || isAdmin(user)) {
+      buttons = `
+        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
+        <button class="wo-act-btn success" onclick="approveWorkorder()">经理直批</button>`;
+    } else if (canApproveMaintenanceWO(user)) {
+      buttons = `
+        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
+        <button class="wo-act-btn success" onclick="approveWorkorder()">机修主任批准</button>`;
+    }
+  } else if (wo.status === 'approved') {
+    // 接单 + 派单（检修主任和经理两个都能用）
+    const claimBtn = canTakeWO(user) ? `<button class="wo-act-btn primary" onclick="claimWorkorder()">接单</button>` : '';
+    const assignBtn = canAssignWO(user) ? `<button class="wo-act-btn ${claimBtn ? 'secondary' : 'primary'}" onclick="assignWorkorder()">指派师傅</button>` : '';
+    buttons = claimBtn + assignBtn;
   } else if (wo.status === 'in-progress' && wo.technicianId === user.empno) {
     buttons = `<button class="wo-act-btn success" onclick="completeWorkorder()">完工</button>`;
   } else if (wo.status === 'in-progress' && isAdmin(user)) {
@@ -5581,19 +5642,81 @@ async function approveWorkorder() {
   const wo = woCache.find(w => w.id === currentWoId);
   if (!wo) return;
   const user = getCurrentUser();
-  const comment = prompt('批准意见（选填）：');
-  if (comment === null) return; // 取消
+  const isBypass = isManager(user) || isAdmin(user);
+
+  // 三种情况：经理直批 / 生产主任一级 / 机修主任二级
+  let newStatus, label, mode;
+  if (isBypass && (wo.status === 'pending-approval' || wo.status === 'pending-maintenance-approval')) {
+    newStatus = 'approved';
+    label = '经理直批';
+    mode = 'bypass';
+  } else if (wo.status === 'pending-approval') {
+    newStatus = 'pending-maintenance-approval';
+    label = '生产主任批准';
+    mode = 'production';
+  } else if (wo.status === 'pending-maintenance-approval') {
+    newStatus = 'approved';
+    label = '机修主任批准';
+    mode = 'maintenance';
+  } else {
+    showToast('当前状态不能审批');
+    return;
+  }
+
+  const comment = prompt(label + '（意见，选填）：');
+  if (comment === null) return;
+
+  let stageFields;
+  if (mode === 'bypass') {
+    // 经理直批：两级一起填，对外看不出是直批（managerBypass 仅作内部标记）
+    stageFields = {
+      productionApproverId: user.empno,
+      productionApproverName: user.name,
+      productionApprovedAt: Date.now(),
+      productionApprovalComment: comment || '',
+      maintenanceApproverId: user.empno,
+      maintenanceApproverName: user.name,
+      maintenanceApprovedAt: Date.now(),
+      maintenanceApprovalComment: comment || '',
+      managerBypass: true,  // 内部标记，不在 UI 显示
+      // 兼容旧字段
+      approverId: user.empno,
+      approverName: user.name,
+      approvedAt: Date.now(),
+      approvalComment: comment || '',
+    };
+  } else if (mode === 'production') {
+    stageFields = {
+      productionApproverId: user.empno,
+      productionApproverName: user.name,
+      productionApprovedAt: Date.now(),
+      productionApprovalComment: comment || '',
+    };
+  } else {
+    stageFields = {
+      maintenanceApproverId: user.empno,
+      maintenanceApproverName: user.name,
+      maintenanceApprovedAt: Date.now(),
+      maintenanceApprovalComment: comment || '',
+      // 兼容
+      approverId: user.empno,
+      approverName: user.name,
+      approvedAt: Date.now(),
+      approvalComment: comment || '',
+    };
+  }
+
   const updated = {
     ...wo,
-    status: 'approved',
-    approverId: user.empno,
-    approverName: user.name,
-    approvedAt: Date.now(),
-    approvalComment: comment || '',
+    status: newStatus,
+    ...stageFields,
+    updatedAt: Date.now(),
   };
   try {
     await cloudSaveWorkorder(updated);
-    showToast('已批准，等待师傅接单');
+    if (mode === 'bypass') showToast('经理直批通过，等待师傅接单');
+    else if (mode === 'production') showToast('已通过，转交机修主任审批');
+    else showToast('已批准，等待师傅接单');
   } catch (err) {
     showToast('操作失败：' + err.message);
   }
