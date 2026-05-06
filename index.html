@@ -3160,6 +3160,46 @@ function generateWoCode() {
   return 'WO' + ymd + seq;
 }
 
+/* ========== 企业微信通知 ========== */
+const WECHAT_NOTIFY_URL = 'https://ems-notify.haoxinglong404.workers.dev';
+const WECHAT_NOTIFY_TOKEN = 'ems-2026-nickel-secret-x9k2';
+
+async function notifyWeChat(content, mentionMobiles = []) {
+  if (!content) return;
+  // 静默失败 — 通知失败不阻塞工单流程
+  try {
+    await fetch(WECHAT_NOTIFY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-Token': WECHAT_NOTIFY_TOKEN,
+      },
+      body: JSON.stringify({
+        msgtype: 'text',
+        text: {
+          content,
+          mentioned_mobile_list: mentionMobiles.filter(Boolean),
+        },
+      }),
+    });
+  } catch (e) {
+    console.warn('[notifyWeChat] failed', e);
+  }
+}
+
+// 找特定角色用户的企业微信手机号
+function getMobilesByRole(role) {
+  return loadUsers()
+    .filter(u => u.role === role && u.wechatMobile)
+    .map(u => u.wechatMobile);
+}
+
+// 找特定 empno 用户的手机号
+function getMobileByEmpno(empno) {
+  const u = loadUsers().find(x => x.empno === empno);
+  return u && u.wechatMobile ? u.wechatMobile : null;
+}
+
 async function cloudSaveWorkorder(wo) {
   setCloudStatus('syncing', '保存中...');
   try {
@@ -4595,6 +4635,7 @@ function showSheet(type, arg) {
         <div class="role-opt" data-role="manager" onclick="pickRole('manager')">经理</div>
         <div class="role-opt" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
+      <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="add-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20"></div>
       <button class="sheet-btn primary" onclick="confirmAddUser()">创建账号</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='editUser') {
     const user = findUser(arg); if (!user) return;
@@ -4611,9 +4652,11 @@ function showSheet(type, arg) {
         <div class="role-opt ${user.role==='manager'?'selected':''}" data-role="manager" onclick="pickRole('manager')">经理</div>
         <div class="role-opt ${user.role==='admin'?'selected':''}" data-role="admin" onclick="pickRole('admin')">管理员</div>
       </div></div>
+      <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="edit-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20" value="${user.wechatMobile || ''}"></div>
       <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>
       ${!isSelf?`<button class="sheet-btn danger" onclick="confirmDeleteUser('${user.empno}')">删除账号</button>`:''}`:
-      `<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px 0 8px;">管理员账号不可修改或删除</div>`}
+      `<div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="edit-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20" value="${user.wechatMobile || ''}"></div>
+      <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>`}
       <button class="sheet-btn" onclick="hideSheet()">${user.role==='admin'?'关闭':'取消'}</button>`;
   } else if (type==='setPassword') {
     const user = findUser(localStorage.getItem(SESSION_KEY));
@@ -4681,11 +4724,13 @@ function pickRole(role) {
 async function confirmAddUser() {
   const name = document.getElementById('add-name').value.trim();
   const empno = document.getElementById('add-empno').value.trim();
+  const wechatMobile = (document.getElementById('add-wechat-mobile').value || '').trim();
   if (!name) { showToast('请填写姓名'); return; }
   if (!empno || !/^\d{4,15}$/.test(empno)) { showToast('工号应为 4-15 位数字'); return; }
   if (findUser(empno)) { showToast('该工号已存在'); return; }
+  if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
   try {
-    await cloudSaveUser({ empno, name, role:selectedRole, password:null, createdAt:Date.now() });
+    await cloudSaveUser({ empno, name, role:selectedRole, password:null, wechatMobile: wechatMobile || '', createdAt:Date.now() });
     hideSheet();
     showToast(`已创建：${name}（${empno}）`);
   } catch (err) {
@@ -4709,10 +4754,16 @@ async function confirmEditUser(empno) {
       return;
     }
   }
+  // 企业微信手机号（选填）
+  const mobileEl = document.getElementById('edit-wechat-mobile');
+  const wechatMobile = mobileEl ? (mobileEl.value || '').trim() : (user.wechatMobile || '');
+  if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
   try {
-    await cloudSaveUser({ ...user, role: selectedRole });
+    // admin 角色不允许通过编辑改动 role，但仍可改 wechatMobile
+    const newRole = (user.role === 'admin') ? 'admin' : selectedRole;
+    await cloudSaveUser({ ...user, role: newRole, wechatMobile });
     hideSheet();
-    showToast('角色已更新');
+    showToast('账号已更新');
   } catch (err) {
     showToast('更新失败：' + err.message);
   }
@@ -5610,6 +5661,18 @@ async function submitWorkorder() {
     await cloudSaveWorkorder(b);
     showToast('工单已提交，等待审批');
 
+    // 通知生产主任
+    const urgencyMap = { normal: '一般', urgent: '紧急', critical: '特急' };
+    notifyWeChat(
+      '🆕 新工单 ' + b.code + '\n' +
+      '设备：' + (b.equipmentTag || '') + ' ' + (b.equipmentName || '') + '\n' +
+      '故障：' + (b.issueDesc || (b.issueTags || []).join('、') || '—') + '\n' +
+      '紧急程度：' + (urgencyMap[b.urgency] || b.urgency) + '\n' +
+      '报修人：' + (b.reporterName || '—') + '\n' +
+      '👉 待生产主任审批',
+      getMobilesByRole('production-director')
+    );
+
     // 本地乐观插入（onSnapshot 很快会覆盖，但先保证 UI 有数据）
     if (!woCache.find(w => w.id === b.id)) {
       woCache.unshift(b);
@@ -5717,6 +5780,31 @@ async function approveWorkorder() {
     if (mode === 'bypass') showToast('经理直批通过，等待师傅接单');
     else if (mode === 'production') showToast('已通过，转交机修主任审批');
     else showToast('已批准，等待师傅接单');
+
+    // 通知（按下一级要做的人）
+    const woHeader = wo.code + ' · ' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '');
+    if (mode === 'production') {
+      // 一级通过 → 通知机修主任
+      notifyWeChat(
+        '✅ 生产主任已批准 ' + woHeader + '\n' +
+        '审批人：' + user.name + (comment ? '\n意见：' + comment : '') + '\n' +
+        '👉 待机修主任审批',
+        getMobilesByRole('maintenance-director')
+      );
+    } else if (mode === 'maintenance' || mode === 'bypass') {
+      // 二级通过 / 经理直批 → 通知所有检修人员（任何人都能接单）
+      const maintMobiles = [
+        ...getMobilesByRole('maintenance-director'),
+        ...getMobilesByRole('maintenance-leader'),
+        ...getMobilesByRole('maintenance-worker'),
+      ];
+      notifyWeChat(
+        '✅ 工单已批准 ' + woHeader + '\n' +
+        '审批人：' + user.name + (comment ? '\n意见：' + comment : '') + '\n' +
+        '👉 待师傅接单',
+        maintMobiles
+      );
+    }
   } catch (err) {
     showToast('操作失败：' + err.message);
   }
@@ -5740,6 +5828,16 @@ async function rejectWorkorder() {
   try {
     await cloudSaveWorkorder(updated);
     showToast('已驳回');
+
+    // 通知报修人
+    const reporterMobile = getMobileByEmpno(wo.reporterId);
+    notifyWeChat(
+      '❌ 工单已驳回 ' + wo.code + '\n' +
+      '设备：' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '') + '\n' +
+      '驳回人：' + user.name + '\n' +
+      '原因：' + comment,
+      reporterMobile ? [reporterMobile] : []
+    );
   } catch (err) {
     showToast('操作失败：' + err.message);
   }
@@ -5811,6 +5909,23 @@ async function completeWorkorder() {
   try {
     await cloudSaveWorkorder(updated);
     showToast('已标记完工，等待确认');
+
+    // 通知报修人 + 生产人员（验收人）
+    const reporterMobile = getMobileByEmpno(wo.reporterId);
+    const productionMobiles = [
+      ...getMobilesByRole('production-director'),
+      ...getMobilesByRole('production-leader'),
+      ...getMobilesByRole('production-worker'),
+    ];
+    const allMobiles = [...new Set([reporterMobile, ...productionMobiles].filter(Boolean))];
+    notifyWeChat(
+      '🔧 工单完工待验收 ' + wo.code + '\n' +
+      '设备：' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '') + '\n' +
+      '维修师傅：' + (wo.technicianName || '—') + '\n' +
+      '检修详情：' + detail + '\n' +
+      '👉 报修人 / 生产人员请验收',
+      allMobiles
+    );
   } catch (err) {
     showToast('操作失败：' + err.message);
   }
