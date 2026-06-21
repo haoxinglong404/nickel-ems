@@ -36,10 +36,12 @@
 - `workorders` · 工单（id = `wo_时间戳_随机`）
 - `lubepoints` · 润滑点（**620** 个 · id = `lp_XXXX` / `lp_v6_001` / `lp_v7_001` / `lp_v8_NNN`）
 - `lubehistory` · 润滑执行记录
-- `spareparts` · 备件（**1861** 条 · id = `sp_XXXXX` / `sp_tbd_NNN` 协议待清点）
-- `spareparthistory` · 备件出入库记录（id = `ph_时间戳_随机`）
-- `tools` · **工器具台账**（251 件 · id = `tl_seed_XXXX`）—— 2026-04-23 新增模块
-- `toolhistory` · 工器具出入库历史（id = `th_seed_XXXX` / `th_时间戳_随机`）
+- ~~`spareparts` · 备件~~ —— **2026-06-21 废弃删除**（前端模块已移除，云端集合用 F12 脚本清空）
+- ~~`spareparthistory` · 备件出入库记录~~ —— 同上废弃
+- ~~`tools` · 工器具台账~~ —— **2026-06-21 废弃删除**（前端模块 + 购物车整体移除）
+- ~~`toolhistory` · 工器具出入库历史~~ —— 同上废弃
+- `secondstock` · **二级库（现场库存台账）**（id = `ss_imp_NNN` 种子 / `ss_时间戳_随机` 新增）—— 2026-06-21 新增模块，替代旧备件
+- `secondstockhistory` · 二级库出入库历史（id = `ssh_时间戳_随机`）
 - `inspecttemplates` · **巡检模板**（**17 个** · id = `tpl_<key>`）—— 2026-04-29 新增模块
 - `inspecthistory` · 巡检执行记录（id = `ih_时间戳_随机`）
 - `meta` · 一次性迁移幂等标记（id = `*_v[N]_YYYYMMDD`）
@@ -217,17 +219,23 @@
 
 ## 🚀 下次会话应该知道的上下文
 
-当前版本：**v0.9**（v0.8 + 工器具模块 + 购物车 + 7 次数据迁移 + 备件/润滑分 tab + 宽屏布局）
+当前版本：**v0.10**（v0.9 删工器具+旧备件模块 → 新建二级库模块）
 
-**底部导航 6 项**：设备 / 工单 / 备件 / 工器具 / 润滑 / 我的（grid `repeat(6,1fr)`，label 9px）
+**底部导航 5 项**：设备 / 巡检 / 工单 / 二级库 / 润滑 / 我的（**横滑 flex**，data-nav="parts" 复用给二级库）
+> ⚠️ 注意：**工器具模块、旧备件（采购/随机）模块已于 2026-06-21 整体删除**，购物车 bar 也删了。底部导航 `data-nav="parts"` 现在指向二级库（沿用 parts module 骨架）。
 
 **模块结构**：
-- 备件模块顶部 2 tab：📦 采购 / 🎲 随机（不同 module，tab 间用 `switchModule` 切换）
+- 二级库（`parts` module，标题 Second Stock）：现场库存台账，**带结存的库存账**
+  - 字段：`name`/`materialCode`/`sourceNo`/`unit`/`fieldLocation`(现场库位)/`location`(领出库位·只读)/`requestQty`/`inQty`/`quantity`(结存)/`usagePart`/`applicant`
+  - **库位双轨**：`location`=从仓库领出时的货位（只读保留）；`fieldLocation`=车间二级库实际存放位置（管理员填，列表/筛选/卡片都用这个）
+  - module：`parts`(列表)/`parts-detail`(详情)/`parts-txn`(领用/入库)/`parts-edit`(新增/编辑)
+  - **仅 admin** 可领用/入库/编辑/删除/批量导入；其他人只读
+  - 详情页按钮：－领用（出库减结存）/＋入库/✏️编辑/🗑️删除条目
+  - 顶部按钮（admin）：＋新增 / 📥批量导入（粘贴 Excel）/ ↓导出
+  - 历史 type：`in`(入库)/`out`(领用)，带撤销(reverted/isCounter)+硬删双轨
+  - **辅助函数**：`escapeAttr`(属性转义)、`renderInfoRow`(信息行)、`ssDataSource`(预览模式云端空时回退 SEED) —— 这几个原属旧备件模块，删除时一并删了，已在二级库块重新定义
+  - `ssTxnBuffer`/`ssEditBuffer` 用 `Object.defineProperty(window,...)` 桥接（同 woBuffer 套路，内联 oninput 需要）
 - 润滑模块顶部 3 tab：🛢️ 脂润滑 / ⛽ 油润滑 / 📝 待补充油号（**按 standardOil 是否含"脂"分**）
-- 工器具：常显购物车 bar 紧贴 nav 上方（**不在 .content 内，跟 .bottom-nav 同级**，仅 tools 模块显示）
-  - 卡片 2 按钮：`+ 加入领用单`（消耗）/ `+ 加入借用单`（要还）
-  - 顶部 3 按钮：归还（选借用人→选物品）/ 批量入库（admin only，粘贴 Excel）/ 导出
-  - 历史 type：`in`/`out`/`consume`/`return`，对应**入库/借用/领用/归还**
 
 **已运行的一次性迁移（marker 都在 `meta/` 集合）**：
 | Marker | 做的事 |
@@ -244,7 +252,8 @@
 | `inspect_init_v11_20260429` | 上传 17 个巡检模板（按 equipment.type 关联）|
 
 **最近做的改动**（按时间倒序）：
-1. **导入 37 条手写润滑记录（v3）**（2026-05-22）：用户给 `设备润滑记录汇总_v3.xlsx`（基于 30 张手写 PDF 修正），8 列：润滑日期/设备名/位号/润滑点/油种类/加注量/润滑方式/检查人。37 条全部按 (tag, point) 匹配上系统润滑点（point 别名：齿轮箱(减速机)→减速机）。**用户 3 个决策**：① 操作人唐仕彬/刘正威用名字记录（operatorId 留空）；② actualOil 按记录表原文存（美孚/壳牌牌号，如 MOB DTE MEDIUM、Omala SH 320、MOBIL NUTO H46）；③ 不符项全按实际记录导入（VT1油站 NUTO H32 727L vs 台账 15#MAXTOP 600L；推进液箱实际 NUTO H46 vs 台账 Nyvac FR 200D；112曲轴箱实际 80L vs 台账 100L —— 台账标准都不动，只记实际）。**实现**：F12 脚本写 37 条 lubehistory（id `lh_imp_v3_001`~`037`，带防重复检查 + 分批 400）+ 更新 37 个 lubepoint 的 lastLubeAt/nextLubeAt/status=已润滑（按各点最新润滑日期 + periodDays 算 nextLubeAt）。本地 SEED 同步更新 37 个润滑点状态。**注意**：浓硫酸给料泵推进液箱实际用 NUTO H46（抗磨液压油）而非台账的 Nyvac FR 200D（抗燃液压油），是两种不同油，用户确认按实际记录但暂不改台账——后续若确认现场长期用 NUTO H46 可考虑改标准油号
+1. **删工器具+旧备件模块 → 新建二级库模块**（2026-06-21）：用户要求把工器具模块和旧备件（采购/随机）模块**整体删除**，新建「二级库」（现场库存台账）。**删除范围**：前端工器具(tools/tool-detail module + 购物车 bar + ~40 函数 + SEED_TOOLS_V9/HISTORY 种子)、旧备件(parts/random + ~30 函数 + SEED_SPARE_PARTS 66万字符 + V4/V5 迁移) 全删；云端 4 集合(spareparts/spareparthistory/tools/toolhistory)用 F12 脚本 `清空旧备件工器具_F12脚本.js` 清空（**用户跑，不进 git**）。文件 1.98MB→0.86MB。底部导航 6→5 项(工器具删，"备件"→"二级库"，沿用 `data-nav="parts"` 骨架)。**新二级库**：新集合 `secondstock`+`secondstockhistory`，57 条垫片种子(`SEED_SECONDSTOCK`，来自 `垫片二级库台账.xlsx`，总结存 472)。**带结存库存账**：可领用(出库减结存)/入库/编辑/删除/批量导入(粘贴 Excel)/导出，撤销+硬删双轨，**仅 admin 可写**。**库位双轨**：`location`(领出库位·仓库·只读) + `fieldLocation`(现场库位·二级库·管理员填，列表/筛选/卡片都用它)，57 条初始 fieldLocation 统一=`203-1`。**3 个踩坑(都修了)**：① 删除脚本误删了"润滑 UI 层"注释的 `/*` 开头→留下悬空 `*/`→整个 module 静默不执行(全部函数 undefined)，靠 Python 注释配平扫描定位；② `escapeAttr`/`renderInfoRow` 原属旧备件模块、被一起删了，二级库代码却用到→已在二级库块重新定义；③ `ssTxnBuffer`/`ssEditBuffer` 内联 oninput 需 `Object.defineProperty(window,...)` 桥接(同 woBuffer)。**预览模式回退**：`ssDataSource()` 在 `?preview=1` 且云端空时显示 SEED，方便本地看效果(写操作因权限 gate 预览测不了，要上线后真实 admin 登录测)。**本机无 node**：`node --check` 用不了，改用 Python 写括号/引号/注释配平校验器 + 浏览器 preview eval 验证。firestore.rules 加了 secondstock/secondstockhistory 白名单(需用户在 Console 发布)
+2. **导入 37 条手写润滑记录（v3）**（2026-05-22）：用户给 `设备润滑记录汇总_v3.xlsx`（基于 30 张手写 PDF 修正），8 列：润滑日期/设备名/位号/润滑点/油种类/加注量/润滑方式/检查人。37 条全部按 (tag, point) 匹配上系统润滑点（point 别名：齿轮箱(减速机)→减速机）。**用户 3 个决策**：① 操作人唐仕彬/刘正威用名字记录（operatorId 留空）；② actualOil 按记录表原文存（美孚/壳牌牌号，如 MOB DTE MEDIUM、Omala SH 320、MOBIL NUTO H46）；③ 不符项全按实际记录导入（VT1油站 NUTO H32 727L vs 台账 15#MAXTOP 600L；推进液箱实际 NUTO H46 vs 台账 Nyvac FR 200D；112曲轴箱实际 80L vs 台账 100L —— 台账标准都不动，只记实际）。**实现**：F12 脚本写 37 条 lubehistory（id `lh_imp_v3_001`~`037`，带防重复检查 + 分批 400）+ 更新 37 个 lubepoint 的 lastLubeAt/nextLubeAt/status=已润滑（按各点最新润滑日期 + periodDays 算 nextLubeAt）。本地 SEED 同步更新 37 个润滑点状态。**注意**：浓硫酸给料泵推进液箱实际用 NUTO H46（抗磨液压油）而非台账的 Nyvac FR 200D（抗燃液压油），是两种不同油，用户确认按实际记录但暂不改台账——后续若确认现场长期用 NUTO H46 可考虑改标准油号
 2. **用户自助设置企业微信手机号**（2026-05-06）：之前 wechatMobile 字段只能管理员通过用户管理 sheet 添加，工人没法自己改。给"我的"页面菜单加 📞 "企业微信手机号" 入口（COMMON_MENU 和 admin 菜单都加），点击弹 sheet 让用户自己填 11 位手机号。**实现**：① 加 `setMobile` sheet 类型（参考 setPassword 的结构）；② `confirmSetMobile()` 函数校验 11 位 + cloudSaveUser；③ 已有手机号时显示当前号 + "保存修改" + "清除手机号" 按钮；④ 加 phone icon SVG 到 ICON_SVG。这样部署后工人各自登录就能填，不用管理员一个个录入
 2. **企业微信群机器人通知集成**（2026-05-06）：用户的工厂用企业微信，要工单事件实时推群。**架构**：EMS 浏览器 → Cloudflare Worker（中转避 CORS + 隐藏 webhook）→ 企业微信群机器人 webhook。**Worker 配置**：`https://ems-notify.haoxinglong404.workers.dev` · token `ems-2026-nickel-secret-x9k2`（写在 EMS 源码里，token 仅做软屏障防爬虫，被刷只会群里灌广告，可重建机器人换 key）。**EMS 改动**：① 加 `notifyWeChat(content, mobiles)` + `getMobilesByRole()` + `getMobileByEmpno()` helper（fetch 失败静默 → 不阻塞工单流程）；② users 表加 `wechatMobile` 字段（11 位手机号校验，编辑/创建账号都能填，写入 Firestore）；③ 5 个事件触发通知：**提报**→@生产主任、**生产批准**→@机修主任、**机修批准/经理直批**→@所有检修人、**驳回**→@报修人、**完工**→@报修人+所有生产人。**Cloudflare Worker 部署经验**：免费版无需绑卡，注册→Workers&Pages→Create→选 Hello World→改 worker.js→Deploy。**用户操作步骤**：① 企业微信建**内部群**（外部群不能加机器人）；② 群机器人/消息推送→自定义机器人→拿 webhook URL；③ 注册 Cloudflare 邮箱即可（不绑卡）；④ 创建 Worker 起名 ems-notify，粘贴脚本，Deploy。**踩坑**：① 外部群不能加机器人（含外部联系人/个人微信好友的群被禁）→ 必须建内部群；② PowerShell URL 必须双引号包起来（否则被当 cmdlet）；③ 企业微信 markdown 不支持 @mention，必须用 text 类型 + mentioned_mobile_list 数组
 2. **工单两级审批 + 经理直批 + 默认看全部**（2026-05-06）：用户提需求改造工单流程：① 所有人可提报；② 必须先**生产主任**审批，再**机修主任**审批，才能接单；③ **经理 / 管理员** 可直批（跳过两级 → 直接 approved）；④ 验收只能由生产人员/经理/admin 操作；⑤ 检修主任和经理都能派单（之前只有经理能派）。**新状态**：`pending-maintenance-approval` 介于一级二级之间。**新角色助手**：拆 `canApproveWO` 为 `canApproveProductionWO`（生产主任+admin）和 `canApproveMaintenanceWO`（机修主任+admin），`canVerifyWO` 加 `isManager`。**双段审批字段**：`productionApproverId/Name/At/Comment` + `maintenanceApproverId/Name/At/Comment`，旧 `approverId` 等字段保留兼容。**经理直批**：写入 `managerBypass:true`（内部审计标记），但 UI **完全隐藏**——批准人显示纯名字、等待行不列哪些角色能批（按用户要求"不能让兄弟们知道权力的黑暗"）。**默认 tab 改为"全部"**：之前默认"我的待办"导致普通员工以为没工单，改成所有人进来就能看到所有工单。**经理直批按钮 / Toast 只对 manager+admin 可见**，其他人完全感知不到这个 shortcut。**改动 10+ 处**：CSS 加 `.pending-maintenance-approval` 样式 / WO_STATUS_MAP 加新状态 / 拆权限函数 / `approveWorkorder` 三种 mode（bypass/production/maintenance）/ `renderWoActions` 按状态+角色显示不同按钮 / 时间线分 ②③ 两级审批 / `isMyTodo` 经理两个 pending 都算待办 / 空状态加"看全部工单"按钮等
@@ -315,6 +324,7 @@
 - 📝 63 台正式位号动设备尚未润滑（203 区冲洗水泵/污水搅拌/密封液给料泵/起重机为主），待师傅现场补
 - ✅ 消息通知（企业微信群机器人，2026-05-06 完成）
 - 📸 图片上传（设备故障照片）/ 数据看板（未做）
+- 🚀 **二级库上线待办（2026-06-21 push 后）**：① Firebase Console 发布 firestore.rules（加了 secondstock/secondstockhistory 白名单，不发布则二级库读写被拒）；② 代码上线 1-2h 后跑 `清空旧备件工器具_F12脚本.js` 清空旧 4 集合；③ 真实 admin 登录测领用/入库/编辑/批量导入（预览模式测不了写操作）。**注意**：本地 `file://` 直接打开会报 `requests-from-referer-<empty>-are-blocked`（API Key referrer 限制），要用 localhost 或线上访问
 
 ---
 

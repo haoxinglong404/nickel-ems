@@ -85,6 +85,16 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    // 二级库（现场库存台账）· 2026-06-21
+    match /secondstock/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 二级库出入库历史
+    match /secondstockhistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
     // 一次性迁移幂等标记
     match /meta/{id} {
       allow read, write: if isSignedIn();
