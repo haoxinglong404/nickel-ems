@@ -4514,6 +4514,7 @@ function showSheet(type, arg) {
         <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
     }
   } else if (type==='secondStockBatch') {
+    ssBatchRows = []; ssBatchFileName = '';
     content.innerHTML = `<div class="sheet-handle"></div>` + renderSecondStockBatchSheet();
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
@@ -7513,38 +7514,71 @@ async function exportSecondStockXlsx() {
   await _exportSheets([['二级库台账', rows]], '二级库台账_' + _today() + '.xlsx');
 }
 
-/* ----- 批量导入（粘贴 Excel，仅管理员）----- */
+/* ----- 批量导入（上传 Excel，仅管理员）----- */
 let ssBatchRows = [];
+let ssBatchFileName = '';
 Object.defineProperty(window, 'ssBatchRows', { get() { return ssBatchRows; }, set(v) { ssBatchRows = v; }, configurable: true });
 
-function parseSSBatchPaste() {
-  const ta = document.getElementById('ss-batch-paste');
-  if (!ta) return;
-  const text = ta.value || '';
-  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-  const rows = [];
-  lines.forEach((line, idx) => {
-    const cells = line.split('\t').map(c => c.trim());
-    // 跳过表头行（含"物料名称"或"名称"或以"序号"开头）
-    if (idx === 0 && (line.includes('物料名称') || line.includes('名称') || cells[0] === '序号')) return;
-    // 列序（同导出）：0序号 1来源单号 2物料代码 3名称 4单位 5现场库位 6领出库位 7申请 8实发 9结存 10使用部位 11申报人
-    const g = i => (cells[i] != null ? cells[i] : '');
-    const name = g(3);
-    const toInt = v => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
-    const reqQ = toInt(g(7)), inQ = toInt(g(8));
-    let bal = toInt(g(9));
-    if (bal == null) bal = (inQ != null ? inQ : (reqQ != null ? reqQ : 0));
-    const r = {
-      sourceNo: g(1), materialCode: g(2), name,
-      unit: g(4) || '个', fieldLocation: g(5), location: g(6),
-      requestQty: reqQ != null ? reqQ : 0, inQty: inQ != null ? inQ : 0, quantity: bal,
-      usagePart: g(10), applicant: g(11),
-      status: name ? 'ok' : 'error',
-      statusMsg: name ? '' : '缺名称，跳过',
-    };
-    rows.push(r);
-  });
-  ssBatchRows = rows;
+// 模板列定义（下载模板 + 解析上传都用这个顺序）
+const SS_BATCH_HEADER = ['序号','来源单号','物料代码','物料名称(含规格)','单位','现场库位','领出库位(仓库)','申请数量','实发入库','结存','使用部位','申报人'];
+const SS_BATCH_EXAMPLE = ['示例(导入时自动跳过)','2026061801','SFSCZG-1595-001','金属缠绕垫片 DN600 CL150','个','203-1','FMI-SFSC-CK-B2-JZ003','10','10','10','低温预热器人孔垫片','王玺茗'];
+
+// 判断是否示例/表头行（导入时跳过）
+function ssIsSkipRow(cells) {
+  const c0 = String(cells[0] || '').trim();
+  const c3 = String(cells[3] || '').trim();
+  if (c0 === '序号' || c3 === '物料名称' || c3 === '物料名称(含规格)') return true; // 表头
+  if (c0.indexOf('示例') === 0) return true; // 示例行
+  return false;
+}
+
+// 数组行 → 解析为条目
+function ssRowFromCells(cells) {
+  const g = i => (cells[i] != null ? String(cells[i]).trim() : '');
+  const name = g(3);
+  const toInt = v => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
+  const reqQ = toInt(g(7)), inQ = toInt(g(8));
+  let bal = toInt(g(9));
+  if (bal == null) bal = (inQ != null ? inQ : (reqQ != null ? reqQ : 0));
+  return {
+    sourceNo: g(1), materialCode: g(2), name,
+    unit: g(4) || '个', fieldLocation: g(5), location: g(6),
+    requestQty: reqQ != null ? reqQ : 0, inQty: inQ != null ? inQ : 0, quantity: bal,
+    usagePart: g(10), applicant: g(11),
+    status: name ? 'ok' : 'error',
+    statusMsg: name ? '' : '缺名称，跳过',
+  };
+}
+
+// 下载导入模板（.xlsx，含表头 + 示例行）
+async function downloadSSBatchTemplate() {
+  const rows = [SS_BATCH_HEADER, SS_BATCH_EXAMPLE];
+  await _exportSheets([['二级库导入模板', rows]], '二级库导入模板.xlsx');
+}
+
+// 选择并解析上传的 Excel
+async function onSSBatchFileChange(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  ssBatchFileName = file.name;
+  try {
+    await loadXlsxLib();
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+    const rows = [];
+    aoa.forEach(cells => {
+      if (!cells || cells.length === 0) return;
+      if (ssIsSkipRow(cells)) return;            // 跳过表头/示例行
+      if (cells.every(c => String(c || '').trim() === '')) return; // 空行
+      rows.push(ssRowFromCells(cells));
+    });
+    ssBatchRows = rows;
+  } catch (e) {
+    showToast('读取失败：' + (e && e.message || e));
+    ssBatchRows = [];
+  }
   const sheet = document.getElementById('sheet-content');
   if (sheet) sheet.innerHTML = `<div class="sheet-handle"></div>` + renderSecondStockBatchSheet();
 }
@@ -7555,8 +7589,8 @@ function renderSecondStockBatchSheet() {
   let preview = '';
   if (ssBatchRows.length > 0) {
     preview = `
-      <div style="margin-top:10px;font-size:12px;color:var(--muted);">已解析 ${ssBatchRows.length} 行：${okN} 可导入 · ${errN} 跳过</div>
-      <div style="max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px;">
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);">📄 ${escapeHtml(ssBatchFileName)} · 已解析 ${ssBatchRows.length} 行：${okN} 可导入 · ${errN} 跳过</div>
+      <div style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px;">
         ${ssBatchRows.slice(0, 60).map(r => {
           const color = r.status === 'ok' ? 'var(--g-forest)' : '#C13B3B';
           const icon = r.status === 'ok' ? '✓' : '✗';
@@ -7573,12 +7607,15 @@ function renderSecondStockBatchSheet() {
   }
   return `
     <div class="sheet-title">📥 批量导入二级库（管理员）</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
-      从 Excel 复制粘贴，列顺序（同导出）：<br>
-      <strong>序号 | 来源单号 | 物料代码 | 物料名称 | 单位 | 现场库位 | 领出库位 | 申请数量 | 实发入库 | 结存 | 使用部位 | 申报人</strong><br>
-      第一行表头会自动跳过。<strong>物料名称必填</strong>；结存为空时自动取实发/申请数量。
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+      1️⃣ 先下载模板，按列填好（<strong>示例行不用删，导入时自动跳过</strong>）<br>
+      2️⃣ 再上传填好的 Excel 文件。<strong>物料名称必填</strong>；结存留空时自动取实发/申请数量。
     </div>
-    <textarea id="ss-batch-paste" placeholder="直接粘贴 Excel 单元格…" style="width:100%;height:130px;font-size:12px;font-family:var(--font-mono);padding:10px;border:1px solid var(--line);border-radius:8px;resize:vertical;" onchange="parseSSBatchPaste()" oninput="parseSSBatchPaste()"></textarea>
+    <button class="sheet-btn" style="margin-bottom:10px;" onclick="downloadSSBatchTemplate()">⬇️ 下载导入模板.xlsx</button>
+    <label class="sheet-btn primary" style="margin-bottom:0;display:block;text-align:center;cursor:pointer;">
+      📤 选择 Excel 文件上传
+      <input type="file" accept=".xlsx,.xls" style="display:none;" onchange="onSSBatchFileChange(this)">
+    </label>
     ${preview}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="sheet-btn" style="flex:1;" onclick="hideSheet()">取消</button>
@@ -7944,7 +7981,8 @@ window.deleteSecondStockItem = deleteSecondStockItem;
 window.revertSecondStockHistory = revertSecondStockHistory;
 window.hardDeleteSecondStockHistory = hardDeleteSecondStockHistory;
 window.exportSecondStockXlsx = exportSecondStockXlsx;
-window.parseSSBatchPaste = parseSSBatchPaste;
+window.downloadSSBatchTemplate = downloadSSBatchTemplate;
+window.onSSBatchFileChange = onSSBatchFileChange;
 window.submitSecondStockBatch = submitSecondStockBatch;
 window.showWelcome = showWelcome;
 window.closeWelcome = closeWelcome;
