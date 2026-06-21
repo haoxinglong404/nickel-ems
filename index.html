@@ -7298,8 +7298,8 @@ function renderSecondStockTxnForm(it) {
       ${isOut ? `<div class="edit-hint">当前结存 ${currentQty}</div>` : ''}
     </div>
     <div class="edit-field">
-      <label class="edit-label">说明（可选）</label>
-      <input class="edit-input" id="f-ss-reason" type="text" placeholder="如：更换低温预热器人孔垫片" value="${escapeAttr(b.reason)}" oninput="ssTxnBuffer.reason = this.value">
+      <label class="edit-label">${isOut ? '用途（领去用在哪）<span style="color:#C13B3B;">*</span>' : '说明（可选）'}</label>
+      <input class="edit-input" id="f-ss-reason" type="text" placeholder="${isOut ? '如：更换低温预热器人孔垫片' : '可选'}" value="${escapeAttr(b.reason)}" oninput="ssTxnBuffer.reason = this.value">
     </div>
     <div class="txn-preview" id="ss-txn-preview" style="color:${color};">结存 ${currentQty} → <strong>${newQty}</strong></div>
   `;
@@ -7324,6 +7324,7 @@ async function submitSecondStockTxn() {
   if (!it) return;
   const currentQty = it.quantity || 0;
   if (b.quantity < 1) { showToast('数量必须大于 0'); return; }
+  if (b.type === 'out' && !(b.reason || '').trim()) { showToast('请填写用途（领去用在哪）'); return; }
   if (b.type === 'out' && b.quantity > currentQty) { showToast('出库数量超过结存'); return; }
   const newQty = b.type === 'out' ? currentQty - b.quantity : currentQty + b.quantity;
   const user = getCurrentUser();
