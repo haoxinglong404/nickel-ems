@@ -549,6 +549,37 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     z-index: 10;
   }
   .wo-actions.hidden { display: none; }
+
+  /* 二级库详情底部操作区（2026-06-21：放大按钮 + 删除条件禁用）*/
+  #parts-detail-actions:not(.hidden) {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--paper); border-top: 1px solid var(--line);
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+    z-index: 10;
+  }
+  #parts-detail-actions.hidden { display: none; }
+  .ss-action-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    max-width: 640px; margin: 0 auto;
+  }
+  .ss-action-btn {
+    min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line);
+    background: var(--paper); color: var(--ink);
+    font-family: var(--font-sans); font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: all .15s; display: flex;
+    align-items: center; justify-content: center; gap: 4px;
+  }
+  .ss-action-btn:active { transform: scale(0.97); }
+  .ss-action-btn.out { background: var(--g-forest); color: #fff; border-color: var(--g-forest); }
+  .ss-action-btn.in { background: var(--g-mist); color: var(--g-forest); border-color: var(--g-primary); }
+  .ss-action-btn.edit { border-color: var(--line); color: var(--muted); }
+  .ss-action-btn.del { border-color: #E4B5B0; color: #C13B3B; }
+  .ss-action-btn:disabled { opacity: .38; cursor: not-allowed; transform: none; }
+  .ss-action-hint {
+    max-width: 640px; margin: 8px auto 0; text-align: center;
+    font-size: 12px; color: #C77B2E;
+  }
   .wo-act-btn {
     flex: 1;
     height: 46px;
@@ -7258,15 +7289,20 @@ function renderSecondStockDetail(it) {
   const actionsEl = document.getElementById('parts-detail-actions');
   if (actionsEl) {
     if (isAdmin(user)) {
-      const canOut = (it.quantity || 0) > 0;
-      actionsEl.className = 'wo-actions';
+      const qty = it.quantity || 0;
+      const canOut = qty > 0;
+      const canDelete = qty === 0;  // 仅结存为 0 才能删条目
+      actionsEl.className = '';
       actionsEl.innerHTML = `
-        <button class="wo-action-btn primary" onclick="openSecondStockTxn('out')" ${canOut ? '' : 'disabled style="opacity:.4;"'}>－ 领用</button>
-        <button class="wo-action-btn" onclick="openSecondStockTxn('in')">＋ 入库</button>
-        <button class="wo-action-btn secondary" onclick="openSecondStockEdit('${it.id}')">✏️ 编辑</button>
-        <button class="wo-action-btn danger" onclick="deleteSecondStockItem('${it.id}')">🗑️ 删除条目</button>`;
+        <div class="ss-action-grid">
+          <button class="ss-action-btn out" onclick="openSecondStockTxn('out')" ${canOut ? '' : 'disabled'}>－ 领用</button>
+          <button class="ss-action-btn in" onclick="openSecondStockTxn('in')">＋ 入库</button>
+          <button class="ss-action-btn edit" onclick="openSecondStockEdit('${it.id}')">✏️ 编辑</button>
+          <button class="ss-action-btn del" onclick="deleteSecondStockItem('${it.id}')" ${canDelete ? '' : 'disabled'} title="${canDelete ? '删除此条目' : '结存为 0 时才能删除'}">🗑️ 删除条目</button>
+        </div>
+        ${canDelete ? '' : '<div class="ss-action-hint">⚠️ 结存为 0 时才能删除条目（请先领用清空）</div>'}`;
     } else {
-      actionsEl.className = 'wo-actions hidden';
+      actionsEl.className = 'hidden';
       actionsEl.innerHTML = '';
     }
   }
@@ -7434,7 +7470,8 @@ async function deleteSecondStockItem(id) {
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
   const it = secondStockCache.find(x => x.id === id);
   if (!it) return;
-  if (!confirm(`⚠️ 彻底删除条目"${it.name}"（结存 ${it.quantity || 0}）？\n\n该条目及其出入库记录将一并删除，不可恢复。`)) return;
+  if ((it.quantity || 0) > 0) { showToast('结存为 0 时才能删除（请先领用清空）'); return; }
+  if (!confirm(`⚠️ 彻底删除条目"${it.name}"？\n\n该条目及其出入库记录将一并删除，不可恢复。`)) return;
   try {
     const hist = (secondStockHistCache || []).filter(h => h.itemId === id);
     for (const h of hist) await cloudDeleteSecondStockHistory(h.id);
