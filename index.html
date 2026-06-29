@@ -6170,8 +6170,9 @@ function renderLubeDetail(lp) {
     overdue:  { lbl: '已逾期',   color: '#B85C5C' },
     'due-soon': { lbl: '即将到期', color: 'var(--s-repair)' },
     ok:       { lbl: '状态正常', color: 'var(--s-running)' },
+    'pending-init': { lbl: '未初始润滑', color: 'var(--muted)' },
   };
-  const st = statusMap[status];
+  const st = statusMap[status] || { lbl: '—', color: 'var(--muted)' };
 
   let daysText = '';
   if (days !== null) {
