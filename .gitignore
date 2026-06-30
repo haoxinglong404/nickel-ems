@@ -54,3 +54,8 @@ secrets.json
 # 一次性运维 F12 脚本（用户手动跑，不进仓库）
 *_F12脚本.js
 清空*.js
+
+# 润滑/审核本地工作文件（生成器 + 待改清单 + 审核 HTML，不进仓库）
+_gen_lube_audit.py
+_pending_lube_fixes.json
+*审核.html
