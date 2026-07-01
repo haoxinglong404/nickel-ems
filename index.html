@@ -151,6 +151,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .ml-sp-edit-row .rm { color:var(--s-scrap); font-size:18px; cursor:pointer; padding:0 4px; }
   .ml-deleted-banner { padding:10px 14px; background:#FBEAEA; color:var(--s-scrap); border-radius:10px; font-size:13px; margin-bottom:14px; text-align:center; }
   .wo-act-btn.danger { color:var(--s-scrap); }
+  .ml-sp-sum-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line-soft); font-size:13px; }
+  .ml-sp-sum-row:last-child { border-bottom:none; }
+  .ml-sp-sum-row.head { font-family:var(--font-mono); font-size:11px; color:var(--subtle); text-transform:uppercase; letter-spacing:.05em; background:var(--surface); }
+  .ml-sp-sum-row .nm { flex:1; min-width:0; word-break:break-word; }
+  .ml-sp-sum-row .qt { flex:0 0 auto; font-family:var(--font-mono); color:var(--g-deep); font-weight:600; text-align:right; min-width:66px; }
+  .ml-sp-sum-row .tm { flex:0 0 auto; font-family:var(--font-mono); color:var(--subtle); text-align:right; min-width:44px; }
 
 .eq-empty-result { text-align:center; padding:60px 20px; color:var(--muted); }
 .eq-empty-result-title { font-size:15px; margin-bottom:6px; font-weight:500; }
@@ -2675,11 +2681,15 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <!-- 检修记录列表 -->
     <section class="module" data-module="maintenance">
       <div class="section-header">
-        <div class="section-label">Maintenance Log · 检修记录</div>
+        <div class="section-label-row">
+          <div class="section-label">Maintenance Log · 检修记录</div>
+          <button class="export-btn" onclick="openMlPartsSummary()" title="备件消耗汇总"><span class="export-btn-arrow">📊</span>备件消耗</button>
+        </div>
         <h1 class="section-title">Repairs</h1>
         <div class="section-sub" id="ml-section-sub">故障部位 · 原因 · 措施 · 备件</div>
       </div>
       <div class="ml-filter-bar" id="ml-filter-bar"></div>
+      <div class="ml-filter-bar" id="ml-class-filter-bar"></div>
       <div class="lube-search-bar">
         <input class="eq-search-input" id="ml-search" placeholder="搜索位号、设备、故障部位、检修人…" oninput="onMlSearchInput()">
         <div class="eq-search-clear" id="ml-search-clear" onclick="clearMlSearch()">×</div>
@@ -4571,6 +4581,22 @@ function showSheet(type, arg) {
       <div class="eq-picker-list" id="ml-part-list"></div>
       <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
     setTimeout(() => renderMlPartPicker(''), 10);
+  } else if (type==='mlPartsSummary') {
+    const recs = filterMaintenanceLogs();
+    const agg = aggregateMlSpareParts(recs);
+    const catLbl = mlFilter==='all' ? '全部类别' : (mlFilter==='deleted' ? '已删除' : (ML_CATEGORY_MAP[mlFilter]||{}).label);
+    const clsLbl = mlClassFilter==='all' ? '全部等级' : mlClassFilter+'类';
+    const rows = agg.length ? agg.map(a =>
+      `<div class="ml-sp-sum-row"><span class="nm">${escapeHtml(a.name)}</span><span class="qt">${a.qty}${escapeHtml(a.unit)}</span><span class="tm">${a.times}次</span></div>`).join('')
+      : `<div class="ml-muted" style="text-align:center;padding:20px;">当前筛选下暂无备件消耗</div>`;
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">备件消耗汇总</div>
+      <div class="sheet-sub">当前筛选：${catLbl} · ${clsLbl} · ${recs.length} 条记录 · ${agg.length} 种备件</div>
+      <div style="max-height:52vh;overflow-y:auto;margin:6px 0 12px;border:1px solid var(--line);border-radius:10px;">
+        <div class="ml-sp-sum-row head"><span class="nm">备件名称</span><span class="qt">总消耗</span><span class="tm">次数</span></div>
+        ${rows}
+      </div>
+      <button class="sheet-btn primary" onclick="exportMlPartsXlsx()">↓ 导出 Excel（汇总 + 明细）</button>
+      <button class="sheet-btn" onclick="hideSheet()">关闭</button>`;
   } else if (type==='secondStockBatch') {
     ssBatchRows = []; ssBatchFileName = '';
     content.innerHTML = `<div class="sheet-handle"></div>` + renderSecondStockBatchSheet();
@@ -4971,6 +4997,7 @@ Object.defineProperty(window, 'mlBuffer', {
 });
 let mlFilter = 'all';   // all / fault / planned / preventive / deleted(仅admin)
 let mlSearch = '';
+let mlClassFilter = 'all';   // all / A / B / C（按设备关键性等级）
 
 function getCurrentUser() {
   return findUser(localStorage.getItem(SESSION_KEY));
@@ -5021,7 +5048,23 @@ function renderMlFilterBar() {
   bar.innerHTML = tabs.map(tb =>
     '<div class="ml-filter-pill' + (mlFilter === tb.key ? ' active' : '') + '" onclick="setMlFilter(\'' + tb.key + '\')">' + tb.label + '<span class="n">' + tb.n + '</span></div>'
   ).join('');
+  // 等级筛选条（A/B/C，独立于类别，可叠加）
+  const cbar = document.getElementById('ml-class-filter-bar');
+  if (cbar) {
+    const base = (mlFilter === 'deleted') ? mlCache.filter(m => m.deleted)
+      : live.filter(m => mlFilter === 'all' || m.category === mlFilter);
+    const ctabs = [
+      { key: 'all', label: '全部等级', n: base.length },
+      { key: 'A',   label: 'A类',     n: base.filter(m => eqClassOf(m.equipmentId) === 'A').length },
+      { key: 'B',   label: 'B类',     n: base.filter(m => eqClassOf(m.equipmentId) === 'B').length },
+      { key: 'C',   label: 'C类',     n: base.filter(m => eqClassOf(m.equipmentId) === 'C').length },
+    ];
+    cbar.innerHTML = ctabs.map(tb =>
+      '<div class="ml-filter-pill' + (mlClassFilter === tb.key ? ' active' : '') + '" onclick="setMlClassFilter(\'' + tb.key + '\')">' + tb.label + '<span class="n">' + tb.n + '</span></div>'
+    ).join('');
+  }
 }
+function setMlClassFilter(c) { mlClassFilter = c; renderMaintenanceList(); }
 
 function filterMaintenanceLogs() {
   let list;
@@ -5031,6 +5074,7 @@ function filterMaintenanceLogs() {
     list = mlCache.filter(m => !m.deleted);
     if (mlFilter !== 'all') list = list.filter(m => m.category === mlFilter);
   }
+  if (mlClassFilter !== 'all') list = list.filter(m => eqClassOf(m.equipmentId) === mlClassFilter);
   if (mlSearch) {
     list = list.filter(m => {
       const hay = [m.equipmentTag, m.equipmentName, (m.faultParts || []).join(' '), m.faultCause, m.measures, m.repairerName]
@@ -5039,6 +5083,33 @@ function filterMaintenanceLogs() {
     });
   }
   return list;
+}
+
+function aggregateMlSpareParts(records) {
+  const map = new Map();
+  records.forEach(m => (m.spareParts || []).forEach(p => {
+    const name = (p.name || '').trim();
+    if (!name) return;
+    const key = name + '|' + (p.unit || '');
+    const cur = map.get(key) || { name, unit: p.unit || '', qty: 0, times: 0 };
+    cur.qty += (Number(p.qty) || 0);
+    cur.times += 1;
+    map.set(key, cur);
+  }));
+  return [...map.values()].sort((a, b) => b.qty - a.qty);
+}
+function openMlPartsSummary() { showSheet('mlPartsSummary'); }
+async function exportMlPartsXlsx() {
+  const recs = filterMaintenanceLogs();
+  const agg = aggregateMlSpareParts(recs);
+  const sum = [['备件名称', '单位', '总消耗', '消耗次数']];
+  agg.forEach(a => sum.push([a.name, a.unit, a.qty, a.times]));
+  const det = [['检修日期', '位号', '设备', '等级', '类别', '检修人', '备件名称', '数量', '单位']];
+  recs.forEach(m => (m.spareParts || []).forEach(p => {
+    det.push([m.repairDate || '', m.equipmentTag || '', m.equipmentName || '', eqClassOf(m.equipmentId) || '',
+      (ML_CATEGORY_MAP[m.category] || {}).label || '', m.repairerName || '', p.name || '', Number(p.qty) || 0, p.unit || '']);
+  }));
+  await _exportSheets([['备件消耗汇总', sum], ['消耗明细', det]], '检修备件消耗_' + _today() + '.xlsx');
 }
 
 function renderMaintenanceList() {
@@ -7625,6 +7696,9 @@ window.confirmSetMobile = confirmSetMobile;
 window.handleMenuAction = handleMenuAction;
 // 检修记录相关
 window.setMlFilter = setMlFilter;
+window.setMlClassFilter = setMlClassFilter;
+window.openMlPartsSummary = openMlPartsSummary;
+window.exportMlPartsXlsx = exportMlPartsXlsx;
 window.onMlSearchInput = onMlSearchInput;
 window.clearMlSearch = clearMlSearch;
 window.openMlDetail = openMlDetail;
