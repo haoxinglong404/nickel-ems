@@ -120,6 +120,37 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .eq-card-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .eq-card-status-dot { width:8px; height:8px; border-radius:50%; }
 .eq-card-arrow { color:var(--subtle); font-size:20px; font-weight:300; }
+  .abc-badge { display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; margin-left:6px; border-radius:4px; font-family:var(--font-mono); font-size:10px; font-weight:600; color:#fff; vertical-align:middle; }
+  .abc-badge.abc-A { background:var(--s-scrap); }
+  .abc-badge.abc-B { background:#B17800; }
+  .abc-badge.abc-C { background:var(--subtle); }
+  .ml-filter-bar { display:flex; gap:8px; overflow-x:auto; padding:4px 0 12px; -webkit-overflow-scrolling:touch; }
+  .ml-filter-pill { flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:999px; background:var(--surface); color:var(--muted); font-size:13px; border:1px solid var(--line); cursor:pointer; white-space:nowrap; }
+  .ml-filter-pill.active { background:var(--g-deep); color:#fff; border-color:var(--g-deep); }
+  .ml-filter-pill .n { font-family:var(--font-mono); font-size:11px; opacity:.85; }
+  .ml-card { padding:14px 16px; margin-bottom:10px; background:#fff; border:1px solid var(--line); border-radius:14px; cursor:pointer; }
+  .ml-card.deleted { opacity:.55; }
+  .ml-card-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; }
+  .ml-card-tag { font-family:var(--font-mono); font-size:12px; color:var(--g-deep); font-weight:600; }
+  .ml-card-cat { font-size:12px; font-weight:500; flex:0 0 auto; }
+  .ml-card-name { font-size:15px; color:var(--ink); font-weight:500; margin-bottom:8px; }
+  .ml-card-parts { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .ml-part-chip { display:inline-block; padding:3px 10px; border-radius:999px; background:var(--g-mist); color:var(--g-forest); font-size:12px; }
+  .ml-part-chip.more { background:var(--surface); color:var(--muted); }
+  .ml-card-cause { font-size:13px; color:var(--muted); line-height:1.55; margin-bottom:8px; word-break:break-word; }
+  .ml-card-meta { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--subtle); font-family:var(--font-mono); }
+  .ml-card-dot { color:var(--line); }
+  .ml-field { padding:14px 0; border-bottom:1px solid var(--line-soft); }
+  .ml-field-label { font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--subtle); margin-bottom:6px; }
+  .ml-field-val { font-size:14px; color:var(--ink); line-height:1.6; display:flex; flex-wrap:wrap; gap:6px; }
+  .ml-field-val.ml-pre { white-space:pre-wrap; display:block; }
+  .ml-muted { color:var(--subtle); }
+  .ml-sp-row { display:flex; justify-content:space-between; width:100%; padding:8px 12px; background:var(--surface); border-radius:8px; margin-bottom:6px; font-size:13px; }
+  .ml-sp-qty { font-family:var(--font-mono); color:var(--muted); }
+  .ml-sp-edit-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; background:var(--surface); border-radius:8px; margin-bottom:6px; font-size:13px; }
+  .ml-sp-edit-row .rm { color:var(--s-scrap); font-size:18px; cursor:pointer; padding:0 4px; }
+  .ml-deleted-banner { padding:10px 14px; background:#FBEAEA; color:var(--s-scrap); border-radius:10px; font-size:13px; margin-bottom:14px; text-align:center; }
+  .wo-act-btn.danger { color:var(--s-scrap); }
 
 .eq-empty-result { text-align:center; padding:60px 20px; color:var(--muted); }
 .eq-empty-result-title { font-size:15px; margin-bottom:6px; font-weight:500; }
@@ -2524,16 +2555,16 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <span class="detail-back-text" id="edit-title">编辑设备</span>
   </header>
 
-  <!-- 工单详情顶栏 -->
-  <header class="detail-back" id="topbar-wo-detail" style="display:none;" onclick="backToWoList()">
+  <!-- 检修详情顶栏 -->
+  <header class="detail-back" id="topbar-ml-detail" style="display:none;" onclick="backToMlList()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    <span class="detail-back-text">返回工单列表</span>
+    <span class="detail-back-text">返回检修列表</span>
   </header>
 
-  <!-- 工单创建顶栏 -->
-  <header class="detail-back" id="topbar-wo-edit" style="display:none;" onclick="cancelWoEdit()">
+  <!-- 检修登记顶栏 -->
+  <header class="detail-back" id="topbar-ml-edit" style="display:none;" onclick="cancelMlEdit()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    <span class="detail-back-text" id="wo-edit-title">提报工单</span>
+    <span class="detail-back-text" id="ml-edit-title">登记检修</span>
   </header>
 
   <!-- 润滑详情顶栏 -->
@@ -2641,29 +2672,36 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
     </section>
 
-    <section class="module" data-module="workorder">
+    <!-- 检修记录列表 -->
+    <section class="module" data-module="maintenance">
       <div class="section-header">
-        <div class="section-label">Work Order · 维修工单</div>
-        <h1 class="section-title">Active orders</h1>
-        <div class="section-sub" id="wo-section-sub">提报 · 审批 · 接单 · 完工 · 确认</div>
+        <div class="section-label">Maintenance Log · 检修记录</div>
+        <h1 class="section-title">Repairs</h1>
+        <div class="section-sub" id="ml-section-sub">故障部位 · 原因 · 措施 · 备件</div>
       </div>
-      <div class="wo-filter-bar" id="wo-filter-bar"></div>
-      <div id="wo-list-container"></div>
+      <div class="ml-filter-bar" id="ml-filter-bar"></div>
+      <div class="lube-search-bar">
+        <input class="eq-search-input" id="ml-search" placeholder="搜索位号、设备、故障部位、检修人…" oninput="onMlSearchInput()">
+        <div class="eq-search-clear" id="ml-search-clear" onclick="clearMlSearch()">×</div>
+        <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="eq-list-meta"><div class="eq-list-count" id="ml-list-count">—</div></div>
+      <div id="ml-list-container"></div>
     </section>
 
-    <!-- 工单详情 -->
-    <section class="module" data-module="workorder-detail">
-      <div class="wo-hero" id="wo-detail-hero"></div>
-      <div class="wo-body" id="wo-detail-body"></div>
-      <div class="wo-actions hidden" id="wo-actions"></div>
+    <!-- 检修记录详情 -->
+    <section class="module" data-module="maintenance-detail">
+      <div class="wo-hero" id="ml-detail-hero"></div>
+      <div class="wo-body" id="ml-detail-body"></div>
+      <div class="wo-actions hidden" id="ml-actions"></div>
     </section>
 
-    <!-- 工单创建/编辑 -->
-    <section class="module" data-module="workorder-create">
-      <div class="edit-form" id="wo-form-body"></div>
+    <!-- 检修记录 登记/编辑 -->
+    <section class="module" data-module="maintenance-create">
+      <div class="edit-form" id="ml-form-body"></div>
       <div class="edit-actions">
-        <button class="edit-btn edit-btn-cancel" onclick="cancelWoEdit()">取消</button>
-        <button class="edit-btn edit-btn-save" onclick="submitWorkorder()">提交</button>
+        <button class="edit-btn edit-btn-cancel" onclick="cancelMlEdit()">取消</button>
+        <button class="edit-btn edit-btn-save" onclick="submitMaintenance()">保存</button>
       </div>
     </section>
 
@@ -2828,7 +2866,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <!-- 浮动新增按钮（仅管理员在设备列表时显示） -->
   <button class="fab hidden" id="fab-add" onclick="openAdd()" title="新增设备">+</button>
   <!-- 浮动提报工单按钮（所有用户在工单列表时显示） -->
-  <button class="fab wo-fab hidden" id="fab-wo" onclick="openReport()" title="提报工单">+</button>
+  <button class="fab wo-fab hidden" id="fab-ml" onclick="openMlCreate()" title="登记检修">+</button>
 
   <!-- 登录欢迎卡片 -->
   <div class="welcome-overlay" id="welcome-overlay" onclick="closeWelcome()">
@@ -2844,7 +2882,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
     <div class="nav-item" data-nav="inspect"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span class="nav-label">巡检</span></div>
-    <div class="nav-item" data-nav="workorder"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg><span class="nav-label">工单</span></div>
+    <div class="nav-item" data-nav="maintenance"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14.6 6.4a3.5 3.5 0 0 0-4.7 4.7l-6.3 6.3 2 2 6.3-6.3a3.5 3.5 0 0 0 4.7-4.7l-2.3 2.3-2-.5-.5-2z"/></svg><span class="nav-label">检修</span></div>
     <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">二级库</span></div>
     <div class="nav-item" data-nav="lube"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v6M8 9h8l-1 12H9z"/><circle cx="12" cy="15" r="1.5"/></svg><span class="nav-label">润滑</span></div>
     <div class="nav-item" data-nav="profile"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-label">我的</span></div>
@@ -3116,48 +3154,34 @@ function subscribeEquipments() {
 }
 
 
-/* ========== 预装导入工单（首次启动时上传）========== */
-const SEED_IMPORTED_WORKORDERS = [{"id":"wo_imp_20260417_001","code":"WO20260417001","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"218子项新增放空阀，具体位置现场交底","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420300000,"createdAt":1776420300000,"updatedAt":1776420300000,"subArea":"218","isImported":true,"equipmentId":"other","equipmentTag":"子项 218","equipmentName":"218子项新增放空阀，具体位置现场交底","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260417_002","code":"WO20260417002","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"218子项新增车间应急物资潜污泵出口短节，具体位置现场交底","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420600000,"createdAt":1776420600000,"updatedAt":1776420600000,"subArea":"203","isImported":true,"equipmentId":"other","equipmentTag":"子项 203","equipmentName":"218子项新增车间应急物资潜污泵出口短节，具体位置现场交底","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260417_003","code":"WO20260417003","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"109-201-PE-PP-001D原矿浆输送泵出口管道拆卸清理","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776420900000,"createdAt":1776420900000,"updatedAt":1776420900000,"subArea":"201","isImported":true,"equipmentId":"eq_seed_0011","equipmentTag":"201-PE-PP-001D","equipmentName":"原矿浆输送泵","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_004","code":"WO20260419001","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"923生产水管道连接，（未与子项外管道连接）","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594000000,"createdAt":1776594000000,"updatedAt":1776594000000,"subArea":"923","isImported":true,"equipmentId":"other","equipmentTag":"子项 923","equipmentName":"923生产水管道连接，（未与子项外管道连接）","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_005","code":"WO20260419002","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"923跨管道楼梯太陡，需重新制作","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594300000,"createdAt":1776594300000,"updatedAt":1776594300000,"subArea":"923","isImported":true,"equipmentId":"other","equipmentTag":"子项 923","equipmentName":"923跨管道楼梯太陡，需重新制作","contactName":"马学斌","contactPhone":"企业微信"},{"id":"wo_imp_20260419_006","code":"WO20260419003","status":"pending-approval","urgency":"normal","issueTags":[],"issueDesc":"201-PE-PP-102A盘根漏水严重，需调整盘根","reporterId":"6725102247","reporterName":"郝行龙","reportedAt":1776594600000,"createdAt":1776594600000,"updatedAt":1776594600000,"subArea":"202","isImported":true,"equipmentId":"other","equipmentTag":"子项 202","equipmentName":"201-PE-PP-102A盘根漏水严重，需调整盘根","contactName":"马学斌","contactPhone":"企业微信"}];
+/* ========== 检修记录 (Maintenance Log) 数据层 ========== */
 
-/* ==========================================================
-   工单 (Work Order) 数据层
-   ========================================================== */
+let mlCache = [];
+let mlUnsub = null;
 
-let woCache = [];
-let woUnsub = null;
-
-
-const WO_STATUS_MAP = {
-  'pending-approval':             { label: '待生产审批', color: 'var(--s-repair)' },
-  'pending-maintenance-approval': { label: '待机修审批', color: '#B17800' },
-  'approved':                     { label: '已批准',     color: '#2B8AD9' },
-  'rejected':                     { label: '已驳回',     color: 'var(--s-scrap)' },
-  'in-progress':                  { label: '维修中',     color: 'var(--g-deep)' },
-  'pending-confirm':              { label: '待确认',     color: '#7565E9' },
-  'done':                         { label: '已完成',     color: 'var(--s-running)' },
-  'reopened':                     { label: '已重开',     color: '#C13B76' },
+// 检修类别
+const ML_CATEGORY_MAP = {
+  'fault':      { label: '故障抢修',   color: 'var(--s-scrap)' },
+  'planned':    { label: '计划检修',   color: 'var(--g-deep)' },
+  'preventive': { label: '预防性维护', color: '#2B8AD9' },
 };
 
-const URGENCY_MAP = {
-  normal:   { label: '一般', color: 'var(--subtle)' },
-  urgent:   { label: '紧急', color: 'var(--s-repair)' },
-  critical: { label: '特急', color: 'var(--s-scrap)' },
+// 设备关键性等级（A/B/C，按停机对生产的影响分级）
+const ABC_CLASS_MAP = {
+  'A': { label: 'A类·核心', short: 'A', color: 'var(--s-scrap)', desc: '停机直接停产' },
+  'B': { label: 'B类·重要', short: 'B', color: '#B17800',        desc: '有备用/短时可撑' },
+  'C': { label: 'C类·一般', short: 'C', color: 'var(--subtle)',  desc: '停机不影响生产' },
 };
 
-// 常见故障标签（基于您飞书数据的分析）
-const COMMON_ISSUE_TAGS = [
-  '盘车不顺', '异响', '漏液', '发热', '震动大',
-  '不启动', '跳闸', '皮带磨损', '密封泄漏', '压力异常'
+// 常见故障部位标签（可多选 + 手动补充）
+const COMMON_FAULT_PARTS = [
+  '机械密封', '轴承', '联轴器', '电机', '减速机', '叶轮',
+  '密封填料', '管路阀门', '电气', '仪表', '本体', '润滑系统'
 ];
 
-// 生成工单号：WO + YYYYMMDD + 三位序号
-function generateWoCode() {
-  const d = new Date();
-  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-  // 统计今日已有工单数量
-  const todayCount = woCache.filter(w => w.code && w.code.startsWith('WO' + ymd)).length;
-  const seq = String(todayCount + 1).padStart(3, '0');
-  return 'WO' + ymd + seq;
+function mlSortKey(m) {
+  const d = m && m.repairDate ? Date.parse(m.repairDate) : 0;
+  return (isNaN(d) ? 0 : d) * 1e6 + (m && m.createdAt ? (m.createdAt % 1e6) : 0);
 }
 
 /* ========== 企业微信通知 ========== */
@@ -3200,84 +3224,53 @@ function getMobileByEmpno(empno) {
   return u && u.wechatMobile ? u.wechatMobile : null;
 }
 
-async function cloudSaveWorkorder(wo) {
+async function cloudSaveMaintenance(ml) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'workorders', wo.id), {
-      ...wo,
-      updatedAt: Date.now(),
-    });
+    await setDoc(doc(db, 'maintenancelogs', ml.id), { ...ml, updatedAt: Date.now() });
     setCloudStatus('online', '已同步');
   } catch (err) {
-    console.error('[Firebase] 保存工单失败', err);
+    console.error('[Firebase] 保存检修记录失败', err);
     setCloudStatus('error', '同步失败：' + err.message);
     throw err;
   }
 }
 
-async function cloudDeleteWorkorder(id) {
+async function cloudDeleteMaintenance(id) {
   setCloudStatus('syncing', '删除中...');
   try {
-    await deleteDoc(doc(db, 'workorders', id));
+    await deleteDoc(doc(db, 'maintenancelogs', id));
     setCloudStatus('online', '已同步');
   } catch (err) {
-    console.error('[Firebase] 删除工单失败', err);
+    console.error('[Firebase] 删除检修记录失败', err);
     setCloudStatus('error', '删除失败：' + err.message);
     throw err;
   }
 }
 
-function subscribeWorkorders() {
-  if (woUnsub) woUnsub();
-  woUnsub = onSnapshot(collection(db, 'workorders'), (snap) => {
-    woCache = snap.docs.map(d => d.data());
-    // 按创建时间倒序
-    woCache.sort((a, b) => (b.reportedAt || 0) - (a.reportedAt || 0));
-    // 自动刷新工单列表
-    const woModule = document.querySelector('.module[data-module="workorder"]');
-    if (woModule && woModule.classList.contains('active')) {
-      renderWorkOrderList();
-    }
-    // 工单详情页刷新
-    if (currentWoId) {
-      const woDetailModule = document.querySelector('.module[data-module="workorder-detail"]');
-      if (woDetailModule && woDetailModule.classList.contains('active')) {
-        const wo = woCache.find(w => w.id === currentWoId);
-        if (wo) renderWoDetail(wo);
+function subscribeMaintenance() {
+  if (mlUnsub) mlUnsub();
+  mlUnsub = onSnapshot(collection(db, 'maintenancelogs'), (snap) => {
+    mlCache = snap.docs.map(d => d.data());
+    mlCache.sort((a, b) => mlSortKey(b) - mlSortKey(a));
+    const mod = document.querySelector('.module[data-module="maintenance"]');
+    if (mod && mod.classList.contains('active')) renderMaintenanceList();
+    if (currentMlId) {
+      const dm = document.querySelector('.module[data-module="maintenance-detail"]');
+      if (dm && dm.classList.contains('active')) {
+        const ml = mlCache.find(m => m.id === currentMlId);
+        if (ml) renderMaintenanceDetail(ml);
       }
     }
-    // 设备详情的维修记录 tab 刷新
     const eqDetailModule = document.querySelector('.module[data-module="equipment-detail"]');
     if (currentEqId && eqDetailModule && eqDetailModule.classList.contains('active')) {
       const activeTab = document.querySelector('.detail-tab.active');
-      if (activeTab && activeTab.dataset.tab === 'records') {
-        renderDeviceRecords(currentEqId);
-      }
+      if (activeTab && activeTab.dataset.tab === 'records') renderDeviceRecords(currentEqId);
     }
   }, (err) => {
-    console.error('[Firebase] 订阅工单失败', err);
+    console.error('[Firebase] 订阅检修记录失败', err);
     setCloudStatus('error', '连接失败');
   });
-}
-
-async function seedImportedWorkordersIfNeeded() {
-  if (!SEED_IMPORTED_WORKORDERS || SEED_IMPORTED_WORKORDERS.length === 0) return;
-  const checkId = SEED_IMPORTED_WORKORDERS[0].id;
-  try {
-    const s = await getDoc(doc(db, 'workorders', checkId));
-    if (s.exists()) return;  // 已导入过
-  } catch(e) { console.error('[Seed] 检查失败', e); return; }
-  setCloudStatus('syncing', '导入历史工单...');
-  const batch = writeBatch(db);
-  SEED_IMPORTED_WORKORDERS.forEach(wo => {
-    batch.set(doc(db, 'workorders', wo.id), wo);
-  });
-  try {
-    await batch.commit();
-    showToast('已导入 ' + SEED_IMPORTED_WORKORDERS.length + ' 条历史工单');
-  } catch(e) {
-    console.error('[Seed] 工单批量写入失败', e);
-  }
 }
 
 /* ========== V2 新增设备 (2026-04-21)：2 台 923 区 + 55 台临时位号 218/546 区 ========== */
@@ -3787,42 +3780,26 @@ const MENU_BY_ROLE = {
     {icon:'info',name:'关于本系统',action:'about'},
   ],
   manager: [
-    {icon:'check',name:'我审批的工单',action:'todo'},
     {icon:'database',name:'数据导出',action:'todo'},
     ...COMMON_MENU,
   ],
   'production-director': [
-    {icon:'list',name:'生产部门工单',action:'todo'},
     {icon:'database',name:'数据导出',action:'todo'},
     ...COMMON_MENU,
   ],
   'maintenance-director': [
-    {icon:'check',name:'我审批的工单',action:'todo'},
     {icon:'database',name:'数据导出',action:'todo'},
     ...COMMON_MENU,
   ],
-  'production-leader': [
-    {icon:'list',name:'本班组工单',action:'todo'},
-    ...COMMON_MENU,
-  ],
-  'maintenance-leader': [
-    {icon:'tool',name:'本班组维修任务',action:'todo'},
-    {icon:'list',name:'指派任务',action:'todo'},
-    ...COMMON_MENU,
-  ],
-  'production-worker': [
-    {icon:'list',name:'我提报的工单',action:'todo'},
-    ...COMMON_MENU,
-  ],
-  'maintenance-worker': [
-    {icon:'tool',name:'我的维修任务',action:'todo'},
-    ...COMMON_MENU,
-  ],
+  'production-leader': [...COMMON_MENU],
+  'maintenance-leader': [...COMMON_MENU],
+  'production-worker': [...COMMON_MENU],
+  'maintenance-worker': [...COMMON_MENU],
   // 旧角色兼容
   reader: [...COMMON_MENU],
-  reporter:[{icon:'list',name:'我提报的工单',action:'todo'},...COMMON_MENU],
-  approver:[{icon:'check',name:'我审批的工单',action:'todo'},...COMMON_MENU],
-  tech:[{icon:'tool',name:'我的维修任务',action:'todo'},...COMMON_MENU],
+  reporter: [...COMMON_MENU],
+  approver: [...COMMON_MENU],
+  tech: [...COMMON_MENU],
 };
 const ICON_SVG = {
   users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -3943,10 +3920,10 @@ function switchModule(name) {
   const t = document.querySelector(`.module[data-module="${name}"]`);
   if (t) t.classList.add('active');
 
-  // 底部导航激活：workorder-detail / workorder-create 时激活 "工单"
+  // 底部导航激活：maintenance-detail / maintenance-create 时激活 "检修"
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   let navKey = name;
-  if (name === 'workorder-detail' || name === 'workorder-create') navKey = 'workorder';
+  if (name === 'maintenance-detail' || name === 'maintenance-create') navKey = 'maintenance';
   if (name === 'equipment-detail' || name === 'equipment-edit') navKey = 'equipment';
   const navItem = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (navItem) navItem.classList.add('active');
@@ -3954,8 +3931,8 @@ function switchModule(name) {
   // 顶栏切换
   const isEqDetail = name==='equipment-detail';
   const isEqEdit = name==='equipment-edit';
-  const isWoDetail = name==='workorder-detail';
-  const isWoCreate = name==='workorder-create';
+  const isWoDetail = name==='maintenance-detail';
+  const isWoCreate = name==='maintenance-create';
   const isLubeDetail = name==='lube-detail';
   const isLubeExec = name==='lube-execute';
   const isPartsDetail = name==='parts-detail';
@@ -3967,9 +3944,9 @@ function switchModule(name) {
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
   document.getElementById('topbar-edit').style.display = isEqEdit ? 'flex' : 'none';
-  const wodet = document.getElementById('topbar-wo-detail');
+  const wodet = document.getElementById('topbar-ml-detail');
   if (wodet) wodet.style.display = isWoDetail ? 'flex' : 'none';
-  const woedit = document.getElementById('topbar-wo-edit');
+  const woedit = document.getElementById('topbar-ml-edit');
   if (woedit) woedit.style.display = isWoCreate ? 'flex' : 'none';
   const lpdet = document.getElementById('topbar-lube-detail');
   if (lpdet) lpdet.style.display = isLubeDetail ? 'flex' : 'none';
@@ -3984,7 +3961,7 @@ function switchModule(name) {
   document.getElementById('bottom-nav').style.display = hideMain ? 'none' : '';
 
   // 底部导航激活处理
-  if (navKey === 'workorder-detail' || navKey === 'workorder-create') navKey = 'workorder';
+  if (navKey === 'maintenance-detail' || navKey === 'maintenance-create') navKey = 'maintenance';
   if (navKey === 'equipment-detail' || navKey === 'equipment-edit') navKey = 'equipment';
   if (navKey === 'lube-detail' || navKey === 'lube-execute') navKey = 'lube';
   if (navKey === 'parts-detail' || navKey === 'parts-txn' || navKey === 'parts-edit') navKey = 'parts';
@@ -3994,8 +3971,8 @@ function switchModule(name) {
   if (ni2) ni2.classList.add('active');
 
   // 进入各 tab 的初始化渲染
-  if (name === 'workorder' && typeof renderWorkOrderList === 'function') {
-    renderWorkOrderList();
+  if (name === 'maintenance' && typeof renderMaintenanceList === 'function') {
+    renderMaintenanceList();
   }
   if (name === 'lube' && typeof renderLubeList === 'function') {
     renderLubeList();
@@ -4164,7 +4141,7 @@ function renderEquipmentList() {
       return `
         <div class="eq-card" onclick="openDetail('${e.id}')">
           <div class="eq-card-left">
-            <div class="eq-card-tag">${e.tag}</div>
+            <div class="eq-card-tag">${e.tag}${e.abcClass?`<span class="abc-badge abc-${e.abcClass}">${e.abcClass}</span>`:``}</div>
             <div class="eq-card-name">${e.name}</div>
             <div class="eq-card-meta">
               <span>${e.type||'—'}</span>
@@ -4213,6 +4190,7 @@ function openDetail(id) {
     ${infoRow('类型', eq.type)}
     ${infoRow('规格型号', eq.spec)}
     ${infoRow('安装区域', eq.area)}
+    ${eq.abcClass && ABC_CLASS_MAP[eq.abcClass] ? infoRow('关键性等级', ABC_CLASS_MAP[eq.abcClass].label) : ''}
     ${infoRow('责任人', eq.responsible)}
     ${infoRow('供应商', eq.supplier)}
     ${eq.remark ? infoRow('备注', eq.remark) : ''}
@@ -4356,6 +4334,16 @@ function renderEditForm() {
       <input class="edit-input" id="f-responsible" value="${escapeHtml(b.responsible)}" placeholder="如 郝行龙">
     </div>
 
+    <div class="edit-field">
+      <div class="edit-field-label">关键性等级（按停机影响）</div>
+      <select class="type-select" id="f-abcClass">
+        <option value=""${!b.abcClass?' selected':''}>未分类</option>
+        <option value="A"${b.abcClass==='A'?' selected':''}>A类 · 核心（停机直接停产）</option>
+        <option value="B"${b.abcClass==='B'?' selected':''}>B类 · 重要（有备用/短时可撑）</option>
+        <option value="C"${b.abcClass==='C'?' selected':''}>C类 · 一般（停机不影响生产）</option>
+      </select>
+    </div>
+
     <div class="edit-group-label">③ 技术参数（选填）</div>
 
     <div class="edit-field">
@@ -4424,6 +4412,7 @@ async function saveEdit() {
   b.specDetail = document.getElementById('f-specDetail').value.trim();
   b.supplier = document.getElementById('f-supplier').value.trim();
   b.remark = document.getElementById('f-remark').value.trim();
+  b.abcClass = document.getElementById('f-abcClass').value;
 
   if (!b.tag) { showToast('请填写设备位号'); return; }
   if (!b.name) { showToast('请填写设备名称'); return; }
@@ -4471,7 +4460,7 @@ async function deleteCurrent() {
 /* ========== FAB 显示控制 ========== */
 function updateFab() {
   const fab = document.getElementById('fab-add');
-  const woFab = document.getElementById('fab-wo');
+  const woFab = document.getElementById('fab-ml');
   const user = findUser(localStorage.getItem(SESSION_KEY));
   const activeModule = document.querySelector('.module.active');
   const moduleName = activeModule ? activeModule.dataset.module : '';
@@ -4481,8 +4470,8 @@ function updateFab() {
   const isAdmin = user && user.role === 'admin';
   fab.classList.toggle('hidden', !(inEquipment && isAdmin));
 
-  // 工单列表：任何登录用户都看到 + 提报
-  const inWorkOrder = moduleName === 'workorder';
+  // 检修列表：任何登录用户都看到 + 登记
+  const inWorkOrder = moduleName === 'maintenance';
   if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && user));
 }
 
@@ -4560,7 +4549,7 @@ function showSheet(type, arg) {
     if (!user) { hideSheet(); return; }
     const hasMobile = user.wechatMobile;
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${hasMobile?'修改企业微信手机号':'设置企业微信手机号'}</div>
-      <div class="sheet-sub">用于工单通知时 @ 你（11 位企业微信绑定的手机号）</div>
+      <div class="sheet-sub">用于消息通知时 @ 你（11 位企业微信绑定的手机号）</div>
       <div class="sheet-form-group"><div class="sheet-form-label">手机号</div>
         <input class="sheet-input" id="self-wechat-mobile" type="tel" inputmode="numeric" placeholder="例如 13800138000" maxlength="11" value="${user.wechatMobile||''}">
       </div>
@@ -4569,36 +4558,26 @@ function showSheet(type, arg) {
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='pickEquipment') {
     // 选择设备 sheet
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择故障设备或对象</div><div class="sheet-sub">共 ${loadEquipments().length} 台设备 · 或选"其他"（非设备工作）</div>
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择设备</div><div class="sheet-sub">共 ${loadEquipments().length} 台设备</div>
       <input class="eq-search-in-sheet" id="eq-picker-search" placeholder="搜索位号或名称…" oninput="filterEqPickerList(this.value)">
-      <button class="sheet-btn" style="background:var(--g-mist);color:var(--g-forest);border:1px solid var(--g-primary);margin-bottom:10px;font-weight:500;" onclick="pickEquipmentOther()">
-        ✦ 其他 / 非设备工作（管道、护栏、楼梯、阀门等）
-      </button>
       <div class="eq-picker-list" id="eq-picker-list"></div>
       <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
     setTimeout(() => renderEqPickerList(''), 10);
-  } else if (type==='assignTech') {
-    // 指派师傅 sheet
-    const techs = loadUsers().filter(u => canTakeWO(u) && !isAdmin(u));
-    if (techs.length === 0) {
-      content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">指派师傅</div>
-        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">暂无维修师傅账号<br>请管理员先添加师傅账号</div>
-        <button class="sheet-btn" onclick="hideSheet()">关闭</button>`;
-    } else {
-      content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">指派师傅</div><div class="sheet-sub">选择一位师傅接单</div>
-        ${techs.map(t => `
-          <button class="sheet-btn" onclick="doAssignTech('${t.empno}')">
-            ${escapeHtml(t.name)} <span style="font-family:var(--font-mono);font-size:11px;color:var(--subtle);margin-left:6px;">${t.empno}</span>
-          </button>`).join('')}
-        <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
-    }
+  } else if (type==='pickMlPart') {
+    // 从二级库选备件（检修记录用）
+    const _src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">从二级库选备件</div><div class="sheet-sub">共 ${_src.length} 项 · 点选加入（不扣库存）</div>
+      <input class="eq-search-in-sheet" id="ml-part-search" placeholder="搜索名称、型号、单号…" oninput="renderMlPartPicker(this.value)">
+      <div class="eq-picker-list" id="ml-part-list"></div>
+      <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
+    setTimeout(() => renderMlPartPicker(''), 10);
   } else if (type==='secondStockBatch') {
     ssBatchRows = []; ssBatchFileName = '';
     content.innerHTML = `<div class="sheet-handle"></div>` + renderSecondStockBatchSheet();
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        <strong style="color:var(--ink);">✓ 设备 + 工单 + 润滑 + 备件（含撤销/删除）</strong><br>
+        <strong style="color:var(--ink);">✓ 设备 + 巡检 + 检修 + 润滑 + 二级库</strong><br>
         5 大模块齐备 · 云端同步 · 完整审计追踪。<br><br>
         <strong style="color:var(--ink);">开发路线：</strong><br>
         · <strong style="color:#3A5424;">阶段 2-5：5 大模块 ✓</strong><br>
@@ -4979,921 +4958,356 @@ function getInspectStatus(eq) {
 }
 
 /* ==========================================================
-   工单 UI 层
+   检修记录 UI 层
    ========================================================== */
 
-let currentWoId = null;
-let woBuffer = null;    // 创建/编辑时的临时数据
-// 暴露到 window，让表单内联 oninput="woBuffer.xxx = ..." 能找到（模块作用域 let 不在 window 上）
-Object.defineProperty(window, 'woBuffer', {
-  get() { return woBuffer; },
-  set(v) { woBuffer = v; },
+let currentMlId = null;
+let mlBuffer = null;
+// 暴露到 window，让表单内联 oninput="mlBuffer.xxx = ..." 能找到（模块作用域 let 不在 window 上）
+Object.defineProperty(window, 'mlBuffer', {
+  get() { return mlBuffer; },
+  set(v) { mlBuffer = v; },
   configurable: true,
 });
-let woFilter = 'all';  // 当前筛选：all / todo / pending-approval / in-progress / done · 默认全部让所有人都能看到
-
-/* ------ 工单列表 ------ */
+let mlFilter = 'all';   // all / fault / planned / preventive / deleted(仅admin)
+let mlSearch = '';
 
 function getCurrentUser() {
   return findUser(localStorage.getItem(SESSION_KEY));
 }
 
-// 计算"我的待办"：根据角色不同含义不同
-function isMyTodo(wo, user) {
-  if (!user) return false;
-  // 我提报的且未关单 → 始终是我的待办（让提报人能跟踪自己的工单）
-  if (wo.reporterId === user.empno && wo.status !== 'done' && wo.status !== 'rejected') {
-    return true;
-  }
-  // 按状态和角色匹配
-  if (wo.status === 'pending-approval') {
-    // 经理 / 管理员 也算（可直批），生产主任正常审批
-    return canApproveProductionWO(user) || isManager(user);
-  }
-  if (wo.status === 'pending-maintenance-approval') {
-    return canApproveMaintenanceWO(user) || isManager(user);
-  }
-  if (wo.status === 'approved') {
-    // 检修人员可接单, 班长以上可派单
-    return canTakeWO(user) || canAssignWO(user);
-  }
-  if (wo.status === 'in-progress') {
-    return wo.technicianId === user.empno;
-  }
-  if (wo.status === 'pending-confirm') {
-    // 验收：提报人本人 + 生产线 + 管理员
-    return wo.reporterId === user.empno || canVerifyWO(user);
-  }
-  if (wo.status === 'reopened') {
-    return wo.technicianId === user.empno || canTakeWO(user);
-  }
-  return false;
+/* ------ 设备等级徽章 ------ */
+function eqClassOf(eqId) {
+  if (!eqId) return '';
+  const eq = loadEquipments().find(e => e.id === eqId);
+  return eq && eq.abcClass ? eq.abcClass : '';
+}
+function abcBadgeHtml(cls) {
+  const c = ABC_CLASS_MAP[cls];
+  if (!c) return '';
+  return '<span class="abc-badge abc-' + cls + '" title="' + c.label + '">' + c.short + '</span>';
 }
 
-function setWoFilter(f) {
-  woFilter = f;
-  renderWorkOrderList();
+/* ------ 列表筛选 ------ */
+function setMlFilter(f) { mlFilter = f; renderMaintenanceList(); }
+function onMlSearchInput() {
+  const el = document.getElementById('ml-search');
+  mlSearch = (el ? el.value : '').trim().toLowerCase();
+  const clr = document.getElementById('ml-search-clear');
+  if (clr) clr.classList.toggle('active', !!mlSearch);
+  renderMaintenanceList();
+}
+function clearMlSearch() {
+  const el = document.getElementById('ml-search');
+  if (el) el.value = '';
+  mlSearch = '';
+  const clr = document.getElementById('ml-search-clear');
+  if (clr) clr.classList.remove('active');
+  renderMaintenanceList();
 }
 
-function renderWoFilterBar() {
+function renderMlFilterBar() {
   const user = getCurrentUser();
-  const all = woCache;
-  const todoCount = user ? all.filter(w => isMyTodo(w, user)).length : 0;
-  const pendingCount = all.filter(w => w.status === 'pending-approval' || w.status === 'pending-maintenance-approval').length;
-  const progressCount = all.filter(w => w.status === 'in-progress' || w.status === 'approved' || w.status === 'pending-confirm' || w.status === 'reopened').length;
-  const doneCount = all.filter(w => w.status === 'done').length;
-
-  const filters = [
-    { key: 'todo', label: '我的待办', count: todoCount },
-    { key: 'pending-approval', label: '待审批', count: pendingCount },
-    { key: 'in-progress', label: '进行中', count: progressCount },
-    { key: 'done', label: '已完成', count: doneCount },
-    { key: 'all', label: '全部', count: all.length },
+  const live = mlCache.filter(m => !m.deleted);
+  const tabs = [
+    { key: 'all',        label: '全部',       n: live.length },
+    { key: 'fault',      label: '故障抢修',   n: live.filter(m => m.category === 'fault').length },
+    { key: 'planned',    label: '计划检修',   n: live.filter(m => m.category === 'planned').length },
+    { key: 'preventive', label: '预防性维护', n: live.filter(m => m.category === 'preventive').length },
   ];
-
-  document.getElementById('wo-filter-bar').innerHTML = filters.map(f =>
-    `<button class="wo-filter-chip${f.key === woFilter ? ' active' : ''}" onclick="setWoFilter('${f.key}')">
-      ${f.label}<span class="wo-filter-count">${f.count}</span>
-    </button>`
+  if (isAdmin(user)) tabs.push({ key: 'deleted', label: '已删除', n: mlCache.filter(m => m.deleted).length });
+  const bar = document.getElementById('ml-filter-bar');
+  if (!bar) return;
+  bar.innerHTML = tabs.map(tb =>
+    '<div class="ml-filter-pill' + (mlFilter === tb.key ? ' active' : '') + '" onclick="setMlFilter(\'' + tb.key + '\')">' + tb.label + '<span class="n">' + tb.n + '</span></div>'
   ).join('');
 }
 
-function filterWorkorders() {
-  const user = getCurrentUser();
-  if (!user) return [];
-  const all = woCache;
-  if (woFilter === 'todo')  return all.filter(w => isMyTodo(w, user));
-  if (woFilter === 'pending-approval') return all.filter(w => w.status === 'pending-approval' || w.status === 'pending-maintenance-approval');
-  if (woFilter === 'in-progress')      return all.filter(w => ['approved','in-progress','pending-confirm','reopened'].includes(w.status));
-  if (woFilter === 'done')             return all.filter(w => w.status === 'done');
-  return all;
+function filterMaintenanceLogs() {
+  let list;
+  if (mlFilter === 'deleted') {
+    list = mlCache.filter(m => m.deleted);
+  } else {
+    list = mlCache.filter(m => !m.deleted);
+    if (mlFilter !== 'all') list = list.filter(m => m.category === mlFilter);
+  }
+  if (mlSearch) {
+    list = list.filter(m => {
+      const hay = [m.equipmentTag, m.equipmentName, (m.faultParts || []).join(' '), m.faultCause, m.measures, m.repairerName]
+        .filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(mlSearch);
+    });
+  }
+  return list;
 }
 
-function renderWorkOrderList() {
-  renderWoFilterBar();
-  const list = filterWorkorders();
-  const container = document.getElementById('wo-list-container');
-  const sub = document.getElementById('wo-section-sub');
-  if (sub) sub.textContent = list.length + ' 张工单';
-
+function renderMaintenanceList() {
+  renderMlFilterBar();
+  const list = filterMaintenanceLogs();
+  const cnt = document.getElementById('ml-list-count');
+  if (cnt) cnt.textContent = list.length + ' 条检修记录';
+  const container = document.getElementById('ml-list-container');
+  if (!container) return;
   if (list.length === 0) {
-    container.innerHTML = `
-      <div class="empty" style="padding:60px 20px 40px;">
-        <div class="empty-mark">—</div>
-        <div class="empty-title">${woFilter === 'todo' ? '暂无待办' : '暂无工单'}</div>
-        <div class="empty-hint">${woFilter === 'todo' ? 'nothing to do right now' : 'no work orders'}</div>
-        ${woFilter === 'todo' ? `<button class="wo-act-btn primary" style="margin-top:20px;" onclick="setWoFilter('all')">看全部工单</button>` : ''}
-      </div>`;
+    container.innerHTML = '<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无检修记录</div><div class="empty-hint">点右下角 ＋ 登记一条</div></div>';
     return;
   }
-
-  container.innerHTML = list.map(wo => renderWoCard(wo)).join('');
+  container.innerHTML = list.map(renderMlCard).join('');
 }
 
-function renderWoCard(wo) {
-  const st = WO_STATUS_MAP[wo.status] || { label: wo.status, color: 'var(--subtle)' };
-  const urg = URGENCY_MAP[wo.urgency] || URGENCY_MAP.normal;
-  const reporterName = wo.reporterName || '—';
-  const issueText = wo.issueDesc || (wo.issueTags || []).join('、') || '（无描述）';
-  const timeStr = wo.reportedAt ? formatShortTime(wo.reportedAt) : '';
-  return `
-    <div class="wo-card" onclick="openWoDetail('${wo.id}')">
-      <div class="wo-card-top">
-        <span class="wo-urgency-dot ${wo.urgency}" title="${urg.label}"></span>
-        <span class="wo-status-tag ${wo.status}">${st.label}</span>
-        <span class="wo-code">${wo.code || ''}</span>
-      </div>
-      <div class="wo-card-device"><span class="wo-card-device-tag">${wo.equipmentTag || ''}</span>${wo.equipmentName || '—'}</div>
-      <div class="wo-card-issue">${escapeHtml(issueText)}</div>
-      <div class="wo-card-meta">
-        <span>报修 ${escapeHtml(reporterName)}</span>
-        ${timeStr ? `<span class="wo-card-meta-sep">·</span><span>${timeStr}</span>` : ''}
-        ${wo.contactName ? `<span class="wo-card-meta-sep">·</span><span>📞${escapeHtml(wo.contactName)}</span>` : ''}
-        ${wo.technicianName ? `<span class="wo-card-meta-sep">·</span><span>维修 ${escapeHtml(wo.technicianName)}</span>` : ''}
-      </div>
-    </div>`;
+function renderMlCard(ml) {
+  const cat = ML_CATEGORY_MAP[ml.category] || { label: '—', color: 'var(--subtle)' };
+  const cls = eqClassOf(ml.equipmentId);
+  const fp = ml.faultParts || [];
+  const parts = fp.slice(0, 3).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('');
+  const more = fp.length > 3 ? '<span class="ml-part-chip more">+' + (fp.length - 3) + '</span>' : '';
+  const spN = (ml.spareParts || []).length;
+  return '<div class="ml-card' + (ml.deleted ? ' deleted' : '') + '" onclick="openMlDetail(\'' + ml.id + '\')">' +
+    '<div class="ml-card-top"><span class="ml-card-tag">' + escapeHtml(ml.equipmentTag || '—') + abcBadgeHtml(cls) + '</span><span class="ml-card-cat" style="color:' + cat.color + ';">' + cat.label + '</span></div>' +
+    '<div class="ml-card-name">' + escapeHtml(ml.equipmentName || '') + '</div>' +
+    (parts || more ? '<div class="ml-card-parts">' + parts + more + '</div>' : '') +
+    '<div class="ml-card-cause">' + escapeHtml(ml.faultCause || ml.measures || '（无描述）') + '</div>' +
+    '<div class="ml-card-meta"><span>' + escapeHtml(ml.repairDate || '') + '</span><span class="ml-card-dot">·</span><span>' + escapeHtml(ml.repairerName || '—') + '</span>' + (spN ? '<span class="ml-card-dot">·</span><span>备件 ' + spN + '</span>' : '') + '</div>' +
+    '</div>';
 }
 
-function formatShortTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) {
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  }
-  return `${d.getMonth()+1}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+function backToMlList() { currentMlId = null; switchModule('maintenance'); }
+
+function openMlDetail(id) {
+  const ml = mlCache.find(m => m.id === id);
+  if (!ml) return;
+  currentMlId = id;
+  renderMaintenanceDetail(ml);
+  switchModule('maintenance-detail');
 }
 
-function formatFullTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+function canEditMl(ml, user) {
+  if (!user) return false;
+  return isAdmin(user) || ml.createdBy === user.empno;
 }
 
-/* ------ 工单详情 ------ */
-
-function backToWoList() {
-  currentWoId = null;
-  switchModule('workorder');
-}
-
-function openWoDetail(id) {
-  const wo = woCache.find(w => w.id === id);
-  if (!wo) { showToast('工单不存在'); return; }
-  currentWoId = id;
-  renderWoDetail(wo);
-  switchModule('workorder-detail');
-}
-
-function renderWoDetail(wo) {
+function renderMaintenanceDetail(ml) {
+  const cat = ML_CATEGORY_MAP[ml.category] || { label: '—', color: 'var(--subtle)' };
+  const cls = eqClassOf(ml.equipmentId);
+  const hero = document.getElementById('ml-detail-hero');
+  hero.innerHTML =
+    '<div style="font-family:var(--font-mono);font-size:12px;color:var(--g-deep);font-weight:600;margin-bottom:6px;">' + escapeHtml(ml.equipmentTag || '—') + ' ' + abcBadgeHtml(cls) + '</div>' +
+    '<div style="font-size:20px;color:var(--ink);font-weight:500;margin-bottom:10px;">' + escapeHtml(ml.equipmentName || '') + '</div>' +
+    '<div style="display:inline-block;padding:4px 12px;border-radius:999px;color:#fff;font-size:12px;background:' + cat.color + ';">' + cat.label + '</div>';
+  const parts = (ml.faultParts || []).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('') || '<span class="ml-muted">未填写</span>';
+  const sp = ml.spareParts || [];
+  const spHtml = sp.length
+    ? sp.map(p => '<div class="ml-sp-row"><span>' + escapeHtml(p.name || '') + '</span><span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + (p.ssId ? ' · 二级库' : '') + '</span></div>').join('')
+    : '<div class="ml-muted">未填写</div>';
+  const body = document.getElementById('ml-detail-body');
+  body.innerHTML =
+    (ml.deleted ? '<div class="ml-deleted-banner">此记录已删除</div>' : '') +
+    '<div class="ml-field"><div class="ml-field-label">检修类别</div><div class="ml-field-val">' + cat.label + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">检修日期</div><div class="ml-field-val">' + escapeHtml(ml.repairDate || '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">检修人</div><div class="ml-field-val">' + escapeHtml(ml.repairerName || '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">故障部位</div><div class="ml-field-val">' + parts + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">故障原因</div><div class="ml-field-val ml-pre">' + escapeHtml(ml.faultCause || '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">处理措施</div><div class="ml-field-val ml-pre">' + escapeHtml(ml.measures || '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">使用备件</div><div class="ml-field-val" style="display:block;">' + spHtml + '</div></div>' +
+    (ml.note ? '<div class="ml-field"><div class="ml-field-label">备注</div><div class="ml-field-val ml-pre">' + escapeHtml(ml.note) + '</div></div>' : '') +
+    '<div class="ml-field"><div class="ml-field-label">登记</div><div class="ml-field-val ml-muted">' + escapeHtml(ml.createdByName || ml.repairerName || '—') + ' · ' + formatShortTime(ml.createdAt) + '</div></div>';
   const user = getCurrentUser();
-  const st = WO_STATUS_MAP[wo.status] || { label: wo.status, color: 'var(--subtle)' };
-  const urg = URGENCY_MAP[wo.urgency] || URGENCY_MAP.normal;
-
-  // Hero
-  document.getElementById('wo-detail-hero').innerHTML = `
-    <div class="wo-hero-code">${wo.code || ''}</div>
-    <h2 class="wo-hero-device">${escapeHtml(wo.equipmentName || '—')}</h2>
-    <div class="wo-hero-device-tag">${wo.equipmentTag || ''}</div>
-    <div class="wo-hero-bottom">
-      <span class="wo-status-tag ${wo.status}">${st.label}</span>
-      <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;">
-        <span class="wo-urgency-dot ${wo.urgency}"></span>${urg.label}
-      </span>
-    </div>
-  `;
-
-  // Body: 故障描述 + 故障标签 + 时间线
-  const tagsHtml = (wo.issueTags && wo.issueTags.length)
-    ? `<div class="wo-tags">${wo.issueTags.map(t => `<span class="wo-tag">${escapeHtml(t)}</span>`).join('')}</div>`
-    : '';
-  const issueDescHtml = wo.issueDesc
-    ? `<div class="wo-section-body">${escapeHtml(wo.issueDesc)}</div>`
-    : (tagsHtml ? '' : '<div class="wo-section-empty">未填写</div>');
-
-  let timelineHtml = '<div class="wo-timeline">';
-  // 1. 提报
-  timelineHtml += `
-    <div class="wo-tl-item">
-      <span class="wo-tl-dot done"></span>
-      <div class="wo-tl-title">① 提报故障</div>
-      <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} · ${formatFullTime(wo.reportedAt)}</div>
-    </div>`;
-  // 2. 生产主任审批
-  if (wo.status === 'rejected' && !wo.productionApprovedAt) {
-    // 在生产审批阶段就被驳回
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot" style="border-color:var(--s-scrap);background:var(--s-scrap);"></span>
-        <div class="wo-tl-title">② 生产主任驳回</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
-        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
-      </div>`;
-  } else if (wo.productionApprovedAt) {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">② 生产主任批准</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.productionApproverName || '—')} · ${formatFullTime(wo.productionApprovedAt)}</div>
-        ${wo.productionApprovalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.productionApprovalComment)}</div>` : ''}
-      </div>`;
-  } else if (wo.approvedAt && !wo.maintenanceApprovedAt) {
-    // 兼容老数据：旧版只有一级审批
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">② 审批通过（旧版）</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
-        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
-      </div>`;
-  } else {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">② 等待生产主任审批</div>
-        <div class="wo-tl-meta">—</div>
-      </div>`;
+  const actionsEl = document.getElementById('ml-actions');
+  let btns = '';
+  if (ml.deleted) {
+    if (isAdmin(user)) btns = '<button class="wo-act-btn" onclick="restoreMaintenance()">恢复</button><button class="wo-act-btn danger" onclick="hardDeleteMaintenance()">彻底删除</button>';
+  } else if (canEditMl(ml, user)) {
+    btns = '<button class="wo-act-btn" onclick="openMlEdit(\'' + ml.id + '\')">编辑</button><button class="wo-act-btn danger" onclick="deleteMaintenance()">删除</button>';
   }
-
-  // 3. 机修主任审批（只有在生产审批通过/旧数据已批准 后才展示）
-  if (wo.status === 'rejected' && wo.productionApprovedAt) {
-    // 在机修审批阶段被驳回
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot" style="border-color:var(--s-scrap);background:var(--s-scrap);"></span>
-        <div class="wo-tl-title">③ 机修主任驳回</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.approverName || '—')} · ${formatFullTime(wo.approvedAt)}</div>
-        ${wo.approvalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.approvalComment)}</div>` : ''}
-      </div>`;
-  } else if (wo.maintenanceApprovedAt) {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">③ 机修主任批准</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.maintenanceApproverName || '—')} · ${formatFullTime(wo.maintenanceApprovedAt)}</div>
-        ${wo.maintenanceApprovalComment ? `<div class="wo-tl-comment">${escapeHtml(wo.maintenanceApprovalComment)}</div>` : ''}
-      </div>`;
-  } else if (wo.status === 'pending-maintenance-approval') {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">③ 等待机修主任审批</div>
-        <div class="wo-tl-meta">—</div>
-      </div>`;
-  }
-  // 4. 接单
-  if (wo.status !== 'pending-approval' && wo.status !== 'pending-maintenance-approval' && wo.status !== 'rejected') {
-    if (wo.technicianId) {
-      timelineHtml += `
-        <div class="wo-tl-item">
-          <span class="wo-tl-dot done"></span>
-          <div class="wo-tl-title">④ 已接单</div>
-          <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.claimedAt)}</div>
-        </div>`;
-    } else if (wo.status === 'approved') {
-      timelineHtml += `
-        <div class="wo-tl-item">
-          <span class="wo-tl-dot pending"></span>
-          <div class="wo-tl-title">④ 等待接单</div>
-          <div class="wo-tl-meta">维修师傅可点击"接单"</div>
-        </div>`;
-    }
-  }
-  // 5. 完工
-  if (wo.completedAt) {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">⑤ 维修完工</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.technicianName || '—')} · ${formatFullTime(wo.completedAt)}</div>
-        ${wo.repairDetail ? `<div class="wo-tl-comment">${escapeHtml(wo.repairDetail)}</div>` : ''}
-      </div>`;
-  } else if (wo.status === 'in-progress') {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">⑤ 维修中</div>
-        <div class="wo-tl-meta">等待师傅完工</div>
-      </div>`;
-  }
-  // 6. 确认
-  if (wo.status === 'done') {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot done"></span>
-        <div class="wo-tl-title">⑥ 已确认关单</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || wo.reporterName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
-      </div>`;
-  } else if (wo.status === 'pending-confirm') {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot pending"></span>
-        <div class="wo-tl-title">⑥ 等待确认</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.reporterName || '—')} 需确认维修效果</div>
-      </div>`;
-  } else if (wo.status === 'reopened') {
-    timelineHtml += `
-      <div class="wo-tl-item">
-        <span class="wo-tl-dot" style="border-color:#C13B76;background:#C13B76;"></span>
-        <div class="wo-tl-title">⑥ 已重开（需重新维修）</div>
-        <div class="wo-tl-meta">${escapeHtml(wo.confirmerName || '—')} · ${formatFullTime(wo.confirmedAt)}</div>
-      </div>`;
-  }
-  timelineHtml += '</div>';
-
-  // 现场联系人展示
-  const contactPhoneHtml = wo.contactPhone
-    ? `<a href="tel:${escapeHtml(wo.contactPhone)}" style="color:var(--g-forest);text-decoration:none;">${escapeHtml(wo.contactPhone)}</a>`
-    : '<span class="wo-section-empty" style="font-style:normal;">未填写</span>';
-  const contactHtml = wo.contactName ? `
-    <div class="wo-section">
-      <div class="wo-section-label">现场联系人</div>
-      <div style="background:var(--surface);border-radius:10px;padding:12px 14px;">
-        <div style="font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px;">👤 ${escapeHtml(wo.contactName)}</div>
-        <div style="font-size:13px;color:var(--muted);">📞 ${contactPhoneHtml}</div>
-      </div>
-    </div>` : '';
-
-  document.getElementById('wo-detail-body').innerHTML = `
-    <div class="wo-section">
-      <div class="wo-section-label">故障描述</div>
-      ${tagsHtml}
-      ${issueDescHtml}
-    </div>
-    ${contactHtml}
-    <div class="wo-section">
-      <div class="wo-section-label">流程时间线</div>
-      ${timelineHtml}
-    </div>
-  `;
-
-  // 操作按钮
-  renderWoActions(wo, user);
+  if (btns) { actionsEl.innerHTML = btns; actionsEl.classList.remove('hidden'); body.classList.add('has-actions'); }
+  else { actionsEl.classList.add('hidden'); body.classList.remove('has-actions'); }
 }
 
-function renderWoActions(wo, user) {
-  const actionsEl = document.getElementById('wo-actions');
-  const bodyEl = document.getElementById('wo-detail-body');
-  if (!user) {
-    actionsEl.classList.add('hidden');
-    bodyEl.classList.remove('has-actions');
-    return;
-  }
-  let buttons = '';
-
-  if (wo.status === 'pending-approval') {
-    if (isManager(user) || isAdmin(user)) {
-      // 经理 / 管理员：直批（跳过两级）
-      buttons = `
-        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
-        <button class="wo-act-btn success" onclick="approveWorkorder()">经理直批</button>`;
-    } else if (canApproveProductionWO(user)) {
-      buttons = `
-        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
-        <button class="wo-act-btn success" onclick="approveWorkorder()">生产主任批准</button>`;
-    }
-  } else if (wo.status === 'pending-maintenance-approval') {
-    if (isManager(user) || isAdmin(user)) {
-      buttons = `
-        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
-        <button class="wo-act-btn success" onclick="approveWorkorder()">经理直批</button>`;
-    } else if (canApproveMaintenanceWO(user)) {
-      buttons = `
-        <button class="wo-act-btn danger" onclick="rejectWorkorder()">驳回</button>
-        <button class="wo-act-btn success" onclick="approveWorkorder()">机修主任批准</button>`;
-    }
-  } else if (wo.status === 'approved') {
-    // 接单 + 派单（检修主任和经理两个都能用）
-    const claimBtn = canTakeWO(user) ? `<button class="wo-act-btn primary" onclick="claimWorkorder()">接单</button>` : '';
-    const assignBtn = canAssignWO(user) ? `<button class="wo-act-btn ${claimBtn ? 'secondary' : 'primary'}" onclick="assignWorkorder()">指派师傅</button>` : '';
-    buttons = claimBtn + assignBtn;
-  } else if (wo.status === 'in-progress' && wo.technicianId === user.empno) {
-    buttons = `<button class="wo-act-btn success" onclick="completeWorkorder()">完工</button>`;
-  } else if (wo.status === 'in-progress' && isAdmin(user)) {
-    // 管理员可代师傅填完工
-    buttons = `<button class="wo-act-btn primary" onclick="completeWorkorder()">代填完工</button>`;
-  } else if (wo.status === 'pending-confirm' && (wo.reporterId === user.empno || canVerifyWO(user))) {
-    buttons = `
-      <button class="wo-act-btn danger" onclick="reopenWorkorder()">退回重修</button>
-      <button class="wo-act-btn success" onclick="confirmWorkorder()">确认关单</button>`;
-  } else if (wo.status === 'reopened' && canTakeWO(user)) {
-    buttons = `<button class="wo-act-btn primary" onclick="claimWorkorder()">重新接单</button>`;
-  }
-
-  if (buttons) {
-    actionsEl.innerHTML = buttons;
-    actionsEl.classList.remove('hidden');
-    bodyEl.classList.add('has-actions');
-  } else {
-    actionsEl.classList.add('hidden');
-    bodyEl.classList.remove('has-actions');
-  }
-}
-
-/* ------ 提报工单 ------ */
-
-function openReport() {
+/* ------ 登记 / 编辑 ------ */
+function openMlCreate() {
   const user = getCurrentUser();
   if (!user) { showToast('请先登录'); return; }
-
-  woBuffer = {
-    id: 'wo_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    code: generateWoCode(),
-    equipmentId: '',
-    equipmentTag: '',
-    equipmentName: '',
-    urgency: 'normal',
-    issueTags: [],
-    issueDesc: '',
-    contactName: (function(){ try { return localStorage.getItem('last_contact_name') || user.name; } catch(e) { return user.name; } })(),
-    contactPhone: (function(){ try { return localStorage.getItem('last_contact_phone') || ''; } catch(e) { return ''; } })(),
-    status: 'pending-approval',
-    reporterId: user.empno,
-    reporterName: user.name,
-    reportedAt: Date.now(),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+  const d = new Date();
+  const ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  mlBuffer = {
+    id: 'ml_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    equipmentId: '', equipmentTag: '', equipmentName: '',
+    category: 'fault',
+    repairDate: ymd,
+    faultParts: [], faultCause: '', measures: '',
+    spareParts: [],
+    repairerId: user.empno, repairerName: user.name,
+    note: '',
+    createdBy: user.empno, createdByName: user.name,
+    createdAt: Date.now(), updatedAt: Date.now(),
+    deleted: false,
   };
-  document.getElementById('wo-edit-title').textContent = '提报工单';
-  renderWoForm();
-  switchModule('workorder-create');
+  document.getElementById('ml-edit-title').textContent = '登记检修';
+  renderMlForm();
+  switchModule('maintenance-create');
 }
 
-function renderWoForm() {
-  const b = woBuffer;
-  const urgencyOptions = Object.entries(URGENCY_MAP).map(([k, v]) =>
-    `<div class="urg-opt${b.urgency === k ? ' selected' : ''}" onclick="pickUrgency('${k}')">
-      <span class="urg-opt-dot" style="background:${v.color};"></span>${v.label}
-    </div>`
-  ).join('');
+function openMlEdit(id) {
+  const ml = mlCache.find(m => m.id === id);
+  if (!ml) return;
+  if (!canEditMl(ml, getCurrentUser())) { showToast('无权编辑'); return; }
+  mlBuffer = JSON.parse(JSON.stringify(ml));
+  if (!mlBuffer.spareParts) mlBuffer.spareParts = [];
+  if (!mlBuffer.faultParts) mlBuffer.faultParts = [];
+  document.getElementById('ml-edit-title').textContent = '编辑检修记录';
+  renderMlForm();
+  switchModule('maintenance-create');
+}
 
-  const tagChips = COMMON_ISSUE_TAGS.map(t =>
-    `<span class="tag-chip${b.issueTags.includes(t) ? ' selected' : ''}" onclick="toggleIssueTag('${t}')">${t}</span>`
+function renderMlSpEditList() {
+  const sp = (mlBuffer && mlBuffer.spareParts) || [];
+  if (sp.length === 0) return '<div class="ml-muted" style="font-size:13px;padding:4px 0;">未添加</div>';
+  return sp.map((p, i) =>
+    '<div class="ml-sp-edit-row"><span>' + escapeHtml(p.name || '') + ' <span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + '</span>' + (p.ssId ? ' · 二级库' : '') + '</span><span class="rm" onclick="removeMlPart(' + i + ')">×</span></div>'
   ).join('');
+}
+function refreshMlSpList() {
+  const el = document.getElementById('ml-sp-list');
+  if (el) el.innerHTML = renderMlSpEditList();
+}
+function removeMlPart(i) { mlBuffer.spareParts.splice(i, 1); refreshMlSpList(); }
+function addManualPart() {
+  const name = prompt('备件名称：');
+  if (name === null) return;
+  if (!name.trim()) { showToast('名称不能为空'); return; }
+  const qs = prompt('数量：', '1');
+  if (qs === null) return;
+  mlBuffer.spareParts.push({ name: name.trim(), qty: parseFloat(qs) || 1, unit: '', ssId: '' });
+  refreshMlSpList();
+}
+function addCustomFaultPart() {
+  const p = prompt('补充故障部位：');
+  if (p === null) return;
+  const v = p.trim().replace(/['"`]/g, '');
+  if (!v) return;
+  if (!mlBuffer.faultParts) mlBuffer.faultParts = [];
+  if (!mlBuffer.faultParts.includes(v)) mlBuffer.faultParts.push(v);
+  renderMlForm();
+}
+function pickMlCategory(c) { mlBuffer.category = c; renderMlForm(); }
+function toggleFaultPart(tag) {
+  if (!mlBuffer.faultParts) mlBuffer.faultParts = [];
+  const i = mlBuffer.faultParts.indexOf(tag);
+  if (i >= 0) mlBuffer.faultParts.splice(i, 1); else mlBuffer.faultParts.push(tag);
+  renderMlForm();
+}
 
+function renderMlForm() {
+  const b = mlBuffer;
+  const cls = eqClassOf(b.equipmentId);
   const deviceTrigger = b.equipmentId
-    ? `<button class="eq-picker-trigger" onclick="showSheet('pickEquipment')">
-        <div class="eq-picker-selected">
-          <span class="tag">${b.equipmentTag}</span>
-          <span class="name">${escapeHtml(b.equipmentName)}</span>
-        </div>
-        <span class="eq-picker-arrow">›</span>
-      </button>`
-    : `<button class="eq-picker-trigger empty" onclick="showSheet('pickEquipment')">
-        选择设备…
-        <span class="eq-picker-arrow">›</span>
-      </button>`;
-
-  document.getElementById('wo-form-body').innerHTML = `
-    <div class="edit-group-label">① 选择设备</div>
-    <div class="edit-field">
-      <div class="edit-field-label required">故障设备</div>
-      ${deviceTrigger}
-    </div>
-
-    <div class="edit-group-label">② 故障描述</div>
-    <div class="edit-field">
-      <div class="edit-field-label">常见故障（可多选）</div>
-      <div class="tag-chips" id="issue-tags-chips">${tagChips}</div>
-    </div>
-    <div class="edit-field">
-      <div class="edit-field-label">详细描述（选填但推荐）</div>
-      <textarea class="edit-textarea" id="f-issue-desc" placeholder="例如：盘车不流畅；风机叶片开裂" oninput="woBuffer.issueDesc = this.value">${escapeHtml(b.issueDesc)}</textarea>
-    </div>
-
-    <div class="edit-group-label">③ 紧急程度</div>
-    <div class="edit-field">
-      <div class="urgency-picker" id="urgency-picker">${urgencyOptions}</div>
-    </div>
-
-    <div class="edit-group-label">④ 现场联系人</div>
-    <div class="edit-field">
-      <div class="edit-field-label required">联系人姓名</div>
-      <input class="edit-input" id="f-contact-name" value="${escapeHtml(b.contactName || '')}" placeholder="接单师傅联系的人" oninput="woBuffer.contactName = this.value">
-    </div>
-    <div class="edit-field">
-      <div class="edit-field-label required">联系方式</div>
-      <input class="edit-input" id="f-contact-phone" type="tel" value="${escapeHtml(b.contactPhone || '')}" placeholder="例如：企业微信、手机号、对讲机频道" oninput="woBuffer.contactPhone = this.value">
-    </div>
-
-    <div style="padding:20px 0 0;color:var(--muted);font-size:12px;line-height:1.6;">
-      💡 提交后会进入审批流程：<br>
-      待李主任/王主任审批 → 师傅接单 → 完工 → 您确认关单<br>
-      <strong style="color:var(--g-forest);">📞 填好现场联系人能帮师傅快速找到人</strong>
-    </div>
-  `;
-}
-
-function pickUrgency(u) {
-  woBuffer.urgency = u;
-  document.querySelectorAll('#urgency-picker .urg-opt').forEach(el => {
-    el.classList.remove('selected');
-  });
-  // 找对应的按钮
-  const items = document.querySelectorAll('#urgency-picker .urg-opt');
-  const keys = Object.keys(URGENCY_MAP);
-  const idx = keys.indexOf(u);
-  if (items[idx]) items[idx].classList.add('selected');
-}
-
-function toggleIssueTag(tag) {
-  if (!woBuffer.issueTags) woBuffer.issueTags = [];
-  const idx = woBuffer.issueTags.indexOf(tag);
-  if (idx >= 0) woBuffer.issueTags.splice(idx, 1);
-  else woBuffer.issueTags.push(tag);
-  // 只更新标签区域，保留用户正在输入的内容
-  const chipsEl = document.getElementById('issue-tags-chips');
-  if (chipsEl) {
-    chipsEl.innerHTML = COMMON_ISSUE_TAGS.map(t =>
-      `<span class="tag-chip${woBuffer.issueTags.includes(t) ? ' selected' : ''}" onclick="toggleIssueTag('${t}')">${t}</span>`
-    ).join('');
-  }
-}
-
-function pickEquipmentOther() {
-  hideSheet();
-  const desc = prompt('请填写工作对象或位置（例如：923 子项跨管道楼梯、201 区地面排水沟、202-PP-AG 旁护栏）：');
-  if (!desc || !desc.trim()) { showToast('未填写，已取消'); return; }
-  const trimmed = desc.trim();
-  woBuffer.equipmentId = 'other';
-  woBuffer.equipmentTag = '其他';
-  woBuffer.equipmentName = trimmed;
-  const trigger = document.querySelector('.eq-picker-trigger');
-  if (trigger) {
-    trigger.classList.remove('empty');
-    trigger.innerHTML = `
-      <div class="eq-picker-selected">
-        <span class="tag">其他</span>
-        <span class="name">${escapeHtml(trimmed)}</span>
-      </div>
-      <span class="eq-picker-arrow">›</span>
-    `;
-  }
+    ? '<button class="eq-picker-trigger" onclick="showSheet(\'pickEquipment\')"><div class="eq-picker-selected"><span class="tag">' + escapeHtml(b.equipmentTag) + abcBadgeHtml(cls) + '</span><span class="name">' + escapeHtml(b.equipmentName) + '</span></div><span class="eq-picker-arrow">›</span></button>'
+    : '<button class="eq-picker-trigger empty" onclick="showSheet(\'pickEquipment\')">选择设备…<span class="eq-picker-arrow">›</span></button>';
+  const catOpts = Object.keys(ML_CATEGORY_MAP).map(k =>
+    '<span class="tag-chip' + (b.category === k ? ' selected' : '') + '" onclick="pickMlCategory(\'' + k + '\')">' + ML_CATEGORY_MAP[k].label + '</span>').join('');
+  const stdParts = COMMON_FAULT_PARTS.map(tp =>
+    '<span class="tag-chip' + ((b.faultParts || []).includes(tp) ? ' selected' : '') + '" onclick="toggleFaultPart(\'' + tp + '\')">' + tp + '</span>').join('');
+  const customParts = (b.faultParts || []).filter(p => COMMON_FAULT_PARTS.indexOf(p) === -1)
+    .map(p => '<span class="tag-chip selected" onclick="toggleFaultPart(\'' + escapeAttr(p) + '\')">' + escapeHtml(p) + ' ×</span>').join('');
+  document.getElementById('ml-form-body').innerHTML =
+    '<div class="edit-group-label">① 设备</div>' +
+    '<div class="edit-field"><div class="edit-field-label required">检修设备</div>' + deviceTrigger + '</div>' +
+    '<div class="edit-group-label">② 检修信息</div>' +
+    '<div class="edit-field"><div class="edit-field-label required">检修类别</div><div class="tag-chips">' + catOpts + '</div></div>' +
+    '<div class="edit-field"><div class="edit-field-label required">检修日期</div><input class="edit-input" id="f-ml-date" type="date" value="' + escapeAttr(b.repairDate || '') + '" oninput="mlBuffer.repairDate = this.value"></div>' +
+    '<div class="edit-field"><div class="edit-field-label">检修人</div><input class="edit-input" id="f-ml-repairer" value="' + escapeAttr(b.repairerName || '') + '" placeholder="默认本人，可改" oninput="mlBuffer.repairerName = this.value"></div>' +
+    '<div class="edit-group-label">③ 故障与处理</div>' +
+    '<div class="edit-field"><div class="edit-field-label">故障部位（可多选）</div><div class="tag-chips" id="ml-parts-chips">' + stdParts + customParts + '</div><button class="wo-act-btn" style="margin-top:8px;" onclick="addCustomFaultPart()">＋ 补充部位</button></div>' +
+    '<div class="edit-field"><div class="edit-field-label">故障原因</div><textarea class="edit-textarea" id="f-ml-cause" placeholder="如：密封面磨损、冷却水中断致干磨" oninput="mlBuffer.faultCause = this.value">' + escapeHtml(b.faultCause || '') + '</textarea></div>' +
+    '<div class="edit-field"><div class="edit-field-label">处理措施</div><textarea class="edit-textarea" id="f-ml-measures" placeholder="如：更换机封、重新对中、试运正常" oninput="mlBuffer.measures = this.value">' + escapeHtml(b.measures || '') + '</textarea></div>' +
+    '<div class="edit-group-label">④ 使用备件</div>' +
+    '<div class="edit-field"><div id="ml-sp-list">' + renderMlSpEditList() + '</div><div style="display:flex;gap:8px;margin-top:8px;"><button class="wo-act-btn" style="flex:1;" onclick="showSheet(\'pickMlPart\')">＋ 从二级库选</button><button class="wo-act-btn" style="flex:1;" onclick="addManualPart()">＋ 手填</button></div></div>' +
+    '<div class="edit-group-label">⑤ 备注</div>' +
+    '<div class="edit-field"><textarea class="edit-textarea" id="f-ml-note" placeholder="选填" oninput="mlBuffer.note = this.value">' + escapeHtml(b.note || '') + '</textarea></div>';
 }
 
 function pickEquipment(id) {
   const eq = loadEquipments().find(e => e.id === id);
-  if (!eq) return;
-  woBuffer.equipmentId = eq.id;
-  woBuffer.equipmentTag = eq.tag;
-  woBuffer.equipmentName = eq.name;
+  if (!eq || !mlBuffer) return;
+  mlBuffer.equipmentId = eq.id;
+  mlBuffer.equipmentTag = eq.tag;
+  mlBuffer.equipmentName = eq.name;
   hideSheet();
-  // 只更新触发按钮，保留已输入的内容
-  // 查找当前的 eq-picker-trigger（只会有一个）
-  const trigger = document.querySelector('.eq-picker-trigger');
-  if (trigger) {
-    trigger.classList.remove('empty');
-    trigger.innerHTML = `
-      <div class="eq-picker-selected">
-        <span class="tag">${eq.tag}</span>
-        <span class="name">${escapeHtml(eq.name)}</span>
-      </div>
-      <span class="eq-picker-arrow">›</span>
-    `;
-  }
+  renderMlForm();
 }
 
-async function submitWorkorder() {
-  const b = woBuffer;
-  if (!b.equipmentId) { showToast('请选择故障设备'); return; }
-  if (!b.issueDesc && (!b.issueTags || b.issueTags.length === 0)) {
-    showToast('请填写故障描述或选择故障标签');
-    return;
-  }
-  if (!b.contactName || !b.contactName.trim()) {
-    showToast('请填写现场联系人');
-    return;
-  }
-  if (!b.contactPhone || !b.contactPhone.trim()) {
-    showToast('请填写联系方式');
-    return;
-  }
-  // 记住本次填的联系信息，下次默认
+/* ------ 从二级库选备件 ------ */
+function renderMlPartPicker(kw) {
+  const src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
+  const k = (kw || '').trim().toLowerCase();
+  let list = src.filter(x => !x.deleted);
+  if (k) list = list.filter(x => ((x.name || '') + ' ' + (x.materialCode || '') + ' ' + (x.sourceNo || '')).toLowerCase().includes(k));
+  list = list.slice(0, 200);
+  const c = document.getElementById('ml-part-list');
+  if (!c) return;
+  if (list.length === 0) { c.innerHTML = '<div style="text-align:center;padding:20px;color:var(--subtle);font-size:13px;">未找到</div>'; return; }
+  c.innerHTML = list.map(x =>
+    '<div class="eq-picker-item" onclick="addStockPart(\'' + x.id + '\')"><div class="tag">' + escapeHtml(x.name || '') + '</div><div class="name">' + escapeHtml(x.materialCode || '') + (x.unit ? ' · ' + escapeHtml(x.unit) : '') + '</div><div class="meta">结存 ' + (x.quantity != null ? x.quantity : '—') + (x.fieldLocation ? ' · ' + escapeHtml(x.fieldLocation) : '') + '</div></div>'
+  ).join('');
+}
+function addStockPart(id) {
+  const src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
+  const it = src.find(x => x.id === id);
+  if (!it || !mlBuffer) return;
+  const qs = prompt('用了多少 ' + (it.name || '') + '（' + (it.unit || '') + '）？', '1');
+  if (qs === null) return;
+  if (!mlBuffer.spareParts) mlBuffer.spareParts = [];
+  mlBuffer.spareParts.push({ name: it.name || '', qty: parseFloat(qs) || 1, unit: it.unit || '', ssId: it.id, materialCode: it.materialCode || '' });
+  hideSheet();
+  refreshMlSpList();
+  showToast('已添加备件（未扣库存）');
+}
+
+async function submitMaintenance() {
+  const b = mlBuffer;
+  if (!b) return;
+  if (!b.equipmentId) { showToast('请选择设备'); return; }
+  if (!b.category) { showToast('请选择检修类别'); return; }
+  if (!b.repairDate) { showToast('请填写检修日期'); return; }
+  b.repairerName = (b.repairerName || '').trim() || ((getCurrentUser() || {}).name) || '';
+  b.updatedAt = Date.now();
   try {
-    localStorage.setItem('last_contact_name', b.contactName);
-    localStorage.setItem('last_contact_phone', b.contactPhone);
-  } catch(e) {}
-  try {
-    await cloudSaveWorkorder(b);
-    showToast('工单已提交，等待审批');
-
-    // 通知生产主任
-    const urgencyMap = { normal: '一般', urgent: '紧急', critical: '特急' };
-    notifyWeChat(
-      '🆕 新工单 ' + b.code + '\n' +
-      '设备：' + (b.equipmentTag || '') + ' ' + (b.equipmentName || '') + '\n' +
-      '故障：' + (b.issueDesc || (b.issueTags || []).join('、') || '—') + '\n' +
-      '紧急程度：' + (urgencyMap[b.urgency] || b.urgency) + '\n' +
-      '报修人：' + (b.reporterName || '—') + '\n' +
-      '👉 待生产主任审批',
-      getMobilesByRole('production-director')
-    );
-
-    // 本地乐观插入（onSnapshot 很快会覆盖，但先保证 UI 有数据）
-    if (!woCache.find(w => w.id === b.id)) {
-      woCache.unshift(b);
-    }
-
-    // 回到工单列表
-    woBuffer = null;
-    switchModule('workorder');
-
-    // 直接打开刚提交的工单详情
-    currentWoId = b.id;
-    setTimeout(() => {
-      const exists = woCache.find(w => w.id === b.id);
-      if (exists) openWoDetail(b.id);
-      else renderWorkOrderList();
-    }, 200);
+    await cloudSaveMaintenance(b);
+    showToast('已保存检修记录');
+    currentMlId = b.id;
+    mlBuffer = null;
+    switchModule('maintenance');
   } catch (err) {
-    showToast('提交失败：' + err.message);
+    showToast('保存失败：' + err.message);
   }
 }
 
-function cancelWoEdit() {
-  woBuffer = null;
-  switchModule('workorder');
-}
+function cancelMlEdit() { mlBuffer = null; switchModule('maintenance'); }
 
-/* ------ 审批 ------ */
-
-async function approveWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
+async function deleteMaintenance() {
+  const ml = mlCache.find(m => m.id === currentMlId);
+  if (!ml) return;
   const user = getCurrentUser();
-  const isBypass = isManager(user) || isAdmin(user);
-
-  // 三种情况：经理直批 / 生产主任一级 / 机修主任二级
-  let newStatus, label, mode;
-  if (isBypass && (wo.status === 'pending-approval' || wo.status === 'pending-maintenance-approval')) {
-    newStatus = 'approved';
-    label = '经理直批';
-    mode = 'bypass';
-  } else if (wo.status === 'pending-approval') {
-    newStatus = 'pending-maintenance-approval';
-    label = '生产主任批准';
-    mode = 'production';
-  } else if (wo.status === 'pending-maintenance-approval') {
-    newStatus = 'approved';
-    label = '机修主任批准';
-    mode = 'maintenance';
-  } else {
-    showToast('当前状态不能审批');
-    return;
-  }
-
-  const comment = prompt(label + '（意见，选填）：');
-  if (comment === null) return;
-
-  let stageFields;
-  if (mode === 'bypass') {
-    // 经理直批：两级一起填，对外看不出是直批（managerBypass 仅作内部标记）
-    stageFields = {
-      productionApproverId: user.empno,
-      productionApproverName: user.name,
-      productionApprovedAt: Date.now(),
-      productionApprovalComment: comment || '',
-      maintenanceApproverId: user.empno,
-      maintenanceApproverName: user.name,
-      maintenanceApprovedAt: Date.now(),
-      maintenanceApprovalComment: comment || '',
-      managerBypass: true,  // 内部标记，不在 UI 显示
-      // 兼容旧字段
-      approverId: user.empno,
-      approverName: user.name,
-      approvedAt: Date.now(),
-      approvalComment: comment || '',
-    };
-  } else if (mode === 'production') {
-    stageFields = {
-      productionApproverId: user.empno,
-      productionApproverName: user.name,
-      productionApprovedAt: Date.now(),
-      productionApprovalComment: comment || '',
-    };
-  } else {
-    stageFields = {
-      maintenanceApproverId: user.empno,
-      maintenanceApproverName: user.name,
-      maintenanceApprovedAt: Date.now(),
-      maintenanceApprovalComment: comment || '',
-      // 兼容
-      approverId: user.empno,
-      approverName: user.name,
-      approvedAt: Date.now(),
-      approvalComment: comment || '',
-    };
-  }
-
-  const updated = {
-    ...wo,
-    status: newStatus,
-    ...stageFields,
-    updatedAt: Date.now(),
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    if (mode === 'bypass') showToast('经理直批通过，等待师傅接单');
-    else if (mode === 'production') showToast('已通过，转交机修主任审批');
-    else showToast('已批准，等待师傅接单');
-
-    // 通知（按下一级要做的人）
-    const woHeader = wo.code + ' · ' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '');
-    if (mode === 'production') {
-      // 一级通过 → 通知机修主任
-      notifyWeChat(
-        '✅ 生产主任已批准 ' + woHeader + '\n' +
-        '审批人：' + user.name + (comment ? '\n意见：' + comment : '') + '\n' +
-        '👉 待机修主任审批',
-        getMobilesByRole('maintenance-director')
-      );
-    } else if (mode === 'maintenance' || mode === 'bypass') {
-      // 二级通过 / 经理直批 → 通知所有检修人员（任何人都能接单）
-      const maintMobiles = [
-        ...getMobilesByRole('maintenance-director'),
-        ...getMobilesByRole('maintenance-leader'),
-        ...getMobilesByRole('maintenance-worker'),
-      ];
-      notifyWeChat(
-        '✅ 工单已批准 ' + woHeader + '\n' +
-        '审批人：' + user.name + (comment ? '\n意见：' + comment : '') + '\n' +
-        '👉 待师傅接单',
-        maintMobiles
-      );
-    }
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
+  if (!canEditMl(ml, user)) { showToast('无权删除'); return; }
+  if (!confirm('删除这条检修记录？可在"已删除"里恢复。')) return;
+  const updated = Object.assign({}, ml, { deleted: true, deletedAt: Date.now(), deletedBy: user.empno, deletedByName: user.name, updatedAt: Date.now() });
+  try { await cloudSaveMaintenance(updated); showToast('已删除'); backToMlList(); }
+  catch (err) { showToast('删除失败：' + err.message); }
 }
-
-async function rejectWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  const user = getCurrentUser();
-  const comment = prompt('驳回原因（必填）：');
-  if (comment === null) return;
-  if (!comment.trim()) { showToast('请填写驳回原因'); return; }
-  const updated = {
-    ...wo,
-    status: 'rejected',
-    approverId: user.empno,
-    approverName: user.name,
-    approvedAt: Date.now(),
-    approvalComment: comment,
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    showToast('已驳回');
-
-    // 通知报修人
-    const reporterMobile = getMobileByEmpno(wo.reporterId);
-    notifyWeChat(
-      '❌ 工单已驳回 ' + wo.code + '\n' +
-      '设备：' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '') + '\n' +
-      '驳回人：' + user.name + '\n' +
-      '原因：' + comment,
-      reporterMobile ? [reporterMobile] : []
-    );
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
+async function restoreMaintenance() {
+  const ml = mlCache.find(m => m.id === currentMlId);
+  if (!ml) return;
+  const updated = Object.assign({}, ml, { deleted: false, updatedAt: Date.now() });
+  try { await cloudSaveMaintenance(updated); showToast('已恢复'); renderMaintenanceDetail(updated); }
+  catch (err) { showToast('恢复失败：' + err.message); }
 }
-
-/* ------ 接单 ------ */
-
-async function claimWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  const user = getCurrentUser();
-  if (!confirm(`确认接单 ${wo.code}？`)) return;
-  const updated = {
-    ...wo,
-    status: 'in-progress',
-    technicianId: user.empno,
-    technicianName: user.name,
-    claimedAt: Date.now(),
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    showToast('已接单，开始维修');
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
-}
-
-async function assignWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  showSheet('assignTech');
-}
-
-async function doAssignTech(techEmpno) {
-  const wo = woCache.find(w => w.id === currentWoId);
-  const tech = findUser(techEmpno);
-  if (!wo || !tech) return;
-  const updated = {
-    ...wo,
-    status: 'in-progress',
-    technicianId: tech.empno,
-    technicianName: tech.name,
-    claimedAt: Date.now(),
-    assignedBy: getCurrentUser().empno,
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    hideSheet();
-    showToast('已指派给 ' + tech.name);
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
-}
-
-/* ------ 完工 ------ */
-
-async function completeWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  const detail = prompt('检修详情（必填，例如：更换叶轮、调整间隙）：');
-  if (detail === null) return;
-  if (!detail.trim()) { showToast('请填写检修详情'); return; }
-  const updated = {
-    ...wo,
-    status: 'pending-confirm',
-    repairDetail: detail,
-    completedAt: Date.now(),
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    showToast('已标记完工，等待确认');
-
-    // 通知报修人 + 生产人员（验收人）
-    const reporterMobile = getMobileByEmpno(wo.reporterId);
-    const productionMobiles = [
-      ...getMobilesByRole('production-director'),
-      ...getMobilesByRole('production-leader'),
-      ...getMobilesByRole('production-worker'),
-    ];
-    const allMobiles = [...new Set([reporterMobile, ...productionMobiles].filter(Boolean))];
-    notifyWeChat(
-      '🔧 工单完工待验收 ' + wo.code + '\n' +
-      '设备：' + (wo.equipmentTag || '') + ' ' + (wo.equipmentName || '') + '\n' +
-      '维修师傅：' + (wo.technicianName || '—') + '\n' +
-      '检修详情：' + detail + '\n' +
-      '👉 报修人 / 生产人员请验收',
-      allMobiles
-    );
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
-}
-
-/* ------ 确认关单 ------ */
-
-async function confirmWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  const user = getCurrentUser();
-  if (!confirm('确认维修效果，关闭工单？')) return;
-  const updated = {
-    ...wo,
-    status: 'done',
-    confirmerId: user.empno,
-    confirmerName: user.name,
-    confirmedAt: Date.now(),
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    showToast('工单已关闭');
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
-}
-
-async function reopenWorkorder() {
-  const wo = woCache.find(w => w.id === currentWoId);
-  if (!wo) return;
-  const user = getCurrentUser();
-  const reason = prompt('退回原因（必填）：');
-  if (reason === null) return;
-  if (!reason.trim()) { showToast('请填写退回原因'); return; }
-  const updated = {
-    ...wo,
-    status: 'reopened',
-    confirmerId: user.empno,
-    confirmerName: user.name,
-    confirmedAt: Date.now(),
-    reopenCount: (wo.reopenCount || 0) + 1,
-    reopenReason: reason,
-    // 清空维修完工信息，以便重新走流程
-    repairDetail: '',
-    completedAt: null,
-  };
-  try {
-    await cloudSaveWorkorder(updated);
-    showToast('已退回，等待重新维修');
-  } catch (err) {
-    showToast('操作失败：' + err.message);
-  }
+async function hardDeleteMaintenance() {
+  const ml = mlCache.find(m => m.id === currentMlId);
+  if (!ml) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员'); return; }
+  if (!confirm('彻底删除后无法恢复，确定？')) return;
+  try { await cloudDeleteMaintenance(ml.id); showToast('已彻底删除'); backToMlList(); }
+  catch (err) { showToast('删除失败：' + err.message); }
 }
 
 /* ------ 设备详情"相关记录" Tab 联动 ------ */
@@ -5901,33 +5315,22 @@ async function reopenWorkorder() {
 function renderDeviceRecords(eqId) {
   const eq = loadEquipments().find(e => e.id === eqId);
   if (!eq) return;
-  const related = woCache.filter(w => w.equipmentId === eqId)
-                        .sort((a, b) => (b.reportedAt || 0) - (a.reportedAt || 0));
+  const related = mlCache.filter(m => m.equipmentId === eqId && !m.deleted).sort((a, b) => mlSortKey(b) - mlSortKey(a));
   const panel = document.getElementById('panel-records');
+  if (!panel) return;
   if (related.length === 0) {
-    panel.innerHTML = `
-      <div class="empty" style="padding:32px 20px 16px;">
-        <div class="empty-mark">—</div>
-        <div class="empty-title">暂无维修记录</div>
-        <div class="empty-hint">no maintenance records yet</div>
-      </div>`;
+    panel.innerHTML = '<div class="empty" style="padding:32px 20px 16px;"><div class="empty-mark">—</div><div class="empty-title">暂无检修记录</div><div class="empty-hint">no maintenance records yet</div></div>';
     return;
   }
-  panel.innerHTML = `
-    <div style="font-family:var(--font-mono);font-size:11px;color:var(--subtle);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">共 ${related.length} 条维修记录</div>
-    ${related.map(wo => {
-      const st = WO_STATUS_MAP[wo.status] || {};
-      return `
-        <div class="device-wo-item" onclick="openWoDetail('${wo.id}')">
-          <div class="device-wo-item-top">
-            <span class="wo-status-tag ${wo.status}">${st.label || wo.status}</span>
-            <span class="device-wo-item-code">${wo.code || ''}</span>
-          </div>
-          <div class="device-wo-item-issue">${escapeHtml(wo.issueDesc || (wo.issueTags||[]).join('、') || '（无描述）')}</div>
-          <div class="device-wo-item-meta">${escapeHtml(wo.reporterName || '—')} · ${formatShortTime(wo.reportedAt)}${wo.technicianName ? ' · 维修 ' + escapeHtml(wo.technicianName) : ''}</div>
-        </div>`;
-    }).join('')}
-  `;
+  panel.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--subtle);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">共 ' + related.length + ' 条检修记录</div>' +
+    related.map(ml => {
+      const cat = ML_CATEGORY_MAP[ml.category] || { label: '—', color: 'var(--subtle)' };
+      return '<div class="device-wo-item" onclick="openMlDetail(\'' + ml.id + '\')">' +
+        '<div class="device-wo-item-top"><span style="font-size:12px;font-weight:500;color:' + cat.color + ';">' + cat.label + '</span><span class="device-wo-item-code">' + escapeHtml(ml.repairDate || '') + '</span></div>' +
+        '<div class="device-wo-item-issue">' + escapeHtml((ml.faultParts || []).join('、') || ml.faultCause || '（无描述）') + '</div>' +
+        '<div class="device-wo-item-meta">' + escapeHtml(ml.repairerName || '—') + ((ml.spareParts || []).length ? ' · 备件 ' + ml.spareParts.length : '') + '</div>' +
+      '</div>';
+    }).join('');
 }
 
 /* ------ 修改 switchDetailTab 使相关记录 tab 能联动 ------ */
@@ -8220,25 +7623,27 @@ window.confirmDeleteUser = confirmDeleteUser;
 window.confirmSetPassword = confirmSetPassword;
 window.confirmSetMobile = confirmSetMobile;
 window.handleMenuAction = handleMenuAction;
-// 工单相关
-window.setWoFilter = setWoFilter;
-window.openWoDetail = openWoDetail;
-window.openReport = openReport;
-window.cancelWoEdit = cancelWoEdit;
-window.submitWorkorder = submitWorkorder;
-window.pickUrgency = pickUrgency;
-window.toggleIssueTag = toggleIssueTag;
+// 检修记录相关
+window.setMlFilter = setMlFilter;
+window.onMlSearchInput = onMlSearchInput;
+window.clearMlSearch = clearMlSearch;
+window.openMlDetail = openMlDetail;
+window.backToMlList = backToMlList;
+window.openMlCreate = openMlCreate;
+window.openMlEdit = openMlEdit;
+window.cancelMlEdit = cancelMlEdit;
+window.submitMaintenance = submitMaintenance;
+window.pickMlCategory = pickMlCategory;
+window.toggleFaultPart = toggleFaultPart;
+window.addCustomFaultPart = addCustomFaultPart;
+window.addManualPart = addManualPart;
+window.removeMlPart = removeMlPart;
+window.addStockPart = addStockPart;
+window.renderMlPartPicker = renderMlPartPicker;
 window.pickEquipment = pickEquipment;
-window.pickEquipmentOther = pickEquipmentOther;
-window.approveWorkorder = approveWorkorder;
-window.rejectWorkorder = rejectWorkorder;
-window.claimWorkorder = claimWorkorder;
-window.assignWorkorder = assignWorkorder;
-window.doAssignTech = doAssignTech;
-window.completeWorkorder = completeWorkorder;
-window.confirmWorkorder = confirmWorkorder;
-window.reopenWorkorder = reopenWorkorder;
-window.backToWoList = backToWoList;
+window.deleteMaintenance = deleteMaintenance;
+window.restoreMaintenance = restoreMaintenance;
+window.hardDeleteMaintenance = hardDeleteMaintenance;
 window.filterEqPickerList = filterEqPickerList;
 window.renderDeviceRecords = renderDeviceRecords;
 // 润滑相关
@@ -8298,8 +7703,6 @@ async function init() {
 
     // 首次启动：如果润滑点为空则上传种子数据
     await seedLubeIfEmpty();
-    // 首次启动：导入 Excel 历史工单
-    await seedImportedWorkordersIfNeeded();
     // 2026-04-21 补：导入 57 台新增设备（923 原矿消能站 + 218 溢流水处理 + 546 雨水池）
     await seedNewEquipmentsV2IfNeeded();
     // 2026-04-21 补：修正 203 区域位号重复 bug
@@ -8324,7 +7727,7 @@ async function init() {
     // 开启实时订阅（用户、设备、工单、润滑、巡检、二级库）
     subscribeUsers();
     subscribeEquipments();
-    subscribeWorkorders();
+    subscribeMaintenance();
     subscribeLubePoints();
     subscribeLubeHistory();
     subscribeInspectTemplates();

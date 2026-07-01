@@ -95,6 +95,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    // 检修记录（Maintenance Log）· 2026-07-01（替代旧工单模块）
+    match /maintenancelogs/{id} {
+      allow read, write: if isSignedIn();
+    }
+
     // 一次性迁移幂等标记
     match /meta/{id} {
       allow read, write: if isSignedIn();
