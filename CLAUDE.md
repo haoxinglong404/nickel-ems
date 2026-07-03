@@ -260,6 +260,7 @@
 | `inspect_init_v11_20260429` | 上传 17 个巡检模板（按 equipment.type 关联）|
 
 **最近做的改动**（按时间倒序）：
+1. **21 台高压釜搅拌器减速机油号更正为 PAO 合成油**（2026-07-03）：203-PE-AG-101/201/301 A~G「减速机」点（`lp_0114~0134`）按 Flender H2SV10B 铭牌（OIL VISCOSITY ISO VG 320 **PAO-OIL**）改 standardOil `VG320`→`ISO VG 320 PAO`、mobilOil `MOBILGEAR EP 320`→`Mobil SHC Gear 320`（全合成）。云端 Chrome MCP 逐条核验后 updateDoc+回读，本地 SEED 同步。**加注量未动**（台账 150/130L vs 铭牌 ≈119L，待用户定夺）；其他 27 个 VG320 点不变。**注意**：PAO 与矿物油不混用，换油需放净。
 1. **修 6 条阀门油压站电机轴承 operationType oil→grease**（2026-07-02）：203-PE-EP-103/203/303 电机前/后轴承（2#锂基脂 17.4g，`lp_0450/0451/0452`+`lp_v16_129/130/131`）operationType 错录 oil 致 UI 单位显示 L。云端经 Chrome MCP 在 EMS 已认证会话里 updateDoc 修复+回读核验，本地 SEED 同步；确认全库再无"油号含脂但标 oil"矛盾条目。起因：做 203-3 系列换油统计（油 17 种 ≈8472L + 脂 4 种 ≈9.2kg，明细见当次会话）时发现。
 1. **修复删工单误删公共时间函数致润滑/检修详情页打不开**（2026-07-02）：删工单 commit(9ad1b36) 把 `formatFullTime`/`formatShortTime` 当工单代码误删，但润滑详情页(最后/下次润滑)和检修详情页(登记行)还在用 → 渲染抛 ReferenceError、详情页整个打不开。原样补回两函数（放 `formatDate` 旁工具区）。已扫过该 commit 删掉的全部 31 个函数，无第三个漏网。**经验**：大块删模块前，对"看着像该模块专属"的小工具函数要先 grep 全文件确认没有别的调用方。
 1. **检修模块加 A/B/C 等级筛选 + 备件消耗汇总**（2026-07-01）：① 列表加**等级筛选条**(`ml-class-filter-bar`,全部/A/B/C,状态 `mlClassFilter`,`setMlClassFilter`),独立于类别、可叠加(如"预防性维护+B类"),`filterMaintenanceLogs` 加 `eqClassOf(m.equipmentId)===mlClassFilter`。② 段头加「📊备件消耗」按钮 → `openMlPartsSummary()` 弹 sheet(`showSheet('mlPartsSummary')`)：`aggregateMlSpareParts()` 按 `name+unit` 合计总量+次数(**跟随当前筛选** filterMaintenanceLogs),`exportMlPartsXlsx()` 导两 sheet(汇总+明细,复用 `_exportSheets`)给采购做依据。CSS `.ml-sp-sum-row`。**目的**：统计备件消耗、给采购提供依据。
