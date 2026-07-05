@@ -1204,6 +1204,99 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
   .ins-check-row.abnormal .ins-check-note { display: block; }
 
+  /* v2 数值点检表单（2026-07-04）：部件分组卡 + 数值输入 + 超限标红 */
+  .ins-group-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .ins-group-card.dim { opacity: 0.45; pointer-events: none; }
+  .ins-group-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--g-deep);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ins-pt-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 12px 0 2px;
+    font-family: var(--font-mono);
+  }
+  .ins-metric { padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .ins-metric:last-child { border-bottom: none; }
+  .ins-m-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .ins-m-name { font-size: 14px; color: var(--ink); font-weight: 500; flex-shrink: 0; }
+  .ins-m-std { font-size: 11px; color: var(--subtle); text-align: right; }
+  .ins-m-input-wrap { display: flex; align-items: center; gap: 8px; }
+  .ins-m-input {
+    flex: 1;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 17px;
+    font-family: var(--font-mono);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .ins-m-input:focus { outline: none; border-color: var(--g-primary); }
+  .ins-m-unit { font-size: 13px; color: var(--muted); min-width: 40px; font-family: var(--font-mono); }
+  .ins-metric.num-bad .ins-m-input { border-color: #B85C5C; background: #FCEBEB; color: #8F2F2F; font-weight: 600; }
+  .ins-m-note {
+    margin-top: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #B85C5C;
+    border-radius: 8px;
+    background: var(--paper);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    resize: vertical;
+    display: none;
+  }
+  .ins-metric.num-bad .ins-m-note, .ins-metric.chk-abn .ins-m-note { display: block; }
+  .ins-metric.chk-abn { background: #FCEBEB; border-radius: 8px; margin: 4px -8px; padding: 10px 8px; border-bottom: none; }
+
+  /* 点检趋势页：每个测点一张独立淡绿灰卡片，卡片之间露米白底断开（2026-07-05） */
+  .ins-trend-group {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--g-deep);
+    font-family: var(--font-mono);
+    margin: 22px 2px 10px;
+  }
+  .ins-trend-group:first-of-type { margin-top: 6px; }
+  .ins-trend-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+    margin-bottom: 14px;
+  }
+  .ins-trend-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .ins-trend-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .ins-trend-stat { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+
   /* 巡检概览总结 */
   .ins-summary-bar {
     display: flex;
@@ -2813,7 +2906,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <!-- 设备巡检 (2026-04-29 v11) -->
     <section class="module" data-module="inspect">
       <div class="section-header">
-        <div class="section-label">Inspection · 设备巡检</div>
+        <div class="section-label-row">
+          <div class="section-label">Inspection · 设备点检</div>
+          <button class="export-btn" onclick="exportInspectMonth()" title="导出本月数值点检 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+        </div>
         <h1 class="section-title">Daily Check</h1>
         <div class="section-sub" id="inspect-section-sub">—</div>
       </div>
@@ -2843,6 +2939,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <button class="edit-btn edit-btn-cancel" onclick="cancelInspect()">取消</button>
         <button class="edit-btn edit-btn-save" onclick="submitInspect()">完成巡检</button>
       </div>
+    </section>
+
+    <!-- 点检趋势页（v2 数值点检，2026-07-04） -->
+    <section class="module" data-module="inspect-trend">
+      <div class="lube-detail-hero" id="inspect-trend-hero"></div>
+      <div class="edit-form" id="inspect-trend-body"></div>
     </section>
 
     <section class="module" data-module="profile">
@@ -2909,7 +3011,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
-  writeBatch, onSnapshot, serverTimestamp, enableIndexedDbPersistence
+  writeBatch, onSnapshot, serverTimestamp, enableIndexedDbPersistence,
+  query, where
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import {
   getAuth, signInAnonymously, onAuthStateChanged
@@ -2984,31 +3087,276 @@ const SEED_LUBE_POINTS = [{"nextLubeAt": 1792454400000, "name": "原矿浓密机
 /* ========== 数据层 ========== */
 const SESSION_KEY = 'ems_session_v06';
 
-/* ========== 巡检模板 (2026-04-29 v11) ==========
-   17 个模板，每个对应一种 equipment.type
+/* ========== 巡检模板 (2026-07-04 v2 数值点检) ==========
+   v2 模板：v:2 + groups[{g:部件, pts:[{p:测点, ms:[指标]}]}]，指标 t:'num'(填数值,自动判超限)/'chk'(正常/异常)
+   源头：纸质《设备日常点检记录表》(机修) 逐张转录 + 6 类自设计(2026-07-04 用户已审)
+   v1 模板：items 字符串数组(勾选式)，静设备 + 暂缓设备(潜水泵/成套/给料器)继续用
    key 字段用作 Firestore doc id（id="tpl_<key>"）*/
+const _num = (n, u, std, mth, max, min) => ({ n, t: 'num', u, std, mth, max: max == null ? null : max, min: min == null ? null : min });
+const _chk = (n, std, mth) => ({ n, t: 'chk', std, mth });
+const _vib5 = (lim) => [
+  _num('水平振动', 'mm/s', '≤' + lim + 'mm/s', '测振仪', lim),
+  _num('垂直振动', 'mm/s', '≤' + lim + 'mm/s', '测振仪', lim),
+  _num('轴向振动', 'mm/s', '≤' + lim + 'mm/s', '测振仪', lim),
+  _num('温度', '℃', '＜70℃', '测温枪', 70),
+  _chk('轴承异响', '轴承无异响', '听针'),
+];
+const _vib4 = (lim) => [
+  _num('水平振动', 'mm/s', '≤' + lim + 'mm/s', '测振仪', lim),
+  _num('轴向振动', 'mm/s', '≤' + lim + 'mm/s', '测振仪', lim),
+  _num('温度', '℃', '＜70℃', '测温枪', 70),
+  _chk('轴承异响', '轴承无异响', '听针'),
+];
+const _oilChk = () => _chk('油位油质', '油位正常、油质合格、无泄漏', '目测');
+const _mechSeal = () => ({ g: '填料/机械密封', pts: [{ p: '', ms: [_chk('泄漏情况', '无泄漏、压力正常', '目测'), _chk('密封液', '无泄漏', '目测')] }] });
+/* 密封变体（2026-07-05 按现场实况：有啥看啥，没有的字段不出现） */
+const _sealMech = () => ({ g: '机械密封', pts: [{ p: '', ms: [_chk('泄漏情况', '无泄漏', '目测')] }] });
+const _sealMechCool = () => ({ g: '机械密封', pts: [{ p: '', ms: [_chk('泄漏情况', '无泄漏', '目测'), _chk('机封冷却水', '冷却水通畅、流量正常', '目测')] }] });
+const _sealPackingCool = () => ({ g: '填料密封', pts: [{ p: '', ms: [_chk('泄漏情况', '滴漏在允许范围内、无喷漏', '目测'), _chk('冷却水', '冷却水通畅、流量正常', '目测')] }] });
+const _coupling = () => ({ g: '联轴器', pts: [{ p: '', ms: [_chk('运行状态', '无摆偏，无异响、缺失', '目测')] }] });
+/* 离心泵通用骨架：电机两端 + 轴承箱两端 + 油位 + 指定密封组 + 联轴器 */
+const _cfGroups = (seal) => [
+  { g: '电机', pts: [{ p: '非驱动端', ms: _vib5(4.5) }, { p: '驱动端', ms: _vib5(4.5) }] },
+  { g: '轴承箱', pts: [{ p: '联轴器端', ms: _vib5(4.5) }, { p: '叶轮端', ms: _vib5(4.5) }, { p: '', ms: [_oilChk()] }] },
+  seal,
+  _coupling(),
+];
 const SEED_INSPECTION_TEMPLATES = [
-  {key:'centrifugal_pump', name:'离心泵',     cycleDays:7,  items:['设备停机未运行','电机温度（<70℃）','振动 / 异响','漏液 / 滴漏','电流（如有显示）','轴承箱温度']},
-  {key:'agitator',         name:'搅拌器',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','减速机油位','减速机渗漏','机架轴承温度']},
-  {key:'plunger_pump',     name:'柱塞泵',     cycleDays:7,  items:['设备停机未运行','电机温度','振动 / 异响','漏液（阀片/接头）','排出压力']},
-  {key:'sealing_system',   name:'密封系统',   cycleDays:7,  items:['设备停机未运行','液位（密封液站补液罐）','密封液压力','漏液','冷却水流量']},
-  {key:'pit_pump',         name:'地坑泵',     cycleDays:14, items:['设备停机未运行','电机温度','异响','电机、轴承震动','出水正常','电流（如有）','轴承温度']},
-  {key:'diaphragm_pump',   name:'隔膜泵',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','漏液','油液位','管接头是否渗漏']},
-  {key:'screw_pump',       name:'螺杆泵',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响','漏液（机封/接头）']},
-  {key:'fan',              name:'风机',       cycleDays:7,  items:['设备停机未运行','电机温度','振动 / 异响','油位（罗茨适用）','轴承温度']},
-  {key:'thickener',        name:'浓密机',     cycleDays:7,  items:['设备停机未运行','电机温度','小减速机温度','中心传动减速机油位','减速机渗漏','马达温度','油管有无剐蹭，磨损']},
-  {key:'hydraulic',        name:'液压设备',   cycleDays:7,  items:['设备停机未运行','油泵温度/异响','油箱油位','油管漏点']},
-  {key:'compressor',       name:'空压机',     cycleDays:7,  items:['设备停机未运行','异响 / 振动','油温油位','排污状态','管接头有无渗漏']},
+  {key:'centrifugal_pump', name:'离心泵', cycleDays:7, v:2, groups:_cfGroups(_mechSeal())},
+  /* 离心泵密封变体（2026-07-05 现场核实）：
+     cf_mech = 只有机封（高压水泵/反洗泵/雨水回用泵）
+     cf_mech_cool = 机封+冷却水（原矿浆输送泵/絮凝剂二次稀释泵/低温预热器给料泵/闪蒸后液/洗水/洗液/冲洗水泵/浓硫酸输送泵）
+     cf_packing_cool = 填料+冷却水（剪切泵/底流泵）
+     cf_double_suction = 中开双吸泵·回用水泵（轴承箱两端叫 联轴器端/非联轴器端，只有机封） */
+  {key:'cf_mech',         name:'离心泵·机封',        cycleDays:7, v:2, groups:_cfGroups(_sealMech())},
+  {key:'cf_mech_cool',    name:'离心泵·机封+冷却水', cycleDays:7, v:2, groups:_cfGroups(_sealMechCool())},
+  {key:'cf_packing_cool', name:'离心泵·填料+冷却水', cycleDays:7, v:2, groups:_cfGroups(_sealPackingCool())},
+  {key:'cf_double_suction', name:'中开双吸泵', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'轴承箱', pts:[{p:'联轴器端', ms:_vib5(4.5)}, {p:'非联轴器端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk()]}]},
+    _sealMech(), _coupling(),
+  ]},
+  /* 地坑泵=立式液下污水泵：现场无填料/机械密封；轴承打润滑脂、无油窗，不看油位油质
+     （2026-07-05 用户核实，201/202/203/316-1/923 一样） */
+  {key:'pit_pump', name:'地坑泵', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'驱动端', ms:_vib4(4.5)}]},
+    {g:'轴承箱', pts:[{p:'输入端', ms:_vib4(4.5)}, {p:'输出端', ms:_vib5(4.5)}]},
+    _coupling(),
+  ]},
+  {key:'agitator', name:'搅拌器', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('齿轮','无异响、运行平稳','目测、耳听')]}]},
+    {g:'机架', pts:[{p:'机架轴承', ms:_vib5(4.5)}, {p:'', ms:[_chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
+    {g:'筒体', pts:[{p:'', ms:[_chk('筒体','无泄露、无变形、无锈蚀','目测'), _chk('搅拌紧固件','无松动、缺失','目测')]}]},
+    _mechSeal(), _coupling(),
+  ]},
+  /* 搅拌器变体（2026-07-05 现场核实）：
+     agitator_open = 敞口槽给料槽搅拌，无机械密封无密封液（原矿浓密机/低温预热器给料槽搅拌）
+     agitator_mech = 只有机封无密封液无冷却水（闪蒸密封槽搅拌器） */
+  {key:'agitator_open', name:'搅拌器·敞口', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('齿轮','无异响、运行平稳','目测、耳听')]}]},
+    {g:'机架', pts:[{p:'机架轴承', ms:_vib5(4.5)}, {p:'', ms:[_chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
+    {g:'筒体', pts:[{p:'', ms:[_chk('筒体','无泄露、无变形、无锈蚀','目测'), _chk('搅拌紧固件','无松动、缺失','目测')]}]},
+    _coupling(),
+  ]},
+  {key:'agitator_mech', name:'搅拌器·机封', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('齿轮','无异响、运行平稳','目测、耳听')]}]},
+    {g:'机架', pts:[{p:'机架轴承', ms:_vib5(4.5)}, {p:'', ms:[_chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
+    {g:'筒体', pts:[{p:'', ms:[_chk('筒体','无泄露、无变形、无锈蚀','目测'), _chk('搅拌紧固件','无松动、缺失','目测')]}]},
+    _sealMech(), _coupling(),
+  ]},
+  /* 污水坑搅拌：现场有一个机架轴承（2026-07-05 用户核实，201/202/203 一样） */
+  {key:'pit_agitator', name:'污水坑搅拌', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'驱动端', ms:_vib4(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
+    {g:'机架', pts:[{p:'机架轴承', ms:_vib4(4.5)}]},
+    {g:'搅拌紧固件', pts:[{p:'', ms:[_chk('紧固件','无松动、缺失','目测')]}]},
+    _coupling(),
+  ]},
+  /* PAM/PAC 加药搅拌器：小立式，无机架轴承 */
+  {key:'chem_agitator', name:'加药搅拌', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'驱动端', ms:_vib4(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
+    {g:'搅拌紧固件', pts:[{p:'', ms:[_chk('紧固件','无松动、缺失','目测')]}]},
+    _coupling(),
+  ]},
+  {key:'diaphragm_pump', name:'隔膜泵', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测')]}]},
+    {g:'齿式联轴器', pts:[{p:'', ms:[_chk('齿轮','无摆偏、缺失','目测'), _num('温度','℃','＜70℃','测温枪',70), _chk('运行状态','无异响、运行平稳','耳听')]}]},
+    {g:'曲轴箱', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'尾端', ms:_vib5(4.5)}, {p:'', ms:[_chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测')]}]},
+    {g:'液力端', pts:[
+      {p:'进口单向阀', ms:[_chk('1#','无泄漏、无异响','耳听、目测'), _chk('2#','无泄漏、无异响','耳听、目测'), _chk('3#','无泄漏、无异响','耳听、目测')]},
+      {p:'出口单向阀', ms:[_chk('1#','无泄漏、无异响','耳听、目测'), _chk('2#','无泄漏、无异响','耳听、目测'), _chk('3#','无泄漏、无异响','耳听、目测')]},
+      {p:'隔膜腔', ms:[_chk('1#','运转平稳、无异常','目测'), _chk('2#','运转平稳、无异常','目测'), _chk('3#','运转平稳、无异常','目测')]},
+    ]},
+    {g:'曲轴箱油循环系统', pts:[{p:'', ms:[_num('油泵电机温度','℃','＜70℃','测温枪',70), _chk('过滤器','无污染','目测'), _chk('电机运转声音','无异响、运行平稳','听针')]}]},
+    {g:'推进液循环系统', pts:[{p:'', ms:[_num('油泵电机温度','℃','＜70℃','测温枪',70), _chk('过滤器','无污染','目测'), _chk('电机运转声音','无异响、运行平稳','听针')]}]},
+  ]},
+  /* 浓硫酸给料泵（2026-07-05 现场核实）：法兰联轴器只看运行状态；推进液系统无电机油泵，只有补油阀 */
+  {key:'diaphragm_pump_acid', name:'隔膜泵·浓硫酸', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测')]}]},
+    {g:'曲轴箱', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'尾端', ms:_vib5(4.5)}, {p:'', ms:[_chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测')]}]},
+    {g:'液力端', pts:[
+      {p:'进口单向阀', ms:[_chk('1#','无泄漏、无异响','耳听、目测'), _chk('2#','无泄漏、无异响','耳听、目测'), _chk('3#','无泄漏、无异响','耳听、目测')]},
+      {p:'出口单向阀', ms:[_chk('1#','无泄漏、无异响','耳听、目测'), _chk('2#','无泄漏、无异响','耳听、目测'), _chk('3#','无泄漏、无异响','耳听、目测')]},
+      {p:'隔膜腔', ms:[_chk('1#','运转平稳、无异常','目测'), _chk('2#','运转平稳、无异常','目测'), _chk('3#','运转平稳、无异常','目测')]},
+    ]},
+    {g:'曲轴箱油循环系统', pts:[{p:'', ms:[_num('油泵电机温度','℃','＜70℃','测温枪',70), _chk('过滤器','无污染','目测'), _chk('电机运转声音','无异响、运行平稳','听针')]}]},
+    {g:'推进液系统', pts:[{p:'', ms:[_chk('补油阀','状态正常、无泄漏','目测')]}]},
+    _coupling(),
+  ]},
+  /* 加药泵（2026-07-05 现场核实）：吸药/下料不检查 */
+  {key:'dosing_pump', name:'加药泵', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'', ms:[_num('温度','℃','＜70℃','测温枪',70), _chk('异响','无异响、运行平稳','耳听')]}]},
+    {g:'泵头', pts:[{p:'', ms:[_chk('泄漏','无泄漏','目测')]}]},
+  ]},
+  {key:'screw_pump', name:'螺杆泵', cycleDays:7, v:2, groups:[
+    {g:'主电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'减速机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk()]}]},
+    {g:'泵体轴承箱', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}]},
+    {g:'机械密封', pts:[{p:'', ms:[_chk('泄漏情况','无泄漏、压力正常','目测')]}]},
+    _coupling(),
+  ]},
+  {key:'plunger_pump', name:'柱塞泵', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'泵头/曲轴箱', pts:[{p:'', ms:[_chk('泄漏','无泄漏','目测'), _chk('异响','无异响、运行平稳','耳听')]}]},
+  ]},
+  {key:'sealing_system', name:'密封液系统', cycleDays:7, v:2, groups:[
+    {g:'密封液', pts:[{p:'', ms:[_num('密封液压力','MPa','按该系统设定值，记录看趋势','压力表'), _chk('泄漏','无泄漏','目测'), _chk('管路接头','无泄漏、松动','目测')]}]},
+  ]},
+  {key:'makeup_station', name:'补液站', cycleDays:7, v:2, groups:[
+    {g:'补液站', pts:[{p:'', ms:[_num('压力','MPa','按设定值，记录看趋势','压力表'), _chk('补液罐液位','液位在正常范围','目测'), _chk('泄漏','无泄漏','目测')]}]},
+  ]},
+  {key:'hydraulic', name:'液压设备', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'油压站', pts:[{p:'', ms:[_num('系统油压','MPa','按设定值，记录看趋势','压力表'), _num('油温','℃','＜60℃','测温枪',60), _chk('油箱油位','油位在1/2～2/3之间，油质合格','目测'), _chk('管路阀门','无泄漏、变形、松动','目测')]}]},
+  ]},
+  {key:'fan', name:'风机', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'风机', pts:[{p:'', ms:[_num('轴承温度','℃','＜70℃','测温枪',70), _oilChk(), _chk('管路连接','无泄漏、松动','目测')]}]},
+  ]},
+  {key:'compressor', name:'空压机', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'压缩机', pts:[{p:'', ms:[_chk('运行状态','平稳，无异响','目测、耳听'), _num('振动·水平','mm/s','≤4.5mm/s','测振仪',4.5), _num('振动·垂直','mm/s','≤4.5mm/s','测振仪',4.5), _num('温度','℃','＜75℃','测温枪',75), _chk('管道及阀门','无泄漏、松动、脱落、变形','目测'), _num('排气压力','MPa','＞1.0MPa','压力表',null,1.0)]}]},
+    {g:'油水分离系统', pts:[{p:'', ms:[_chk('油位油质','油位正常、油质合格，无泄漏','目测'), _num('油温','℃','＜35℃','测温枪',35)]}]},
+    {g:'冷却系统', pts:[{p:'', ms:[_num('进水温度','℃','＜35℃','测温枪',35), _num('回水温度','℃','＜50℃','测温枪',50), _num('进油温度','℃','＜50℃','测温枪',50), _num('回油温度','℃','＜35℃','测温枪',35), _chk('管路各部件','无泄露、变形、松动','目测')]}]},
+    {g:'皮带/联轴器', pts:[{p:'', ms:[_chk('松紧度、磨损','皮带无裂纹、松紧合适/联轴器无松动','目测')]}]},
+    {g:'安全阀', pts:[{p:'', ms:[_chk('外观状态','无锈蚀、无堵塞、无泄漏','目测')]}]},
+  ]},
+  /* 高压釜给料泵用空压机（2026-07-05 现场核实）：联轴器被罩住看不到，删该组 */
+  {key:'compressor_pump', name:'空压机·给料泵用', cycleDays:7, v:2, groups:[
+    {g:'电机', pts:[{p:'非驱动端', ms:_vib5(4.5)}, {p:'驱动端', ms:_vib5(4.5)}]},
+    {g:'压缩机', pts:[{p:'', ms:[_chk('运行状态','平稳，无异响','目测、耳听'), _num('振动·水平','mm/s','≤4.5mm/s','测振仪',4.5), _num('振动·垂直','mm/s','≤4.5mm/s','测振仪',4.5), _num('温度','℃','＜75℃','测温枪',75), _chk('管道及阀门','无泄漏、松动、脱落、变形','目测'), _num('排气压力','MPa','＞1.0MPa','压力表',null,1.0)]}]},
+    {g:'油水分离系统', pts:[{p:'', ms:[_chk('油位油质','油位正常、油质合格，无泄漏','目测'), _num('油温','℃','＜35℃','测温枪',35)]}]},
+    {g:'冷却系统', pts:[{p:'', ms:[_num('进水温度','℃','＜35℃','测温枪',35), _num('回水温度','℃','＜50℃','测温枪',50), _num('进油温度','℃','＜50℃','测温枪',50), _num('回油温度','℃','＜35℃','测温枪',35), _chk('管路各部件','无泄露、变形、松动','目测')]}]},
+    {g:'安全阀', pts:[{p:'', ms:[_chk('外观状态','无锈蚀、无堵塞、无泄漏','目测')]}]},
+  ]},
+  {key:'thickener', name:'浓密机', cycleDays:7, v:2, groups:[
+    {g:'液压马达+减速机', pts:['1#','2#','3#','4#','5#','6#','7#','8#'].map(i => ({p:i+'驱动装置', ms:[_num('温度','℃','＜70℃','测温枪',70), _chk('轴承异响','轴承无异响','听针'), _chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测')]}))},
+    {g:'转笼', pts:[{p:'大齿轮', ms:[_chk('齿轮','无摆偏、缺失','目测'), _num('齿轮油温度','℃','＜70℃','测温枪',70), _chk('运行状态','无异响、运行平稳','耳听')]}]},
+    {g:'液压油泵电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'油泵端', ms:_vib4(4.5)}]},
+    {g:'液压油箱', pts:[{p:'', ms:[_chk('油位油质','油位在1/2～2/3刻度线范围内，油质合格','目测'), _chk('管路','无泄露','目测'), _num('油温','℃','＜60℃','测温枪',60)]}]},
+  ]},
+  {key:'crane', name:'起重机', cycleDays:7, v:2, groups:[
+    {g:'结构件', pts:[{p:'', ms:[
+      _chk('主梁/端梁金属结构','无失稳、严重锈蚀、塑性变形和裂纹','目测'),
+      _chk('金属结构连接','焊缝无缺陷；螺栓/铆钉无松动、缺件','目测'),
+      _chk('主梁下挠','无爬坡困难和自行溜车现象','目测'),
+      _chk('门、梯子、走台、栏杆','完好无损，方便到达','目测')]}]},
+    {g:'主要零部件', pts:[{p:'', ms:[
+      _chk('钢丝绳','无脱槽、打结、扭曲；绳端固定牢固，压板≥3个；安全圈数≥2圈','目测'),
+      _chk('链条与链轮','啮合正确，无卡阻和冲击','目测'),
+      _chk('吊具（吊钩等）','悬挂牢固；防脱钩保险装置有效；吊钩无焊补','目测'),
+      _chk('滑轮','转动灵活、无裂纹、无异常磨损','目测')]}]},
+    {g:'安全保护装置', pts:[{p:'', ms:[
+      _chk('制动器','零件无裂纹、过度磨损；推动器无漏油','目测'),
+      _chk('起重量限制器','能停止向不安全方向的动作','目测'),
+      _chk('运行行程限位器','极限位置能自动切断前进方向','目测'),
+      _chk('安全/限位开关','定位准确、工作灵活可靠','目测'),
+      _chk('轨道端部止挡','牢固可靠','目测'),
+      _chk('滑触线安全防护','隔离措施完整，无破损、夹缝','目测'),
+      _chk('防护罩','传动部件均装设防护罩/栏','目测'),
+      _chk('行车灯和警告装置','功能正常','目测')]}]},
+    {g:'电气设备', pts:[{p:'', ms:[
+      _chk('电气元件','齐全完整、固定牢固、绝缘良好、无接触不良','目测'),
+      _chk('急停开关','功能正常，能立即切断电源','目测'),
+      _chk('超载保护','装置有效，报警功能正常','目测')]}]},
+    {g:'润滑与运行', pts:[{p:'', ms:[
+      _chk('润滑情况','减速器、制动器、钢丝绳润滑良好、油位正常','目测'),
+      _chk('设备异音','运行无异音','耳听')]}]},
+  ]},
+  /* —— v1 勾选模板：静设备 + 暂缓做数值点检的设备(2026-07-04/05 用户决定；潜水泵/起重机整体不做点检)
+     静设备(压力容器/贮槽/非标)不设"设备停机未运行"项——静设备谈不上停机(2026-07-05 用户定)；
+     给料器/成套(刮泥机)是转动设备，保留停机项 —— */
   {key:'feeder',           name:'给料器',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响']},
-  {key:'crane',            name:'起重机',     cycleDays:30, items:['设备停机未运行','钢丝绳磨损/锈蚀','限位器/制动器','滑触线','控制手柄/无线遥控','大车/小车行走机构']},
-  {key:'pressure_vessel',  name:'压力容器',   cycleDays:30, items:['设备停机未运行','外观腐蚀','接管/法兰漏点','安全阀状态','压力表/温度计']},
-  {key:'storage_tank',     name:'贮槽',       cycleDays:30, items:['设备停机未运行','外观腐蚀','接管漏点']},
-  {key:'non_standard',     name:'非标静设备', cycleDays:30, items:['设备停机未运行','震动/异响','外观腐蚀','接管漏点']},
+  {key:'pressure_vessel',  name:'压力容器',   cycleDays:30, items:['外观腐蚀','接管/法兰漏点','安全阀状态','压力表/温度计']},
+  {key:'pv_no_gauge',      name:'压力容器·高压釜', cycleDays:30, items:['外观腐蚀','接管/法兰漏点','安全阀状态']},
+  {key:'pv_basic',         name:'压力容器·简化',   cycleDays:30, items:['外观腐蚀','接管/法兰漏点']},
+  {key:'storage_tank',     name:'贮槽',       cycleDays:30, items:['外观腐蚀','接管漏点']},
+  {key:'non_standard',     name:'非标静设备', cycleDays:30, items:['震动/异响','外观腐蚀','接管漏点']},
+  {key:'ns_no_vib',        name:'尾气净化装置', cycleDays:30, items:['外观腐蚀','接管漏点']},
   {key:'package_unit',     name:'成套设备',   cycleDays:30, items:['设备停机未运行','整体运行状态','异常报警','主要部件外观']},
 ];
-// type 字段值 → 模板 key（保持等长映射，方便维护）
-const INSPECT_TYPE_TO_TPL = Object.fromEntries(SEED_INSPECTION_TEMPLATES.map(t => [t.name, t.key]));
+// 模板内容修订号：改动任何模板内容都要 +1（并配套新的迁移 marker 把云端刷新）。
+// getInspectTemplateForEquipment 按 rev 比对云端/内置版本，云端旧于代码时用内置——预览和迁移间隙都安全
+const INSPECT_TPL_REV = 2;
+SEED_INSPECTION_TEMPLATES.forEach(t => { t.rev = INSPECT_TPL_REV; });
+// type → 模板 key 直接映射（细分类型在 getInspectTplKeyForEq 里按设备名再分流）
+const INSPECT_TYPE_TO_TPL = {
+  '离心泵':'centrifugal_pump', '搅拌器':'agitator', '柱塞泵':'plunger_pump', '密封系统':'sealing_system',
+  '地坑泵':'pit_pump', '隔膜泵':'diaphragm_pump', '螺杆泵':'screw_pump', '风机':'fan', '浓密机':'thickener',
+  '液压设备':'hydraulic', '空压机':'compressor', '给料器':'feeder', '起重机':'crane',
+  '压力容器':'pressure_vessel', '贮槽':'storage_tank', '非标静设备':'non_standard', '成套设备':'package_unit',
+};
+/* 设备 → 模板 key：优先设备级 inspectTplKey 字段(预留)，再按 type+设备名分流细分模板。
+   返回 null = 该设备不做点检（不进巡检列表）。
+   分流规则 2026-07-05 按用户现场逐条核实（有啥看啥，没有的部件不出现在表里）。 */
+function getInspectTplKeyForEq(eq) {
+  if (!eq) return null;
+  if (eq.inspectTplKey) return eq.inspectTplKey;
+  const nm = eq.name || '';
+  const t = eq.type || '';
+  // —— 不做点检 ——
+  if (t === '起重机') return null;                                        // 电动单梁/旋转吊臂/316-1/218 全部暂不做
+  if (/潜水搅拌/.test(nm)) return null;                                   // 218 潜水搅拌
+  if (/排泥泵|污水池潜水泵|集水坑潜水泵/.test(nm)) return null;            // 潜水泵不做
+  if (nm.indexOf('絮凝剂制备系统') >= 0) return null;                      // 316-1 动静混合成套，不做
+  if (eq.area === '316-1' && /[EFGH]$/.test(eq.tag || '')) return null;   // 316-1 E/F/G/H 未安装
+  // —— 按类型 + 设备名分流 ——
+  if (t === '离心泵') {
+    if (/高压水泵|反洗泵|雨水回用泵/.test(nm)) return 'cf_mech';
+    if (/原矿浆输送泵|絮凝剂二次稀释泵|低温预热器给料泵|闪蒸后液输送泵|洗水输送泵|洗液输送泵|冲洗水泵|浓硫酸输送泵/.test(nm)) return 'cf_mech_cool';
+    if (/剪切泵|底流泵/.test(nm)) return 'cf_packing_cool';
+    if (/回用水泵/.test(nm)) return 'cf_double_suction';
+    return 'centrifugal_pump';   // 默认：机封+密封液（中/高温预热器给料泵 warman/五二五，带密封液系统）
+  }
+  if (t === '搅拌器') {
+    if (/污水坑搅拌/.test(nm)) return 'pit_agitator';
+    if (/PAM ?搅拌|PAC ?搅拌/i.test(nm)) return 'chem_agitator';
+    if (/给料槽搅拌|絮凝剂搅拌/.test(nm)) return 'agitator_open';  // 敞口无机封无密封液（2026-07-05 用户核实絮凝剂搅拌器同给料槽）
+    if (/闪蒸密封槽搅拌/.test(nm)) return 'agitator_mech';
+    return 'agitator';           // 默认：机封+密封液（高压釜隔室搅拌 21 台）
+  }
+  if (t === '隔膜泵') {
+    if (nm.indexOf('加药泵') >= 0) return 'dosing_pump';
+    if (nm.indexOf('浓硫酸给料泵') >= 0) return 'diaphragm_pump_acid';
+    return 'diaphragm_pump';     // 高压釜给料泵（GEHO 全套）
+  }
+  if (t === '地坑泵') return 'pit_pump';    // 潜水类已在上面 return null
+  if (t === '密封系统') return nm.indexOf('补液站') >= 0 ? 'makeup_station' : 'sealing_system';
+  if (t === '空压机') return nm.indexOf('给料泵用空压机') >= 0 ? 'compressor_pump' : 'compressor';
+  if (t === '压力容器') return nm === '高压釜' ? 'pv_no_gauge' : 'pv_basic';  // 闪蒸槽/预热器/接收罐/储气罐全部不看安全阀+表计
+  if (t === '非标静设备') return nm.indexOf('尾气净化') >= 0 ? 'ns_no_vib' : 'non_standard';
+  return INSPECT_TYPE_TO_TPL[t] || null;
+}
 const INSPECT_MARKER = 'inspect_init_v11_20260429';
+const INSPECT_TPL_V2_MARKER = 'inspect_tpl_v2_20260704';
+// 点检周期由设备 A/B/C 等级决定；未分级(静设备)回退模板 cycleDays
+const INSPECT_CYCLE_BY_CLASS = { A: 1, B: 2, C: 7 };
 
 /* ==========================================================
    云端数据层：Firestore Collections
@@ -3965,7 +4313,8 @@ function switchModule(name) {
   const isPartsTxn = name==='parts-txn';
   const isPartsEdit = name==='parts-edit';
   const isInspectDetail = name==='inspect-detail';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isPartsEdit || isInspectDetail;
+  const isInspectTrend = name==='inspect-trend';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isPartsEdit || isInspectDetail || isInspectTrend;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -3991,7 +4340,7 @@ function switchModule(name) {
   if (navKey === 'equipment-detail' || navKey === 'equipment-edit') navKey = 'equipment';
   if (navKey === 'lube-detail' || navKey === 'lube-execute') navKey = 'lube';
   if (navKey === 'parts-detail' || navKey === 'parts-txn' || navKey === 'parts-edit') navKey = 'parts';
-  if (navKey === 'inspect-detail') navKey = 'inspect';
+  if (navKey === 'inspect-detail' || navKey === 'inspect-trend') navKey = 'inspect';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const ni2 = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (ni2) ni2.classList.add('active');
@@ -4933,7 +5282,183 @@ async function cloudSaveInspectHistory(record) {
   }
 }
 
-// 首次启动：如果 inspecttemplates 为空，上传 17 个种子模板
+/* ========== inspectmonthly 月表数据层 (2026-07-04 v2 数值点检) ==========
+   一台设备一个月一个文档(id = im_<eqId>_<YYYYMM>)，days["日"] = 当天点检数据。
+   只订阅"当月 + 上月"两个月的文档 → 读取量恒定(约 350×2)，不随历史增长。 */
+let inspectMonthlyCache = [];
+let inspectMonthlyUnsub = null;
+
+function inspectMonthKey(ts) {
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function inspectPrevMonthKey(ts) {
+  const d = new Date(ts);
+  return inspectMonthKey(new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime());
+}
+
+function subscribeInspectMonthly() {
+  if (inspectMonthlyUnsub) inspectMonthlyUnsub();
+  const cur = inspectMonthKey(Date.now());
+  const prev = inspectPrevMonthKey(Date.now());
+  const qy = query(collection(db, 'inspectmonthly'), where('month', 'in', [prev, cur]));
+  inspectMonthlyUnsub = onSnapshot(qy, (snap) => {
+    inspectMonthlyCache = snap.docs.map(d => d.data());
+    const mod = document.querySelector('.module[data-module="inspect"]');
+    if (mod && mod.classList.contains('active')) renderInspectOverview();
+  }, (err) => console.error('[Firebase] 订阅月度点检失败', err));
+}
+
+/* 预览演示数据（仅 ?preview=1 且云端月表为空时注入内存，不写云端；正式上线云端有数据后自动失效）
+   场景：6 台高压釜给料泵近两个月每日点检；第 1 台"曲轴箱·输入端·水平振动"缓慢爬升、月底超限 */
+function seedPreviewInspectDemo() {
+  if (!PREVIEW_MODE || inspectMonthlyCache.length > 0) return;
+  const eqs = loadEquipments().filter(e => e.type === '隔膜泵' && (e.name || '').indexOf('高压釜给料泵') >= 0);
+  if (!eqs.length) return;
+  const tpl = SEED_INSPECTION_TEMPLATES.find(t => t.key === 'diaphragm_pump');
+  const fm = tplFlatMetrics(tpl);
+  const now = new Date();
+  const months = [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1)];
+  const docs = [];
+  eqs.forEach((eq, ei) => {
+    months.forEach(m0 => {
+      const month = inspectMonthKey(m0.getTime());
+      const daysInMonth = new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate();
+      const isCurMonth = m0.getMonth() === now.getMonth() && m0.getFullYear() === now.getFullYear();
+      const lastDay = isCurMonth ? now.getDate() : daysInMonth;
+      const days = {};
+      for (let d = 1; d <= lastDay; d++) {
+        const rnd = (k) => { const x = Math.sin(ei * 97 + d * 13 + k * 7) * 10000; return x - Math.floor(x); };
+        const at = new Date(m0.getFullYear(), m0.getMonth(), d, 9, 30).getTime();
+        const v = {}, abn = [], notes = {};
+        fm.forEach((mt, mi) => {
+          if (mt.t === 'chk') { v[mt.key] = 1; return; }
+          let base;
+          if (mt.u === 'mm/s') base = 2.0 + rnd(mi) * 1.2;
+          else if (mt.u === '℃') base = 42 + rnd(mi) * 14;
+          else base = 1 + rnd(mi);
+          if (ei === 0 && mt.key === '曲轴箱·输入端·水平振动') {
+            // 两个月内从 2.0 缓慢爬到 ≈5.2（今天爬满）→ 演示"超限预警 + 趋势可视"
+            const totalDays = months[0] ? new Date(months[0].getFullYear(), months[0].getMonth() + 1, 0).getDate() + now.getDate() : 60;
+            const prog = (isCurMonth ? new Date(m0.getFullYear(), m0.getMonth(), 0).getDate() + d : d) / totalDays;
+            base = 2.0 + prog * 3.2 + rnd(mi) * 0.3;
+          }
+          const val = Math.round(base * 10) / 10;
+          v[mt.key] = val;
+          if (metricOutOfRange(mt, val)) { abn.push(mt.key); notes[mt.key] = '振动持续增大，已通知检修关注'; }
+        });
+        days[String(d)] = { at, by: '演示数据', byId: '', stopped: false, v, abn, notes, note: '' };
+      }
+      docs.push({ id: 'im_' + eq.id + '_' + month.replace('-', ''), equipmentId: eq.id, equipmentTag: eq.tag, equipmentName: eq.name || '', tplKey: 'diaphragm_pump', month, days, updatedAt: Date.now(), _demo: true });
+    });
+  });
+  inspectMonthlyCache = docs;
+  console.log('[Preview] 已注入高压釜给料泵演示点检数据：' + docs.length + ' 个月表（仅内存，不写云端）');
+}
+
+/* v2 模板拉平成指标行：[{key, g, p, n, t, u, max, min, std, mth}] */
+function tplFlatMetrics(tpl) {
+  const out = [];
+  ((tpl && tpl.groups) || []).forEach(gr => (gr.pts || []).forEach(pt => (pt.ms || []).forEach(m => {
+    out.push(Object.assign({ key: gr.g + '·' + (pt.p ? pt.p + '·' : '') + m.n, g: gr.g, p: pt.p || '' }, m));
+  })));
+  return out;
+}
+
+/* 数值超限判定：true = 超限 */
+function metricOutOfRange(m, val) {
+  if (m.t !== 'num' || val === '' || val == null || isNaN(Number(val))) return false;
+  const v = Number(val);
+  if (m.max != null && v > m.max) return true;
+  if (m.min != null && v < m.min) return true;
+  return false;
+}
+
+/* 保存某设备当天的点检数据(整文档 setDoc；同一天重复提交 = 覆盖当天，可用于订正) */
+async function cloudSaveInspectDay(eq, tplKey, dayEntry) {
+  const month = inspectMonthKey(dayEntry.at);
+  const docId = 'im_' + eq.id + '_' + month.replace('-', '');
+  const existing = inspectMonthlyCache.find(m => m.id === docId);
+  const base = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: docId, equipmentId: eq.id, equipmentTag: eq.tag, equipmentName: eq.name || '',
+    tplKey, month, days: {},
+  };
+  base.tplKey = tplKey;
+  base.days[String(new Date(dayEntry.at).getDate())] = dayEntry;
+  base.updatedAt = Date.now();
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'inspectmonthly', docId), base);
+    setCloudStatus('online', '已同步');
+  } catch (err) {
+    console.error('[Firebase] 保存月度点检失败', err);
+    setCloudStatus('error', '同步失败：' + err.message);
+    throw err;
+  }
+}
+
+/* 某台设备在月表里的最近一次点检 day 条目 {at, by, stopped, v, abn, notes, note} */
+function getLatestInspectV2For(equipmentId) {
+  let best = null;
+  inspectMonthlyCache.forEach(md => {
+    if (md.equipmentId !== equipmentId) return;
+    Object.values(md.days || {}).forEach(dv => { if (dv && dv.at && (!best || dv.at > best.at)) best = dv; });
+  });
+  return best;
+}
+
+/* 月表 → 伪历史条目（供"历史"tab 显示），字段对齐 inspecthistory 卡片所需 */
+function monthlyDerivedHistEntries() {
+  const out = [];
+  inspectMonthlyCache.forEach(md => {
+    Object.entries(md.days || {}).forEach(([d, dv]) => {
+      if (!dv || !dv.at) return;
+      out.push({
+        _v2: true,
+        id: md.id + '_d' + d,
+        equipmentId: md.equipmentId,
+        equipmentTag: md.equipmentTag,
+        equipmentName: md.equipmentName,
+        inspectAt: dv.at,
+        inspectorName: dv.by || '',
+        stopped: !!dv.stopped,
+        abnormalCount: (dv.abn || []).length,
+        abnormalSummary: (dv.abn || []).map(k => '[' + k + '] ' + ((dv.notes || {})[k] || '')).join(' / '),
+      });
+    });
+  });
+  return out;
+}
+
+/* 一次性迁移：云端 inspecttemplates 升级为 v2 结构（21 个，marker 幂等）。
+   预览模式跳过 —— 否则本地预览会抢先改生产模板，线上旧代码读到 v2 结构会崩；
+   正式上线 push 后由线上页面第一次加载时执行。 */
+async function applyInspectTplV2IfNeeded() {
+  if (PREVIEW_MODE) return;
+  // 本地(localhost/127.0.0.1/file)一律不跑——即使忘带 ?preview=1 也不能碰生产模板
+  // （2026-07-05 教训：预览工具曾以裸 localhost 打开页面，导致迁移误跑到生产云端）
+  if (/^(localhost|127\.0\.0\.1|)$/.test(location.hostname)) return;
+  const markerSnap = await getDoc(doc(db, 'meta', INSPECT_TPL_V2_MARKER));
+  if (markerSnap.exists()) return;
+  setCloudStatus('syncing', '升级巡检模板 v2...');
+  const batch = writeBatch(db);
+  SEED_INSPECTION_TEMPLATES.forEach(t => {
+    batch.set(doc(db, 'inspecttemplates', 'tpl_' + t.key), {
+      id: 'tpl_' + t.key,
+      ...t,
+      updatedAt: Date.now(),
+    });
+  });
+  batch.set(doc(db, 'meta', INSPECT_TPL_V2_MARKER), {
+    id: INSPECT_TPL_V2_MARKER,
+    desc: '巡检模板升级为 v2 数值点检结构（24 v2 + 8 v1，含 2026-07-05 现场密封/联轴器核实变体）',
+    at: Date.now(),
+  });
+  await batch.commit();
+  console.log('[Migration] 巡检模板已升级 v2');
+}
+
+// 首次启动：如果 inspecttemplates 为空，上传种子模板（21 个，v2+v1）
 async function seedInspectionTemplatesIfEmpty() {
   // marker 幂等保护
   const markerSnap = await getDoc(doc(db, 'meta', INSPECT_MARKER));
@@ -4962,17 +5487,29 @@ async function seedInspectionTemplatesIfEmpty() {
   });
 }
 
-/* 工具：根据 equipment.type 找模板 */
+/* 工具：根据设备找模板。云端优先；但云端版本与 SEED 期望不一致时用 SEED
+   （保证"代码 ↔ 模板结构"版本一致：v2 迁移前的预览 / 迁移间隙都安全） */
 function getInspectTemplateForEquipment(eq) {
-  if (!eq) return null;
-  const tplKey = INSPECT_TYPE_TO_TPL[eq.type];
+  const tplKey = getInspectTplKeyForEq(eq);
   if (!tplKey) return null;
-  return inspectTplCache.find(t => t.key === tplKey) || SEED_INSPECTION_TEMPLATES.find(t => t.key === tplKey);
+  const seedTpl = SEED_INSPECTION_TEMPLATES.find(t => t.key === tplKey) || null;
+  const cloudTpl = inspectTplCache.find(t => t.key === tplKey) || null;
+  if (cloudTpl && seedTpl && ((cloudTpl.rev || 0) !== (seedTpl.rev || 0) || !!cloudTpl.v !== !!seedTpl.v)) return seedTpl;
+  return cloudTpl || seedTpl;
 }
 
-/* 工具：某台设备最近一次巡检（任何状态）*/
+/* 工具：某台设备最近一次巡检（v2 月表 与 旧 inspecthistory 取较新者）*/
 function getLatestInspectFor(equipmentId) {
-  return inspectHistCache.find(h => h.equipmentId === equipmentId) || null;
+  const old = inspectHistCache.find(h => h.equipmentId === equipmentId) || null;
+  const v2 = getLatestInspectV2For(equipmentId);
+  if (v2 && (!old || v2.at > old.inspectAt)) return { inspectAt: v2.at, inspectorName: v2.by || '', _v2: true };
+  return old;
+}
+
+/* 工具：点检周期(天)。A/B/C 等级优先（A=1 / B=2 / C=7），未分级用模板 cycleDays */
+function getInspectCycleDays(eq, tpl) {
+  if (eq && eq.abcClass && INSPECT_CYCLE_BY_CLASS[eq.abcClass]) return INSPECT_CYCLE_BY_CLASS[eq.abcClass];
+  return (tpl && tpl.cycleDays) || 30;
 }
 
 /* 工具：计算下次巡检时间 */
@@ -4987,7 +5524,7 @@ function getInspectStatus(eq) {
   if (!tpl) return { code: 'no-tpl', label: '无模板', tone: 'gray' };
   const last = getLatestInspectFor(eq.id);
   if (!last) return { code: 'pending-init', label: '未初始巡检', tone: 'gray' };
-  const next = calcNextInspectAt(last.inspectAt, tpl.cycleDays);
+  const next = calcNextInspectAt(last.inspectAt, getInspectCycleDays(eq, tpl));
   const now = Date.now();
   if (now < next) {
     const daysLeft = Math.ceil((next - now) / (24 * 3600 * 1000));
@@ -5468,6 +6005,9 @@ function renderEqPickerList(keyword) {
 
 let currentLubePointId = null;
 let lubeExecBuffer = null;
+// 桥接到 window：登记表单内联 oninput="lubeExecBuffer.x = ..." 需要（模块 let 不在 window 上，同 woBuffer 套路。
+// 2026-07-04 修存量 bug：此前 oninput 静默 ReferenceError，提交靠 DOM 兜底没丢数据，但"≈N 下"提示不实时刷新）
+Object.defineProperty(window, 'lubeExecBuffer', { get() { return lubeExecBuffer; }, set(v) { lubeExecBuffer = v; }, configurable: true });
 let lubeFilter = 'overdue';  // overdue / due-soon / all
 let lubeOpFilter = 'grease'; // 'grease' (脂润滑) / 'oil' (油润滑) / 'unspecified' (待补充油号) · 2026-04-23
 
@@ -6209,7 +6749,10 @@ function renderDeviceLubePoints(eqId) {
    ========================================================== */
 
 let currentInspectEqId = null;     // 当前正在巡检的设备 ID
-let inspectExecBuffer = null;      // 表单缓冲：{equipmentId, items: [{name, status, note}]}
+let inspectExecBuffer = null;      // 表单缓冲：v1={items:[{name,status,note}]} / v2={rows:[指标行]}
+// 桥接到 window：表单内联 oninput="inspectExecBuffer.x = ..." 需要（模块 let 不在 window 上，同 woBuffer 套路。
+// 顺带修复 v11 存量 bug：异常备注 oninput 之前因此静默失败）
+Object.defineProperty(window, 'inspectExecBuffer', { get() { return inspectExecBuffer; }, set(v) { inspectExecBuffer = v; }, configurable: true });
 let inspectFilter = 'todo';        // 'todo' / 'abnormal' / 'history'
 let inspectSearchText = '';
 let inspectAreaFilter = '';        // '' = 全部
@@ -6242,7 +6785,7 @@ function renderInspectFilterRow() {
   if (!row) return;
   if (inspectFilter !== 'todo') { row.innerHTML = ''; return; }
 
-  const eqs = loadEquipments().filter(eq => INSPECT_TYPE_TO_TPL[eq.type]);
+  const eqs = loadEquipments().filter(eq => getInspectTplKeyForEq(eq));
   const areas = {};  eqs.forEach(e => { if (e.area) areas[e.area] = (areas[e.area] || 0) + 1; });
   const types = {};  eqs.forEach(e => { types[e.type] = (types[e.type] || 0) + 1; });
   const AREA_ORDER = { '201': 0, '202': 1, '203': 2, '316-1': 3, '218': 4, '923': 5, '546': 6 };
@@ -6267,6 +6810,7 @@ function renderInspectFilterRow() {
 }
 
 function renderInspectOverview() {
+  if (PREVIEW_MODE && inspectMonthlyCache.length === 0) seedPreviewInspectDemo();  // 预览演示数据（不写云端）
   renderInspectFilterRow();  // 渲染区域/类型筛选条
   const eqs = loadEquipments();
   const searchEl = document.getElementById('inspect-search');
@@ -6278,7 +6822,7 @@ function renderInspectOverview() {
   if (ov) {
     let countOverdue = 0, countDue = 0, countOk = 0, countPending = 0;
     eqs.forEach(eq => {
-      if (!INSPECT_TYPE_TO_TPL[eq.type]) return;
+      if (!getInspectTplKeyForEq(eq)) return;
       const st = getInspectStatus(eq);
       if (st.code === 'overdue') countOverdue++;
       else if (st.code === 'due') countDue++;
@@ -6302,8 +6846,9 @@ function renderInspectOverview() {
   if (!container) return;
 
   if (tab === 'history') {
-    // 历史 tab：直接列 inspecthistory 全量（最新在前）
-    let list = inspectHistCache.slice();
+    // 历史 tab：v2 月表衍生条目（近两个月）+ 旧记录（src==='v2' 的异常记录已含在月表里，去重跳过）
+    let list = monthlyDerivedHistEntries().concat(inspectHistCache.filter(h => h.src !== 'v2'));
+    list.sort((a, b) => (b.inspectAt || 0) - (a.inspectAt || 0));
     if (inspectSearchText) {
       list = list.filter(h => {
         const hay = (h.equipmentTag + ' ' + h.equipmentName + ' ' + (h.inspectorName || '')).toLowerCase();
@@ -6331,7 +6876,7 @@ function renderInspectOverview() {
   }
 
   // 默认 todo tab：仅未 ok 的设备（逾期/到期/未初始）
-  let cards = eqs.filter(eq => INSPECT_TYPE_TO_TPL[eq.type]);
+  let cards = eqs.filter(eq => getInspectTplKeyForEq(eq));
   // 应用区域/类型筛选
   if (inspectAreaFilter) cards = cards.filter(eq => eq.area === inspectAreaFilter);
   if (inspectTypeFilter) cards = cards.filter(eq => eq.type === inspectTypeFilter);
@@ -6374,6 +6919,11 @@ function renderInspectCard({ eq, status }) {
   if (status.code === 'overdue') statusCls = 'overdue';
   else if (status.code === 'due') statusCls = 'due';
   else if (status.code === 'ok') statusCls = 'ok';
+  const tpl = getInspectTemplateForEquipment(eq);
+  const trendBtn = (tpl && tpl.v === 2)
+    ? `<button onclick="event.stopPropagation();openInspectTrend('${eq.id}')" style="margin-top:6px;background:white;color:var(--g-deep);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">📈 趋势</button>`
+    : '';
+  const clsBadge = eq.abcClass ? `<span class="lube-card-meta-sep">·</span><span>${eq.abcClass} 类</span>` : '';
   return `
     <div class="lube-card" onclick="openInspectDetail('${eq.id}')">
       <div class="lube-card-left">
@@ -6382,13 +6932,14 @@ function renderInspectCard({ eq, status }) {
         </div>
         <div class="lube-card-point">${eq.name || ''}</div>
         <div class="lube-card-meta">
-          <span>${tplName}</span>
+          <span>${tplName}</span>${clsBadge}
           <span class="lube-card-meta-sep">·</span>
           <span>上次：${lastInfo}</span>
         </div>
       </div>
       <div class="lube-card-right">
         <span class="lube-status-tag ${statusCls}">${status.label}</span>
+        ${trendBtn}
       </div>
     </div>`;
 }
@@ -6408,9 +6959,9 @@ function renderInspectHistCard(h) {
   }
   const inspector = h.inspectorName || h.inspectorId || '—';
   const note = h.abnormalSummary ? `<div class="lube-card-meta" style="color:#B85C5C;margin-top:4px;">${h.abnormalSummary.substring(0, 80)}${h.abnormalSummary.length > 80 ? '…' : ''}</div>` : '';
-  // 仅 admin 可见删除按钮
+  // 仅 admin 可见删除按钮（月表衍生条目无独立文档，不提供删除——重新提交当天点检即覆盖订正）
   const user = getCurrentUser();
-  const delBtn = canHardDelete(user)
+  const delBtn = !h._v2 && canHardDelete(user)
     ? `<button onclick="event.stopPropagation();hardDeleteInspectHistory('${h.id}')" style="margin-top:6px;background:white;color:#C77700;border:1px solid #E4E0D8;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">删除</button>`
     : '';
   return `
@@ -6474,15 +7025,31 @@ function openInspectDetail(eqId) {
   const tpl = getInspectTemplateForEquipment(eq);
   if (!tpl) { showToast('该设备类型暂无巡检模板'); return; }
 
-  inspectExecBuffer = {
-    equipmentId: eq.id,
-    equipmentTag: eq.tag,
-    equipmentName: eq.name || '',
-    templateId: 'tpl_' + tpl.key,
-    templateName: tpl.name,
-    items: tpl.items.map(name => ({ name, status: '', note: '' })),
-    overallNote: '',
-  };
+  if (tpl.v === 2) {
+    // v2 数值点检：模板拉平成指标行
+    inspectExecBuffer = {
+      v2: true,
+      equipmentId: eq.id,
+      equipmentTag: eq.tag,
+      equipmentName: eq.name || '',
+      tplKey: tpl.key,
+      templateId: 'tpl_' + tpl.key,
+      templateName: tpl.name,
+      stopped: false,
+      rows: tplFlatMetrics(tpl).map(m => Object.assign({}, m, { val: '', chk: '', note: '' })),
+      overallNote: '',
+    };
+  } else {
+    inspectExecBuffer = {
+      equipmentId: eq.id,
+      equipmentTag: eq.tag,
+      equipmentName: eq.name || '',
+      templateId: 'tpl_' + tpl.key,
+      templateName: tpl.name,
+      items: tpl.items.map(name => ({ name, status: '', note: '' })),
+      overallNote: '',
+    };
+  }
   renderInspectDetail();
   switchModule('inspect-detail');
 }
@@ -6500,7 +7067,7 @@ function renderInspectDetail() {
       <div onclick="cancelInspect()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
       <div class="lube-detail-hero-tag">${eq.tag}</div>
       <h2 class="lube-detail-hero-name">${eq.name || ''}</h2>
-      <div class="lube-detail-hero-point">${eq.type || ''} · 模板：${tpl.name} · 周期 ${tpl.cycleDays} 天</div>
+      <div class="lube-detail-hero-point">${eq.type || ''} · 模板：${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · 周期 ${getInspectCycleDays(eq, tpl)} 天</div>
       ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);">上次巡检：${formatRelTime(last.inspectAt)} · ${last.inspectorName || ''}</div>` : ''}
     `;
   }
@@ -6508,6 +7075,18 @@ function renderInspectDetail() {
   // body：检查项列表 + 备注
   const body = document.getElementById('inspect-detail-body');
   if (!body) return;
+  if (inspectExecBuffer.v2) {
+    const numCount = inspectExecBuffer.rows.filter(r => r.t === 'num').length;
+    body.innerHTML = `
+      <div class="edit-group-label">点检项（共 ${inspectExecBuffer.rows.length} 项 · 其中数值 ${numCount} 项）</div>
+      <div id="inspect-items-list">${renderInspectV2Body()}</div>
+      <div class="edit-field" style="margin-top:24px;">
+        <div class="edit-field-label">总体备注（可选）</div>
+        <textarea class="edit-textarea" id="inspect-overall-note" placeholder="补充说明..." oninput="inspectExecBuffer.overallNote = this.value">${inspectExecBuffer.overallNote || ''}</textarea>
+      </div>
+    `;
+    return;
+  }
   body.innerHTML = `
     <div class="edit-group-label">检查项 (共 ${inspectExecBuffer.items.length} 项)</div>
     <div id="inspect-items-list">
@@ -6550,6 +7129,160 @@ function renderInspectItemRow(it, idx) {
     </div>`;
 }
 
+/* ===== v2 数值点检表单（按 部件→测点 分组，数值超限实时标红） ===== */
+function renderInspectV2Body() {
+  const buf = inspectExecBuffer;
+  if (!buf || !buf.v2) return '';
+  const stopped = buf.stopped;
+  let html = `
+    <div class="ins-check-row ${stopped ? 'stopped' : ''}">
+      <div class="ins-check-name">设备停机未运行？</div>
+      <div class="ins-check-toggle">
+        <button class="ins-check-btn ${stopped ? 'stopped-on' : ''}" onclick="toggleInsStopped()">
+          ${stopped ? '✓ 是 · 设备停机（免检，直接提交）' : '是 · 设备停机未运行'}
+        </button>
+      </div>
+    </div>`;
+  // 按 部件(g) → 测点(p) 归组
+  const groups = [];
+  buf.rows.forEach((r, i) => {
+    let g = groups[groups.length - 1];
+    if (!g || g.name !== r.g) { g = { name: r.g, pts: [] }; groups.push(g); }
+    let p = g.pts[g.pts.length - 1];
+    if (!p || p.name !== r.p) { p = { name: r.p, idxs: [] }; g.pts.push(p); }
+    p.idxs.push(i);
+  });
+  html += groups.map(g => `
+    <div class="ins-group-card ${stopped ? 'dim' : ''}">
+      <div class="ins-group-title">${g.name}</div>
+      ${g.pts.map(p => (p.name ? `<div class="ins-pt-label">${p.name}</div>` : '')
+        + p.idxs.map(i => renderInsMetricRow(i)).join('')).join('')}
+    </div>`).join('');
+  return html;
+}
+
+function renderInsMetricRow(idx) {
+  const r = inspectExecBuffer.rows[idx];
+  const dis = inspectExecBuffer.stopped ? 'disabled' : '';
+  const stdLine = `<span class="ins-m-std">${r.std || ''}${r.mth ? ' · ' + r.mth : ''}</span>`;
+  if (r.t === 'num') {
+    const bad = metricOutOfRange(r, r.val);
+    return `
+    <div class="ins-metric ${bad ? 'num-bad' : ''}" id="ins-m-${idx}">
+      <div class="ins-m-head"><span class="ins-m-name">${r.n}</span>${stdLine}</div>
+      <div class="ins-m-input-wrap">
+        <input class="ins-m-input" type="text" inputmode="decimal" placeholder="实测值" value="${r.val}" ${dis} oninput="setInsVal(${idx}, this.value)">
+        <span class="ins-m-unit">${r.u || ''}</span>
+      </div>
+      <textarea class="ins-m-note" placeholder="超限说明（必填）..." oninput="inspectExecBuffer.rows[${idx}].note = this.value">${r.note || ''}</textarea>
+    </div>`;
+  }
+  const cls = r.chk === 'abn' ? 'chk-abn' : (r.chk === 'ok' ? 'chk-ok' : '');
+  return `
+    <div class="ins-metric ${cls}" id="ins-m-${idx}">
+      <div class="ins-m-head"><span class="ins-m-name">${r.n}</span>${stdLine}</div>
+      <div class="ins-check-toggle">
+        <button class="ins-check-btn ${r.chk === 'ok' ? 'normal-on' : ''}" ${dis} onclick="setInsChk(${idx},'ok')">✅ 正常</button>
+        <button class="ins-check-btn ${r.chk === 'abn' ? 'abn-on' : ''}" ${dis} onclick="setInsChk(${idx},'abn')">⚠️ 异常</button>
+      </div>
+      <textarea class="ins-m-note" placeholder="异常说明（必填）..." oninput="inspectExecBuffer.rows[${idx}].note = this.value">${r.note || ''}</textarea>
+    </div>`;
+}
+
+/* 数值输入：只更新缓冲 + 切换超限样式，不重渲染（避免输入框失焦） */
+function setInsVal(idx, v) {
+  if (!inspectExecBuffer || !inspectExecBuffer.rows[idx]) return;
+  const r = inspectExecBuffer.rows[idx];
+  r.val = v;
+  const el = document.getElementById('ins-m-' + idx);
+  if (el) el.classList.toggle('num-bad', metricOutOfRange(r, v));
+}
+
+function setInsChk(idx, val) {
+  if (!inspectExecBuffer || !inspectExecBuffer.rows[idx] || inspectExecBuffer.stopped) return;
+  inspectExecBuffer.rows[idx].chk = val;
+  const el = document.getElementById('ins-m-' + idx);
+  if (el) el.outerHTML = renderInsMetricRow(idx);
+}
+
+function toggleInsStopped() {
+  if (!inspectExecBuffer || !inspectExecBuffer.v2) return;
+  inspectExecBuffer.stopped = !inspectExecBuffer.stopped;
+  if (inspectExecBuffer.stopped) {
+    inspectExecBuffer.rows.forEach(r => { r.val = ''; r.chk = ''; r.note = ''; });
+  }
+  const list = document.getElementById('inspect-items-list');
+  if (list) list.innerHTML = renderInspectV2Body();
+}
+
+async function submitInspectV2() {
+  const buf = inspectExecBuffer;
+  const eq = loadEquipments().find(e => e.id === buf.equipmentId);
+  if (!eq) { showToast('设备未找到'); return; }
+  const now = Date.now();
+  const vals = {}, notes = {};
+  let abn = [];
+  if (!buf.stopped) {
+    const missNum = buf.rows.filter(r => r.t === 'num' && (String(r.val).trim() === '' || isNaN(Number(r.val))));
+    if (missNum.length > 0) { showToast(`还有 ${missNum.length} 个数值未填（或不是数字）：${missNum[0].key}`); return; }
+    const missChk = buf.rows.filter(r => r.t === 'chk' && !r.chk);
+    if (missChk.length > 0) { showToast(`还有 ${missChk.length} 项未判定：${missChk[0].key}`); return; }
+    buf.rows.forEach(r => {
+      if (r.t === 'num') {
+        vals[r.key] = Number(r.val);
+        if (metricOutOfRange(r, r.val)) abn.push(r.key);
+      } else {
+        vals[r.key] = r.chk === 'ok' ? 1 : 0;
+        if (r.chk === 'abn') abn.push(r.key);
+      }
+      if ((r.note || '').trim()) notes[r.key] = r.note.trim();
+    });
+    const abnNoNote = abn.filter(k => !notes[k]);
+    if (abnNoNote.length > 0) { showToast(`有 ${abnNoNote.length} 项异常/超限未填说明：${abnNoNote[0]}`); return; }
+  }
+  const user = getCurrentUser();
+  const dayEntry = {
+    at: now,
+    by: (user && user.name) || '',
+    byId: (user && user.empno) || '',
+    stopped: !!buf.stopped,
+    v: buf.stopped ? {} : vals,
+    abn: buf.stopped ? [] : abn,
+    notes: buf.stopped ? {} : notes,
+    note: buf.overallNote || '',
+  };
+  try {
+    await cloudSaveInspectDay(eq, buf.tplKey, dayEntry);
+    // 有异常时另写一条 inspecthistory（"异常"tab / 30 天窗口沿用旧通道；src:'v2' 供历史 tab 去重）
+    if (!buf.stopped && abn.length > 0) {
+      await cloudSaveInspectHistory({
+        id: 'ih_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        src: 'v2',
+        equipmentId: buf.equipmentId,
+        equipmentTag: buf.equipmentTag,
+        equipmentName: buf.equipmentName,
+        templateId: buf.templateId,
+        templateName: buf.templateName,
+        inspectAt: now,
+        inspectorId: (user && user.empno) || '',
+        inspectorName: (user && user.name) || '',
+        items: abn.map(k => ({ name: k, status: 'abnormal', note: notes[k] || '', value: vals[k] })),
+        stopped: false,
+        abnormalCount: abn.length,
+        abnormalSummary: abn.map(k => `[${k}] ${notes[k] || ''}`).join(' / '),
+        overallNote: buf.overallNote || '',
+        createdAt: now,
+      });
+    }
+    showToast(buf.stopped ? '已记录·设备停机未运行' : (abn.length > 0 ? `已保存（${abn.length} 项异常）` : '已保存，全部正常'));
+    inspectExecBuffer = null;
+    currentInspectEqId = null;
+    switchModule('inspect');
+  } catch (err) {
+    showToast('保存失败：' + err.message);
+  }
+}
+
 function setInspectItemStatus(idx, status) {
   if (!inspectExecBuffer || !inspectExecBuffer.items[idx]) return;
   // 如果已经勾"停机"，普通项不能再点
@@ -6582,6 +7315,7 @@ function toggleInspectStopped(idx) {
 
 async function submitInspect() {
   if (!inspectExecBuffer) return;
+  if (inspectExecBuffer.v2) return submitInspectV2();
   const items = inspectExecBuffer.items;
   const firstItem = items[0];
   const isStopped = firstItem && firstItem.name === '设备停机未运行' && firstItem.status === 'stopped';
@@ -6640,6 +7374,253 @@ function cancelInspect() {
   inspectExecBuffer = null;
   currentInspectEqId = null;
   switchModule('inspect');
+}
+
+/* ==========================================================
+   点检趋势页 + 导出 (2026-07-04 v2 数值点检)
+   ========================================================== */
+let currentTrendEqId = null;
+
+function openInspectTrend(eqId) {
+  const eq = loadEquipments().find(e => e.id === eqId);
+  if (!eq) { showToast('设备未找到'); return; }
+  const tpl = getInspectTemplateForEquipment(eq);
+  if (!tpl || tpl.v !== 2) { showToast('该设备不是数值点检设备'); return; }
+  const nums = tplFlatMetrics(tpl).filter(m => m.t === 'num');
+  if (!nums.length) { showToast('该模板没有数值测点'); return; }
+  currentTrendEqId = eqId;
+  renderInspectTrend();
+  switchModule('inspect-trend');
+}
+
+function closeInspectTrend() { switchModule('inspect'); }
+
+/* 近两个月缓存里取某设备某测点的数值序列 [{t, v, abn}]（停机日跳过） */
+function getTrendSeries(eqId, metricKey) {
+  const pts = [];
+  inspectMonthlyCache.forEach(md => {
+    if (md.equipmentId !== eqId) return;
+    Object.values(md.days || {}).forEach(dv => {
+      if (!dv || !dv.at || dv.stopped) return;
+      const val = (dv.v || {})[metricKey];
+      if (typeof val !== 'number') return;
+      pts.push({ t: dv.at, v: val, abn: (dv.abn || []).indexOf(metricKey) >= 0 });
+    });
+  });
+  pts.sort((a, b) => a.t - b.t);
+  return pts;
+}
+
+/* 点击数据点看数值：每张图的点位序列注册在这里（chartId → {pts, xs, ys, u}） */
+let _trendPtsReg = {};
+function insTrendPtClick(chartId, i) {
+  const reg = _trendPtsReg[chartId];
+  if (!reg) return;
+  const p = reg.pts[i];
+  const d = new Date(p.t);
+  const tip = document.getElementById(chartId + '-tip');
+  const dot = document.getElementById(chartId + '-tipdot');
+  if (!tip || !dot) return;
+  tip.textContent = (d.getMonth() + 1) + '-' + d.getDate() + ' · ' + p.v + (reg.u || '') + (p.abn ? ' 超限' : '');
+  tip.setAttribute('fill', p.abn ? '#B85C5C' : 'var(--g-deep)');
+  tip.setAttribute('visibility', 'visible');
+  dot.setAttribute('cx', reg.xs[i]);
+  dot.setAttribute('cy', reg.ys[i]);
+  dot.setAttribute('stroke', p.abn ? '#B85C5C' : 'var(--g-forest)');
+  dot.setAttribute('visibility', 'visible');
+}
+
+function renderTrendChartSVG(pts, metric, height, chartId) {
+  if (!pts.length) return '';
+  const W = 640, H = height || 260, L = 40, R = 12, T = 16, B = 22;
+  let hi = Math.max(...pts.map(p => p.v));
+  if (metric.max != null) hi = Math.max(hi, metric.max);
+  if (metric.min != null) hi = Math.max(hi, metric.min);
+  if (hi <= 0) hi = 1;
+  hi = hi * 1.22;
+  const px = i => pts.length === 1 ? (L + (W - L - R) / 2) : (L + (W - L - R) * i / (pts.length - 1));
+  const py = v => T + (H - T - B) * (1 - v / hi);
+  const fmtD = ts => { const d = new Date(ts); return (d.getMonth() + 1) + '-' + d.getDate(); };
+  const clampX = x => Math.min(Math.max(x, L + 16), W - R - 16);
+  const xs = pts.map((p, i) => +px(i).toFixed(1));
+  const ys = pts.map(p => +py(p.v).toFixed(1));
+  if (chartId) _trendPtsReg[chartId] = { pts, xs, ys, u: metric.u || '' };
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">`;
+  s += `<line x1="${L}" y1="${T}" x2="${L}" y2="${H - B}" stroke="var(--line)" stroke-width="1"/>`;
+  s += `<line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)" stroke-width="1"/>`;
+  s += `<text x="${L - 5}" y="${H - B + 4}" text-anchor="end" font-size="10" fill="var(--subtle)" font-family="var(--font-mono)">0</text>`;
+  if (metric.max != null) {
+    const ym = py(metric.max);
+    s += `<line x1="${L}" y1="${ym.toFixed(1)}" x2="${W - R}" y2="${ym.toFixed(1)}" stroke="#B85C5C" stroke-width="1" stroke-dasharray="5 4"/>`;
+    s += `<text x="${W - R}" y="${(ym - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#B85C5C">上限 ${metric.max}</text>`;
+  }
+  if (metric.min != null) {
+    const ym = py(metric.min);
+    s += `<line x1="${L}" y1="${ym.toFixed(1)}" x2="${W - R}" y2="${ym.toFixed(1)}" stroke="#C77700" stroke-width="1" stroke-dasharray="5 4"/>`;
+    s += `<text x="${W - R}" y="${(ym - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#C77700">下限 ${metric.min}</text>`;
+  }
+  // 平滑曲线（Catmull-Rom → 三次贝塞尔，2026-07-05 用户要求圆滑样式）
+  if (xs.length > 1) {
+    let d = 'M' + xs[0] + ',' + ys[0];
+    for (let i = 0; i < xs.length - 1; i++) {
+      const x0 = xs[i - 1] != null ? xs[i - 1] : xs[i], y0 = ys[i - 1] != null ? ys[i - 1] : ys[i];
+      const x1 = xs[i], y1 = ys[i], x2 = xs[i + 1], y2 = ys[i + 1];
+      const x3 = xs[i + 2] != null ? xs[i + 2] : x2, y3 = ys[i + 2] != null ? ys[i + 2] : y2;
+      d += 'C' + (x1 + (x2 - x0) / 6).toFixed(1) + ',' + (y1 + (y2 - y0) / 6).toFixed(1)
+         + ' ' + (x2 - (x3 - x1) / 6).toFixed(1) + ',' + (y2 - (y3 - y1) / 6).toFixed(1)
+         + ' ' + x2 + ',' + y2;
+    }
+    s += `<path d="${d}" fill="none" stroke="var(--g-forest)" stroke-width="1.3" stroke-linecap="round"/>`;
+  }
+  // 最高/最低值标注（取首个出现位置；同一点只标一次）
+  let iMax = 0, iMin = 0;
+  pts.forEach((p, i) => { if (p.v > pts[iMax].v) iMax = i; if (p.v < pts[iMin].v) iMin = i; });
+  pts.forEach((p, i) => {
+    s += `<circle cx="${xs[i]}" cy="${ys[i]}" r="${p.abn ? 3.2 : 2}" fill="${p.abn ? '#B85C5C' : 'var(--g-forest)'}"/>`;
+    if (chartId) s += `<circle cx="${xs[i]}" cy="${ys[i]}" r="11" fill="transparent" style="cursor:pointer;" onclick="insTrendPtClick('${chartId}',${i})"/>`;
+  });
+  s += `<text x="${clampX(xs[iMax])}" y="${(ys[iMax] - 7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="600" fill="${pts[iMax].abn ? '#B85C5C' : 'var(--g-deep)'}" font-family="var(--font-mono)">高 ${pts[iMax].v}</text>`;
+  if (iMin !== iMax) {
+    s += `<text x="${clampX(xs[iMin])}" y="${Math.min(ys[iMin] + 15, H - B - 3).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--font-mono)">低 ${pts[iMin].v}</text>`;
+  }
+  s += `<text x="${xs[0]}" y="${H - B + 14}" text-anchor="start" font-size="10" fill="var(--subtle)" font-family="var(--font-mono)">${fmtD(pts[0].t)}</text>`;
+  if (pts.length > 1) s += `<text x="${xs[pts.length - 1]}" y="${H - B + 14}" text-anchor="end" font-size="10" fill="var(--subtle)" font-family="var(--font-mono)">${fmtD(pts[pts.length - 1].t)}</text>`;
+  if (chartId) {
+    s += `<circle id="${chartId}-tipdot" r="5.5" fill="none" stroke-width="2" visibility="hidden" pointer-events="none"/>`;
+    s += `<text id="${chartId}-tip" x="${L + 6}" y="${T - 3}" font-size="12" font-weight="600" font-family="var(--font-mono)" visibility="hidden" pointer-events="none"></text>`;
+  }
+  s += '</svg>';
+  return s;
+}
+
+function renderInspectTrend() {
+  const eq = loadEquipments().find(e => e.id === currentTrendEqId);
+  if (!eq) return;
+  const tpl = getInspectTemplateForEquipment(eq);
+  if (!tpl || tpl.v !== 2) return;
+  const nums = tplFlatMetrics(tpl).filter(m => m.t === 'num');
+  const hero = document.getElementById('inspect-trend-hero');
+  if (hero) {
+    hero.innerHTML = `
+      <div onclick="closeInspectTrend()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
+      <div class="lube-detail-hero-tag">${eq.tag}</div>
+      <h2 class="lube-detail-hero-name">${eq.name || ''} · 点检趋势</h2>
+      <div class="lube-detail-hero-point">${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · ${nums.length} 个数值测点 · 近两个月</div>`;
+  }
+  const body = document.getElementById('inspect-trend-body');
+  if (!body) return;
+  // 全部测点按 部件 分组卡平铺，点数据点可看当天数值，图上标最高/最低（2026-07-05 用户要求）
+  _trendPtsReg = {};
+  let html = `<button class="edit-btn edit-btn-save export-btn" style="width:100%;margin-bottom:14px;" onclick="exportInspectDeviceMonth()">↓ 导出本台设备月度点检表（Excel）</button>`;
+  let anyData = false;
+  let chartSeq = 0;
+  // 按部件归组
+  const groups = [];
+  nums.forEach(m => {
+    let g = groups[groups.length - 1];
+    if (!g || g.name !== m.g) { g = { name: m.g, ms: [] }; groups.push(g); }
+    g.ms.push(m);
+  });
+  groups.forEach(g => {
+    html += `<div class="ins-trend-group">${g.name}</div>`;
+    g.ms.forEach(m => {
+      const pts = getTrendSeries(eq.id, m.key);
+      if (pts.length) anyData = true;
+      const abnCount = pts.filter(p => p.abn).length;
+      const avg = pts.length ? Math.round(pts.reduce((sum, p) => sum + p.v, 0) / pts.length * 10) / 10 : null;
+      const lastV = pts.length ? pts[pts.length - 1].v : null;
+      const statTxt = pts.length
+        ? `最新 <b style="color:${abnCount && pts[pts.length - 1].abn ? '#B85C5C' : 'var(--g-deep)'};">${lastV}</b>${m.u ? m.u : ''} · 均值 ${avg}${abnCount > 0 ? ` · <span style="color:#B85C5C;">超限 ${abnCount} 次</span>` : ''}`
+        : '暂无数据';
+      const chartId = 'tc' + (chartSeq++);
+      html += `
+        <div class="ins-trend-card">
+          <div class="ins-trend-head">
+            <span class="ins-trend-name">${m.p ? m.p + ' · ' : ''}${m.n}</span>
+            <span class="ins-trend-stat">${statTxt}</span>
+          </div>
+          ${pts.length ? renderTrendChartSVG(pts, m, 150, chartId) : ''}
+        </div>`;
+    });
+  });
+  if (!anyData) {
+    html += '<div style="padding:24px 4px;color:var(--muted);font-size:13px;text-align:center;">该设备近两个月还没有数值点检数据，登记后这里会自动出趋势</div>';
+  }
+  body.innerHTML = html;
+}
+
+/* 导出：全厂当月数值点检（明细长表 + 异常汇总，给领导做分析） */
+async function exportInspectMonth() {
+  const cur = inspectMonthKey(Date.now());
+  const docs = inspectMonthlyCache.filter(m => m.month === cur);
+  if (!docs.length) { showToast('本月还没有数值点检数据'); return; }
+  const eqMap = {};
+  loadEquipments().forEach(e => { eqMap[e.id] = e; });
+  const detail = [['日期', '区域', '位号', '设备名称', '等级', '部件', '测点', '指标', '数值/判定', '单位', '标准值', '超限/异常', '说明', '点检人']];
+  const abnRows = [['日期', '位号', '设备名称', '异常项', '实测值', '说明', '点检人']];
+  docs.sort((a, b) => (a.equipmentTag || '').localeCompare(b.equipmentTag || '', 'en', { numeric: true }));
+  docs.forEach(md => {
+    const eq = eqMap[md.equipmentId] || {};
+    const tpl = SEED_INSPECTION_TEMPLATES.find(t => t.key === md.tplKey);
+    const fm = tpl ? tplFlatMetrics(tpl) : [];
+    Object.keys(md.days || {}).map(Number).sort((a, b) => a - b).forEach(d => {
+      const dv = md.days[String(d)];
+      if (!dv) return;
+      const dateStr = md.month + '-' + String(d).padStart(2, '0');
+      if (dv.stopped) {
+        detail.push([dateStr, eq.area || '', md.equipmentTag, md.equipmentName, eq.abcClass || '', '', '', '设备停机未运行', '停机', '', '', '', dv.note || '', dv.by || '']);
+        return;
+      }
+      const seen = {};
+      const pushRow = (m, k) => {
+        const val = (dv.v || {})[k];
+        if (val == null) return;
+        seen[k] = true;
+        const isAbn = (dv.abn || []).indexOf(k) >= 0;
+        detail.push([dateStr, eq.area || '', md.equipmentTag, md.equipmentName, eq.abcClass || '',
+          m ? m.g : (k.split('·')[0] || ''), m ? m.p : '', m ? m.n : k,
+          (m && m.t === 'chk') ? (val ? '正常' : '异常') : val,
+          m ? (m.u || '') : '', m ? (m.std || '') : '', isAbn ? '是' : '', (dv.notes || {})[k] || '', dv.by || '']);
+      };
+      fm.forEach(m => pushRow(m, m.key));
+      Object.keys(dv.v || {}).forEach(k => { if (!seen[k]) pushRow(null, k); });
+      (dv.abn || []).forEach(k => abnRows.push([dateStr, md.equipmentTag, md.equipmentName, k, (dv.v || {})[k], (dv.notes || {})[k] || '', dv.by || '']));
+    });
+  });
+  await _exportSheets([['点检明细 ' + cur, detail], ['异常汇总 ' + cur, abnRows]], `数值点检_${cur}.xlsx`);
+}
+
+/* 导出：单台设备的月度点检表（纸质样式：行=日期，列=测点；近两个月各一个 sheet） */
+async function exportInspectDeviceMonth() {
+  const eq = loadEquipments().find(e => e.id === currentTrendEqId);
+  if (!eq) return;
+  const tpl = getInspectTemplateForEquipment(eq);
+  const fm = tplFlatMetrics(tpl);
+  const docs = inspectMonthlyCache.filter(m => m.equipmentId === eq.id)
+    .sort((a, b) => (a.month < b.month ? 1 : -1));
+  if (!docs.length) { showToast('该设备近两个月没有数值点检数据'); return; }
+  const sheets = docs.map(md => {
+    const rows = [
+      ['日期', ...fm.map(m => m.key + (m.u ? '（' + m.u + '）' : '')), '停机', '总体备注', '点检人'],
+      ['标准值', ...fm.map(m => m.std || ''), '', '', ''],
+    ];
+    Object.keys(md.days || {}).map(Number).sort((a, b) => a - b).forEach(d => {
+      const dv = md.days[String(d)];
+      if (!dv) return;
+      rows.push([
+        md.month + '-' + String(d).padStart(2, '0'),
+        ...fm.map(m => {
+          if (dv.stopped) return '停机';
+          const val = (dv.v || {})[m.key];
+          if (val == null) return '';
+          return m.t === 'chk' ? (val ? '√' : '× 异常') : val;
+        }),
+        dv.stopped ? '是' : '', dv.note || '', dv.by || '',
+      ]);
+    });
+    return [md.month, rows];
+  });
+  await _exportSheets(sheets, `点检表_${eq.tag}_${docs[0].month}.xlsx`);
 }
 
 
@@ -7679,10 +8660,18 @@ window.renderInspectOverview = renderInspectOverview;
 window.openInspectDetail = openInspectDetail;
 window.setInspectItemStatus = setInspectItemStatus;
 window.toggleInspectStopped = toggleInspectStopped;
+window.setInsVal = setInsVal;
+window.setInsChk = setInsChk;
+window.toggleInsStopped = toggleInsStopped;
 window.submitInspect = submitInspect;
 window.cancelInspect = cancelInspect;
 window.toggleInspectFilter = toggleInspectFilter;
 window.hardDeleteInspectHistory = hardDeleteInspectHistory;
+window.openInspectTrend = openInspectTrend;
+window.closeInspectTrend = closeInspectTrend;
+window.insTrendPtClick = insTrendPtClick;
+window.exportInspectMonth = exportInspectMonth;
+window.exportInspectDeviceMonth = exportInspectDeviceMonth;
 window.onEmpnoInput = onEmpnoInput;
 window.attemptLogin = attemptLogin;
 window.showSheet = showSheet;
@@ -7811,6 +8800,8 @@ async function init() {
     await addAreaLubePointsV8IfNeeded();
     // 2026-04-29：V11 巡检模板初始化（17 个）
     await seedInspectionTemplatesIfEmpty();
+    // 2026-07-04：巡检模板升级 v2 数值点检结构（21 个，预览模式跳过）
+    await applyInspectTplV2IfNeeded();
     // 2026-06-21：二级库种子（57 条垫片现场库存）
     await seedSecondStockIfEmpty();
 
@@ -7822,6 +8813,7 @@ async function init() {
     subscribeLubeHistory();
     subscribeInspectTemplates();
     subscribeInspectHistory();
+    subscribeInspectMonthly();
     subscribeSecondStock();
     subscribeSecondStockHistory();
 

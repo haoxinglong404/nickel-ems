@@ -75,13 +75,18 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    // 巡检模板（17 个）
+    // 巡检模板（32 个：24 个 v2 数值点检 + 8 个 v1 勾选）
     match /inspecttemplates/{id} {
       allow read, write: if isSignedIn();
     }
 
     // 巡检执行记录
     match /inspecthistory/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // 月度数值点检表（一台设备一月一文档）· 2026-07-04
+    match /inspectmonthly/{id} {
       allow read, write: if isSignedIn();
     }
 
