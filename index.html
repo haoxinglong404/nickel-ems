@@ -3645,51 +3645,10 @@ async function cloudDeleteMaintenance(id) {
   }
 }
 
-/* 预览演示数据：203-PE-PP-106A 高压釜给料泵的零件更换履历（仅 ?preview=1 注入内存，不写云端）
-   剧情：单向阀 GEHO 原厂 vs 国产件寿命对比、隔膜 3 次更换、隔热组件 2 次更换 —— 演示零件时间线 */
-let _mlDemoCache = null;
-function previewMlDemoRecords() {
-  if (!PREVIEW_MODE) return [];
-  if (_mlDemoCache) return _mlDemoCache;
-  const eq = loadEquipments().find(e => e.tag === '203-PE-PP-106A');
-  const mk = (date, category, faultParts, cause, measures, spares, who) => ({
-    id: 'ml_demo_' + date.replace(/-/g, ''),
-    equipmentId: (eq && eq.id) || '', equipmentTag: '203-PE-PP-106A', equipmentName: '高压釜给料泵',
-    category, repairDate: date, faultParts, faultCause: cause, measures,
-    spareParts: spares, repairerName: who, note: '预览演示数据（上线后不会出现）',
-    createdAt: Date.parse(date + 'T10:00:00'), createdBy: '', createdByName: who, deleted: false,
-  });
-  _mlDemoCache = [
-    // —— 单向阀：原厂 vs 国产寿命对比 ——
-    mk('2026-02-10', 'planned', ['单向阀'], '解体检查，出口单向阀阀座轻微磨损', '更换出口单向阀总成（原厂件）',
-      [{ name: 'GEHO 原厂单向阀总成', qty: 1, unit: '套' }], '唐仕彬'),
-    mk('2026-04-15', 'planned', ['单向阀'], '例行更换，试用国产替代件对比寿命', '更换出口单向阀总成（国产试用）',
-      [{ name: '国产单向阀总成（襄阳五二五）', qty: 1, unit: '套' }], '陆壮'),
-    mk('2026-05-06', 'fault', ['单向阀'], '国产单向阀阀芯冲蚀严重，出口压力波动、流量下降', '换回原厂单向阀总成',
-      [{ name: 'GEHO 原厂单向阀总成', qty: 1, unit: '套' }], '唐仕彬'),
-    mk('2026-06-18', 'planned', ['单向阀'], '例行更换单向阀', '更换出口单向阀阀芯、阀座',
-      [{ name: 'GEHO 原厂单向阀阀芯', qty: 2, unit: '个' }, { name: 'GEHO 原厂阀座', qty: 2, unit: '个' }], '刘正威'),
-    // —— 隔膜 ——
-    mk('2026-03-20', 'fault', ['隔膜'], '2# 隔膜破损，隔膜腔窜液报警', '更换 2# 隔膜，清洗隔膜腔',
-      [{ name: 'GEHO 原厂隔膜', qty: 1, unit: '张' }], '唐仕彬'),
-    mk('2026-05-12', 'planned', ['隔膜'], '计划检修更换隔膜（试用国产件）', '更换 2# 隔膜',
-      [{ name: '国产隔膜（衡水橡塑）', qty: 1, unit: '张' }], '陆壮'),
-    mk('2026-06-24', 'fault', ['隔膜'], '国产隔膜鼓包变形，行程异常', '换回原厂隔膜',
-      [{ name: 'GEHO 原厂隔膜', qty: 1, unit: '张' }], '唐仕彬'),
-    // —— 隔热组件 ——
-    mk('2026-04-08', 'planned', ['隔热段'], '隔热段温度偏高，隔热组件老化', '更换隔热套组件',
-      [{ name: '隔热套组件（原厂）', qty: 1, unit: '套' }], '刘正威'),
-    mk('2026-06-28', 'fault', ['隔热段'], '3# 隔热段温度异常（86℃，比 1#/2# 高约 18℃）', '更换 3# 隔热套组件',
-      [{ name: '隔热套组件（国产定制）', qty: 1, unit: '套' }], '唐仕彬'),
-  ];
-  return _mlDemoCache;
-}
-
 function subscribeMaintenance() {
   if (mlUnsub) mlUnsub();
   mlUnsub = onSnapshot(collection(db, 'maintenancelogs'), (snap) => {
     mlCache = snap.docs.map(d => d.data());
-    if (PREVIEW_MODE) mlCache = mlCache.concat(previewMlDemoRecords());  // 预览演示数据（不写云端）
     mlCache.sort((a, b) => mlSortKey(b) - mlSortKey(a));
     const mod = document.querySelector('.module[data-module="maintenance"]');
     if (mod && mod.classList.contains('active')) renderMaintenanceList();
