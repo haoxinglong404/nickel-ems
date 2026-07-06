@@ -5557,10 +5557,12 @@ function getInspectCycleDays(eq, tpl) {
   return (tpl && tpl.cycleDays) || 30;
 }
 
-/* 工具：计算下次巡检时间 */
+/* 工具：计算下次巡检时间 —— 按自然日 + 早上 6 点更新（2026-07-07 用户定）
+   例：A 类今天任何时间巡检 → 明天 06:00 重新出现在待巡检；C 类 → 7 天后 06:00 */
 function calcNextInspectAt(lastInspectAt, cycleDays) {
   if (!lastInspectAt) return 0; // 0 = 未初始巡检
-  return lastInspectAt + cycleDays * 24 * 3600 * 1000;
+  const d = new Date(lastInspectAt);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + cycleDays, 6, 0, 0).getTime();
 }
 
 /* 工具：巡检状态颜色 */
