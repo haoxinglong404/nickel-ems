@@ -7285,8 +7285,9 @@ async function hardDeleteInspectHistory(historyId) {
 
 function formatRelTime(ts) {
   if (!ts) return '—';
-  const diff = Date.now() - ts;
-  const day = Math.floor(diff / (24 * 3600 * 1000));
+  // 按自然日算（2026-07-07 修：昨天下午的记录今天上午看不满 24h 曾误显示"今天"）
+  const now = new Date(), d = new Date(ts);
+  const day = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / (24 * 3600 * 1000));
   if (day < 0) return '未来';
   if (day === 0) return '今天';
   if (day === 1) return '昨天';
