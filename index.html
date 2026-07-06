@@ -1322,6 +1322,11 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   }
   .ins-trend-name { font-size: 13px; font-weight: 500; color: var(--ink); }
   .ins-trend-stat { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  /* 勾选类测点：每日正常/异常点条 */
+  .ins-chk-strip { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .ins-chk-strip .d { width: 14px; height: 14px; border-radius: 4px; background: var(--g-primary); cursor: pointer; flex: 0 0 auto; }
+  .ins-chk-strip .d.abn { background: #B85C5C; }
+  .ins-chk-range { font-size: 10px; color: var(--subtle); font-family: var(--font-mono); margin-top: 6px; }
 
   /* 巡检概览总结 */
   .ins-summary-bar {
@@ -2964,6 +2969,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
       <div class="wo-filter-bar" id="inspect-filter-row"></div>
+      <div class="wo-filter-bar" id="inspect-class-row"></div>
       <div class="eq-list-meta">
         <div class="eq-list-count" id="inspect-list-count">—</div>
       </div>
@@ -3360,6 +3366,7 @@ function getInspectTplKeyForEq(eq) {
   const nm = eq.name || '';
   const t = eq.type || '';
   // —— 不做点检 ——
+  if (t === '压力容器' || t === '贮槽' || t === '非标静设备') return null;  // 静设备全部不做（2026-07-06 用户定：设备太多工作量太大）
   if (t === '起重机') return null;                                        // 电动单梁/旋转吊臂/316-1/218 全部暂不做
   if (/潜水搅拌/.test(nm)) return null;                                   // 218 潜水搅拌
   if (/排泥泵|污水池潜水泵|集水坑潜水泵/.test(nm)) return null;            // 潜水泵不做
@@ -3388,8 +3395,6 @@ function getInspectTplKeyForEq(eq) {
   if (t === '地坑泵') return 'pit_pump';    // 潜水类已在上面 return null
   if (t === '密封系统') return nm.indexOf('补液站') >= 0 ? 'makeup_station' : 'sealing_system';
   if (t === '空压机') return nm.indexOf('给料泵用空压机') >= 0 ? 'compressor_pump' : 'compressor';
-  if (t === '压力容器') return nm === '高压釜' ? 'pv_no_gauge' : 'pv_basic';  // 闪蒸槽/预热器/接收罐/储气罐全部不看安全阀+表计
-  if (t === '非标静设备') return nm.indexOf('尾气净化') >= 0 ? 'ns_no_vib' : 'non_standard';
   return INSPECT_TYPE_TO_TPL[t] || null;
 }
 const INSPECT_MARKER = 'inspect_init_v11_20260429';
@@ -7009,6 +7014,7 @@ let inspectFilter = 'todo';        // 'todo' / 'abnormal' / 'history'
 let inspectSearchText = '';
 let inspectAreaFilter = '';        // '' = 全部
 let inspectTypeFilter = '';        // '' = 全部
+let inspectClassFilter = '';       // '' = 全部等级 / A / B / C
 
 function switchInspectTab(tab) {
   inspectFilter = tab;
@@ -7028,14 +7034,16 @@ function clearInspectSearch() {
 function toggleInspectFilter(kind, val) {
   if (kind === 'area') inspectAreaFilter = (inspectAreaFilter === val) ? '' : val;
   if (kind === 'type') inspectTypeFilter = (inspectTypeFilter === val) ? '' : val;
+  if (kind === 'class') inspectClassFilter = (inspectClassFilter === val) ? '' : val;
   renderInspectOverview();
 }
 
 function renderInspectFilterRow() {
   // 仅 todo tab 显示筛选条；其他 tab 不需要（按 inspectAt 时间排）
   const row = document.getElementById('inspect-filter-row');
+  const classRow = document.getElementById('inspect-class-row');
   if (!row) return;
-  if (inspectFilter !== 'todo') { row.innerHTML = ''; return; }
+  if (inspectFilter !== 'todo') { row.innerHTML = ''; if (classRow) classRow.innerHTML = ''; return; }
 
   const eqs = loadEquipments().filter(eq => getInspectTplKeyForEq(eq));
   const areas = {};  eqs.forEach(e => { if (e.area) areas[e.area] = (areas[e.area] || 0) + 1; });
@@ -7059,6 +7067,16 @@ function renderInspectFilterRow() {
     html += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('type','${k}')">${k}<span style="margin-left:4px;opacity:.6;font-size:11px;">${v}</span></button>`;
   });
   row.innerHTML = html;
+  // 等级筛选行（A/B/C，独立一行，可与区域/类型叠加）
+  if (classRow) {
+    const classes = {};  eqs.forEach(e => { if (e.abcClass) classes[e.abcClass] = (classes[e.abcClass] || 0) + 1; });
+    let chtml = `<button class="eq-filter-btn${inspectClassFilter === '' ? ' active' : ''}" onclick="toggleInspectFilter('class','')">全部等级<span style="margin-left:4px;opacity:.6;font-size:11px;">${eqs.length}</span></button>`;
+    ['A', 'B', 'C'].forEach(k => {
+      const active = inspectClassFilter === k ? ' active' : '';
+      chtml += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('class','${k}')">${k} 类<span style="margin-left:4px;opacity:.6;font-size:11px;">${classes[k] || 0}</span></button>`;
+    });
+    classRow.innerHTML = chtml;
+  }
 }
 
 function renderInspectOverview() {
@@ -7132,6 +7150,7 @@ function renderInspectOverview() {
   // 应用区域/类型筛选
   if (inspectAreaFilter) cards = cards.filter(eq => eq.area === inspectAreaFilter);
   if (inspectTypeFilter) cards = cards.filter(eq => eq.type === inspectTypeFilter);
+  if (inspectClassFilter) cards = cards.filter(eq => eq.abcClass === inspectClassFilter);
   if (inspectSearchText) {
     cards = cards.filter(eq => {
       const hay = (eq.tag + ' ' + (eq.name || '') + ' ' + (eq.spec || '')).toLowerCase();
@@ -7153,7 +7172,7 @@ function renderInspectOverview() {
   });
   countEl.textContent = `共 ${cards.length} 台设备`;
   let emptyMsg = '没有匹配的设备';
-  if (!cards.length && !inspectSearchText && !inspectAreaFilter && !inspectTypeFilter) {
+  if (!cards.length && !inspectSearchText && !inspectAreaFilter && !inspectTypeFilter && !inspectClassFilter) {
     emptyMsg = '🎉 全部巡检已完成';
   }
   container.innerHTML = cards.length ? cards.map(renderInspectCard).join('') : emptyHtml(emptyMsg);
@@ -7663,6 +7682,22 @@ function getTrendSeries(eqId, metricKey) {
   return pts;
 }
 
+/* 近两个月缓存里取某设备某勾选测点的判定序列 [{t, ok, note}]（停机日跳过） */
+function getTrendChkSeries(eqId, metricKey) {
+  const pts = [];
+  inspectMonthlyCache.forEach(md => {
+    if (md.equipmentId !== eqId) return;
+    Object.values(md.days || {}).forEach(dv => {
+      if (!dv || !dv.at || dv.stopped) return;
+      const val = (dv.v || {})[metricKey];
+      if (val == null) return;
+      pts.push({ t: dv.at, ok: !!val, note: (dv.notes || {})[metricKey] || '' });
+    });
+  });
+  pts.sort((a, b) => a.t - b.t);
+  return pts;
+}
+
 /* 点击数据点看数值：每张图的点位序列注册在这里（chartId → {pts, xs, ys, u}） */
 let _trendPtsReg = {};
 function insTrendPtClick(chartId, i) {
@@ -7750,14 +7785,15 @@ function renderInspectTrend() {
   if (!eq) return;
   const tpl = getInspectTemplateForEquipment(eq);
   if (!tpl || tpl.v !== 2) return;
-  const nums = tplFlatMetrics(tpl).filter(m => m.t === 'num');
+  const allMetrics = tplFlatMetrics(tpl);   // 数值 + 勾选全显示（2026-07-06 用户要求）
+  const numCount = allMetrics.filter(m => m.t === 'num').length;
   const hero = document.getElementById('inspect-trend-hero');
   if (hero) {
     hero.innerHTML = `
       <div onclick="closeInspectTrend()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
       <div class="lube-detail-hero-tag">${eq.tag}</div>
       <h2 class="lube-detail-hero-name">${eq.name || ''} · 点检趋势</h2>
-      <div class="lube-detail-hero-point">${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · ${nums.length} 个数值测点 · 近两个月</div>`;
+      <div class="lube-detail-hero-point">${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · ${allMetrics.length} 个测点（数值 ${numCount} + 勾选 ${allMetrics.length - numCount}）· 近两个月</div>`;
   }
   const body = document.getElementById('inspect-trend-body');
   if (!body) return;
@@ -7768,30 +7804,49 @@ function renderInspectTrend() {
   let chartSeq = 0;
   // 按部件归组
   const groups = [];
-  nums.forEach(m => {
+  allMetrics.forEach(m => {
     let g = groups[groups.length - 1];
     if (!g || g.name !== m.g) { g = { name: m.g, ms: [] }; groups.push(g); }
     g.ms.push(m);
   });
+  const fmtD = ts => { const d = new Date(ts); return (d.getMonth() + 1) + '-' + d.getDate(); };
   groups.forEach(g => {
     html += `<div class="ins-trend-group">${g.name}</div>`;
     g.ms.forEach(m => {
-      const pts = getTrendSeries(eq.id, m.key);
-      if (pts.length) anyData = true;
-      const abnCount = pts.filter(p => p.abn).length;
-      const avg = pts.length ? Math.round(pts.reduce((sum, p) => sum + p.v, 0) / pts.length * 10) / 10 : null;
-      const lastV = pts.length ? pts[pts.length - 1].v : null;
-      const statTxt = pts.length
-        ? `最新 <b style="color:${abnCount && pts[pts.length - 1].abn ? '#B85C5C' : 'var(--g-deep)'};">${lastV}</b>${m.u ? m.u : ''} · 均值 ${avg}${abnCount > 0 ? ` · <span style="color:#B85C5C;">超限 ${abnCount} 次</span>` : ''}`
-        : '暂无数据';
-      const chartId = 'tc' + (chartSeq++);
+      let statTxt, chartHtml = '';
+      if (m.t === 'num') {
+        const pts = getTrendSeries(eq.id, m.key);
+        if (pts.length) anyData = true;
+        const abnCount = pts.filter(p => p.abn).length;
+        const avg = pts.length ? Math.round(pts.reduce((sum, p) => sum + p.v, 0) / pts.length * 10) / 10 : null;
+        const lastV = pts.length ? pts[pts.length - 1].v : null;
+        statTxt = pts.length
+          ? `最新 <b style="color:${abnCount && pts[pts.length - 1].abn ? '#B85C5C' : 'var(--g-deep)'};">${lastV}</b>${m.u ? m.u : ''} · 均值 ${avg}${abnCount > 0 ? ` · <span style="color:#B85C5C;">超限 ${abnCount} 次</span>` : ''}`
+          : '暂无数据';
+        if (pts.length) chartHtml = renderTrendChartSVG(pts, m, 150, 'tc' + (chartSeq++));
+      } else {
+        // 勾选类：每日正常/异常点条（绿=正常 红=异常，点小方块看当天判定）
+        const pts = getTrendChkSeries(eq.id, m.key);
+        if (pts.length) anyData = true;
+        const abnCount = pts.filter(p => !p.ok).length;
+        statTxt = pts.length
+          ? (abnCount ? `检查 ${pts.length} 次 · <span style="color:#B85C5C;">异常 ${abnCount} 次</span>` : `检查 ${pts.length} 次 · 全部正常`)
+          : '暂无数据';
+        if (pts.length) {
+          const dots = pts.map(p => {
+            const tip = fmtD(p.t) + (p.ok ? ' 正常' : ' 异常') + (p.note ? '：' + p.note : '');
+            return `<span class="d${p.ok ? '' : ' abn'}" title="${escapeAttr(tip)}" onclick="showToast('${escapeAttr(tip)}')"></span>`;
+          }).join('');
+          chartHtml = `<div class="ins-chk-strip">${dots}</div><div class="ins-chk-range">${fmtD(pts[0].t)} → ${fmtD(pts[pts.length - 1].t)} · 每格一天</div>`;
+        }
+      }
       html += `
         <div class="ins-trend-card">
           <div class="ins-trend-head">
             <span class="ins-trend-name">${m.p ? m.p + ' · ' : ''}${m.n}</span>
             <span class="ins-trend-stat">${statTxt}</span>
           </div>
-          ${pts.length ? renderTrendChartSVG(pts, m, 150, chartId) : ''}
+          ${chartHtml}
         </div>`;
     });
   });
@@ -8918,6 +8973,7 @@ window.toggleInsStopped = toggleInsStopped;
 window.submitInspect = submitInspect;
 window.cancelInspect = cancelInspect;
 window.toggleInspectFilter = toggleInspectFilter;
+window.showToast = showToast;
 window.hardDeleteInspectHistory = hardDeleteInspectHistory;
 window.openInspectTrend = openInspectTrend;
 window.closeInspectTrend = closeInspectTrend;
