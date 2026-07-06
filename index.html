@@ -157,6 +157,32 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .ml-sp-sum-row .nm { flex:1; min-width:0; word-break:break-word; }
   .ml-sp-sum-row .qt { flex:0 0 auto; font-family:var(--font-mono); color:var(--g-deep); font-weight:600; text-align:right; min-width:66px; }
   .ml-sp-sum-row .tm { flex:0 0 auto; font-family:var(--font-mono); color:var(--subtle); text-align:right; min-width:44px; }
+  /* 重点设备档案页：零件更换时间线 */
+  .ml-tl { padding:4px 0 8px 6px; }
+  .ml-tl-item { position:relative; padding:0 0 20px 22px; border-left:2px solid var(--line); }
+  .ml-tl-item:last-child { border-left-color:transparent; padding-bottom:4px; }
+  .ml-tl-dot { position:absolute; left:-7px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--g-primary); border:2px solid #fff; box-shadow:0 0 0 1px var(--line); }
+  .ml-tl-item.current .ml-tl-dot { background:var(--g-deep); }
+  .ml-tl-date { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-family:var(--font-mono); font-size:12px; color:var(--g-deep); font-weight:600; margin-bottom:6px; }
+  .ml-tl-life { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-family:var(--font-mono); font-weight:400; background:var(--surface); color:var(--muted); }
+  .ml-tl-life.current { background:var(--g-mist); color:var(--g-forest); }
+  .ml-tl-card { padding:10px 12px; background:#fff; border:1px solid var(--line); border-radius:10px; cursor:pointer; }
+  .ml-tl-card:active { background:var(--surface); }
+  .ml-tl-brand { display:flex; flex-wrap:wrap; gap:6px; }
+  .ml-tl-note { font-size:12px; color:var(--subtle); line-height:1.5; margin-top:6px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  /* 零件使用时长对比条形图（颜色=品牌） */
+  .ml-lc { padding:12px 14px; background:#fff; border:1px solid var(--line); border-radius:12px; margin-bottom:16px; }
+  .ml-lc-title { font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .ml-lc-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .ml-lc-row .d { flex:0 0 auto; font-family:var(--font-mono); font-size:11px; color:var(--subtle); width:38px; }
+  .ml-lc-row .barwrap { flex:1; background:var(--surface); border-radius:6px; height:16px; overflow:hidden; }
+  .ml-lc-row .bar { height:100%; border-radius:6px; }
+  .ml-lc-row .bar.cur { opacity:.55; }
+  .ml-lc-row .v { flex:0 0 auto; font-family:var(--font-mono); font-size:11px; color:var(--ink); min-width:58px; text-align:right; }
+  .ml-lc-row .v em { font-style:normal; color:var(--g-forest); }
+  .ml-lc-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft); }
+  .ml-lc-leg { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .ml-lc-leg i { width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
 
 .eq-empty-result { text-align:center; padding:60px 20px; color:var(--muted); }
 .eq-empty-result-title { font-size:15px; margin-bottom:6px; font-weight:500; }
@@ -2783,6 +2809,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
       <div class="ml-filter-bar" id="ml-filter-bar"></div>
       <div class="ml-filter-bar" id="ml-class-filter-bar"></div>
+      <div class="ml-filter-bar" id="ml-keyeq-bar"></div>
       <div class="lube-search-bar">
         <input class="eq-search-input" id="ml-search" placeholder="搜索位号、设备、故障部位、检修人…" oninput="onMlSearchInput()">
         <div class="eq-search-clear" id="ml-search-clear" onclick="clearMlSearch()">×</div>
@@ -2797,6 +2824,18 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div class="wo-hero" id="ml-detail-hero"></div>
       <div class="wo-body" id="ml-detail-body"></div>
       <div class="wo-actions hidden" id="ml-actions"></div>
+    </section>
+
+    <!-- 重点设备检修档案（高压釜给料泵 / 高压釜搅拌器）2026-07-05 -->
+    <section class="module" data-module="maintenance-keyeq">
+      <div class="lube-detail-hero" id="ml-keyeq-hero"></div>
+      <div class="edit-form" id="ml-keyeq-body"></div>
+    </section>
+
+    <!-- 重点设备·单台检修档案（全部记录 + 零件更换时间线）2026-07-05 -->
+    <section class="module" data-module="maintenance-eqlog">
+      <div class="lube-detail-hero" id="ml-eqlog-hero"></div>
+      <div class="edit-form" id="ml-eqlog-body"></div>
     </section>
 
     <!-- 检修记录 登记/编辑 -->
@@ -3606,10 +3645,51 @@ async function cloudDeleteMaintenance(id) {
   }
 }
 
+/* 预览演示数据：203-PE-PP-106A 高压釜给料泵的零件更换履历（仅 ?preview=1 注入内存，不写云端）
+   剧情：单向阀 GEHO 原厂 vs 国产件寿命对比、隔膜 3 次更换、隔热组件 2 次更换 —— 演示零件时间线 */
+let _mlDemoCache = null;
+function previewMlDemoRecords() {
+  if (!PREVIEW_MODE) return [];
+  if (_mlDemoCache) return _mlDemoCache;
+  const eq = loadEquipments().find(e => e.tag === '203-PE-PP-106A');
+  const mk = (date, category, faultParts, cause, measures, spares, who) => ({
+    id: 'ml_demo_' + date.replace(/-/g, ''),
+    equipmentId: (eq && eq.id) || '', equipmentTag: '203-PE-PP-106A', equipmentName: '高压釜给料泵',
+    category, repairDate: date, faultParts, faultCause: cause, measures,
+    spareParts: spares, repairerName: who, note: '预览演示数据（上线后不会出现）',
+    createdAt: Date.parse(date + 'T10:00:00'), createdBy: '', createdByName: who, deleted: false,
+  });
+  _mlDemoCache = [
+    // —— 单向阀：原厂 vs 国产寿命对比 ——
+    mk('2026-02-10', 'planned', ['单向阀'], '解体检查，出口单向阀阀座轻微磨损', '更换出口单向阀总成（原厂件）',
+      [{ name: 'GEHO 原厂单向阀总成', qty: 1, unit: '套' }], '唐仕彬'),
+    mk('2026-04-15', 'planned', ['单向阀'], '例行更换，试用国产替代件对比寿命', '更换出口单向阀总成（国产试用）',
+      [{ name: '国产单向阀总成（襄阳五二五）', qty: 1, unit: '套' }], '陆壮'),
+    mk('2026-05-06', 'fault', ['单向阀'], '国产单向阀阀芯冲蚀严重，出口压力波动、流量下降', '换回原厂单向阀总成',
+      [{ name: 'GEHO 原厂单向阀总成', qty: 1, unit: '套' }], '唐仕彬'),
+    mk('2026-06-18', 'planned', ['单向阀'], '例行更换单向阀', '更换出口单向阀阀芯、阀座',
+      [{ name: 'GEHO 原厂单向阀阀芯', qty: 2, unit: '个' }, { name: 'GEHO 原厂阀座', qty: 2, unit: '个' }], '刘正威'),
+    // —— 隔膜 ——
+    mk('2026-03-20', 'fault', ['隔膜'], '2# 隔膜破损，隔膜腔窜液报警', '更换 2# 隔膜，清洗隔膜腔',
+      [{ name: 'GEHO 原厂隔膜', qty: 1, unit: '张' }], '唐仕彬'),
+    mk('2026-05-12', 'planned', ['隔膜'], '计划检修更换隔膜（试用国产件）', '更换 2# 隔膜',
+      [{ name: '国产隔膜（衡水橡塑）', qty: 1, unit: '张' }], '陆壮'),
+    mk('2026-06-24', 'fault', ['隔膜'], '国产隔膜鼓包变形，行程异常', '换回原厂隔膜',
+      [{ name: 'GEHO 原厂隔膜', qty: 1, unit: '张' }], '唐仕彬'),
+    // —— 隔热组件 ——
+    mk('2026-04-08', 'planned', ['隔热段'], '隔热段温度偏高，隔热组件老化', '更换隔热套组件',
+      [{ name: '隔热套组件（原厂）', qty: 1, unit: '套' }], '刘正威'),
+    mk('2026-06-28', 'fault', ['隔热段'], '3# 隔热段温度异常（86℃，比 1#/2# 高约 18℃）', '更换 3# 隔热套组件',
+      [{ name: '隔热套组件（国产定制）', qty: 1, unit: '套' }], '唐仕彬'),
+  ];
+  return _mlDemoCache;
+}
+
 function subscribeMaintenance() {
   if (mlUnsub) mlUnsub();
   mlUnsub = onSnapshot(collection(db, 'maintenancelogs'), (snap) => {
     mlCache = snap.docs.map(d => d.data());
+    if (PREVIEW_MODE) mlCache = mlCache.concat(previewMlDemoRecords());  // 预览演示数据（不写云端）
     mlCache.sort((a, b) => mlSortKey(b) - mlSortKey(a));
     const mod = document.querySelector('.module[data-module="maintenance"]');
     if (mod && mod.classList.contains('active')) renderMaintenanceList();
@@ -4297,7 +4377,7 @@ function switchModule(name) {
   // 底部导航激活：maintenance-detail / maintenance-create 时激活 "检修"
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   let navKey = name;
-  if (name === 'maintenance-detail' || name === 'maintenance-create') navKey = 'maintenance';
+  if (name === 'maintenance-detail' || name === 'maintenance-create' || name === 'maintenance-keyeq' || name === 'maintenance-eqlog') navKey = 'maintenance';
   if (name === 'equipment-detail' || name === 'equipment-edit') navKey = 'equipment';
   const navItem = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (navItem) navItem.classList.add('active');
@@ -4314,7 +4394,8 @@ function switchModule(name) {
   const isPartsEdit = name==='parts-edit';
   const isInspectDetail = name==='inspect-detail';
   const isInspectTrend = name==='inspect-trend';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isPartsEdit || isInspectDetail || isInspectTrend;
+  const isMlKeyEq = name==='maintenance-keyeq' || name==='maintenance-eqlog';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isPartsEdit || isInspectDetail || isInspectTrend || isMlKeyEq;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -4336,7 +4417,7 @@ function switchModule(name) {
   document.getElementById('bottom-nav').style.display = hideMain ? 'none' : '';
 
   // 底部导航激活处理
-  if (navKey === 'maintenance-detail' || navKey === 'maintenance-create') navKey = 'maintenance';
+  if (navKey === 'maintenance-detail' || navKey === 'maintenance-create' || navKey === 'maintenance-keyeq' || navKey === 'maintenance-eqlog') navKey = 'maintenance';
   if (navKey === 'equipment-detail' || navKey === 'equipment-edit') navKey = 'equipment';
   if (navKey === 'lube-detail' || navKey === 'lube-execute') navKey = 'lube';
   if (navKey === 'parts-detail' || navKey === 'parts-txn' || navKey === 'parts-edit') navKey = 'parts';
@@ -5551,6 +5632,31 @@ Object.defineProperty(window, 'mlBuffer', {
 let mlFilter = 'all';   // all / fault / planned / preventive / deleted(仅admin)
 let mlSearch = '';
 let mlClassFilter = 'all';   // all / A / B / C（按设备关键性等级）
+let mlKeyEqGroupKey = '';    // 当前打开的重点设备组
+let mlEqlogTag = '';         // 单台检修档案页：当前设备位号
+let mlEqlogPart = 'all';     // 单台档案页：all / 零件 key（零件更换时间线）
+let mlDetailFrom = '';       // 检修详情返回目标：'' = 检修列表 / 'eqlog' = 单台档案页
+
+/* ------ 重点设备组（对生产尤其重要，单独提出来看检修记录）
+   parts = 定期更换的重点零件，按关键词从 故障部位/使用备件/原因/措施 里自动归类 ------ */
+const ML_KEY_EQ_GROUPS = [
+  { key: 'feedpump', label: '高压釜给料泵', match: n => n === '高压釜给料泵', parts: [
+    { key: 'checkvalve', label: '单向阀', kw: ['单向阀', '止逆'] },
+    { key: 'diaphragm',  label: '隔膜',   kw: ['隔膜'] },
+    { key: 'heatshield', label: '隔热组件', kw: ['隔热'] },
+  ] },
+  { key: 'agitator', label: '高压釜搅拌器', match: n => /^高压釜\d隔室搅拌$/.test(n), parts: [
+    { key: 'mechseal', label: '机械密封', kw: ['机械密封', '机封'] },
+    { key: 'gearbox',  label: '减速机',   kw: ['减速机'] },
+    { key: 'impeller', label: '搅拌桨',   kw: ['搅拌桨', '桨叶'] },
+  ] },
+];
+function mlKeyEqUnits(groupKey) {
+  const g = ML_KEY_EQ_GROUPS.find(x => x.key === groupKey);
+  if (!g) return [];
+  return loadEquipments().filter(e => g.match(e.name || ''))
+    .sort((a, b) => (a.tag || '').localeCompare(b.tag || ''));
+}
 
 function getCurrentUser() {
   return findUser(localStorage.getItem(SESSION_KEY));
@@ -5616,8 +5722,180 @@ function renderMlFilterBar() {
       '<div class="ml-filter-pill' + (mlClassFilter === tb.key ? ' active' : '') + '" onclick="setMlClassFilter(\'' + tb.key + '\')">' + tb.label + '<span class="n">' + tb.n + '</span></div>'
     ).join('');
   }
+  // 重点设备条（高压釜给料泵 / 高压釜搅拌器，点开进重点设备档案）
+  const kbar = document.getElementById('ml-keyeq-bar');
+  if (kbar) {
+    kbar.innerHTML = ML_KEY_EQ_GROUPS.map(g => {
+      const units = mlKeyEqUnits(g.key);
+      const tags = new Set(units.map(u => u.tag));
+      const ids = new Set(units.map(u => u.id));
+      const n = live.filter(m => tags.has(m.equipmentTag) || ids.has(m.equipmentId)).length;
+      return '<div class="ml-filter-pill" onclick="openMlKeyEqPage(\'' + g.key + '\')">⭐ ' + g.label + '<span class="n">' + n + '</span></div>';
+    }).join('');
+  }
 }
 function setMlClassFilter(c) { mlClassFilter = c; renderMaintenanceList(); }
+function openMlKeyEqPage(key) { mlKeyEqGroupKey = key; renderMlKeyEqPage(); switchModule('maintenance-keyeq'); }
+function backToMlKeyEq() { if (mlEqlogTag) mlKeyEqGroupKey = mlEqlogGroup().key; renderMlKeyEqPage(); switchModule('maintenance-keyeq'); }
+function openMlEqLog(tag) { mlEqlogTag = tag; mlEqlogPart = 'all'; renderMlEqLogPage(); switchModule('maintenance-eqlog'); }
+function setMlEqlogPart(k) { mlEqlogPart = k; renderMlEqLogPage(); }
+
+/* ------ 重点设备检修档案页（整页，替代半屏弹层） ------ */
+function renderMlKeyEqPage() {
+  const g = ML_KEY_EQ_GROUPS.find(x => x.key === mlKeyEqGroupKey) || ML_KEY_EQ_GROUPS[0];
+  const units = mlKeyEqUnits(g.key);
+  const live = mlCache.filter(m => !m.deleted);
+  const hero = document.getElementById('ml-keyeq-hero');
+  if (hero) {
+    hero.innerHTML =
+      '<div onclick="backToMlList()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回检修记录</div>' +
+      '<div class="lube-detail-hero-tag">⭐ 重点设备</div>' +
+      '<h2 class="lube-detail-hero-name">' + g.label + '</h2>' +
+      '<div class="lube-detail-hero-point">共 ' + units.length + ' 台 · 点开一台查看它的全部检修记录</div>';
+  }
+  const body = document.getElementById('ml-keyeq-body');
+  if (!body) return;
+  body.innerHTML = units.map(u => {
+    const recs = live.filter(m => m.equipmentTag === u.tag || m.equipmentId === u.id);
+    const latest = recs.map(m => m.repairDate || '').sort().pop() || '';
+    const meta = recs.length
+      ? '<span style="color:var(--g-forest);font-weight:500;">' + recs.length + ' 条检修记录</span>' + (latest ? '<span class="ml-card-dot">·</span><span>最近 ' + escapeHtml(latest) + '</span>' : '')
+      : '<span>暂无检修记录</span>';
+    return '<div class="ml-card" onclick="openMlEqLog(\'' + u.tag + '\')">' +
+      '<div class="ml-card-top"><span class="ml-card-tag">' + escapeHtml(u.tag) + ' ' + abcBadgeHtml(u.abcClass) + '</span><span class="ml-card-cat" style="color:var(--subtle);">›</span></div>' +
+      '<div class="ml-card-name">' + escapeHtml(u.name || '') + '</div>' +
+      '<div class="ml-card-meta">' + meta + '</div>' +
+      '</div>';
+  }).join('') || '<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">未找到该组设备</div></div>';
+}
+
+/* ------ 单台重点设备检修档案页（全部记录 + 零件更换时间线） ------ */
+function mlEqlogGroup() {
+  const eq = loadEquipments().find(e => e.tag === mlEqlogTag);
+  return ML_KEY_EQ_GROUPS.find(g => g.match((eq && eq.name) || ''))
+    || ML_KEY_EQ_GROUPS.find(g => g.key === mlKeyEqGroupKey)
+    || ML_KEY_EQ_GROUPS[0];
+}
+function mlEqlogRecords() {
+  const eq = loadEquipments().find(e => e.tag === mlEqlogTag);
+  return mlCache.filter(m => !m.deleted && (m.equipmentTag === mlEqlogTag || (eq && m.equipmentId === eq.id)))
+    .sort((a, b) => (b.repairDate || '').localeCompare(a.repairDate || ''));
+}
+function mlRecMatchesPart(m, part) {
+  const hay = [(m.faultParts || []).join(' '), (m.spareParts || []).map(p => p.name || '').join(' '), m.faultCause || '', m.measures || ''].join(' ');
+  return part.kw.some(k => hay.includes(k));
+}
+function _mlDaysBetween(later, earlier) {
+  const a = new Date(later), b = new Date(earlier);
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.round((a - b) / 86400000);
+}
+function _mlLifeLabel(days) {
+  if (days == null) return '—';
+  if (days < 7) return days + ' 天';
+  if (days < 28) return days + ' 天（约 ' + (Math.round(days / 7 * 10) / 10) + ' 周）';
+  return days + ' 天（约 ' + (Math.round(days / 30 * 10) / 10) + ' 个月）';
+}
+
+function renderMlEqLogPage() {
+  const eq = loadEquipments().find(e => e.tag === mlEqlogTag);
+  const g = mlEqlogGroup();
+  const recs = mlEqlogRecords();
+  const hero = document.getElementById('ml-eqlog-hero');
+  if (hero) {
+    hero.innerHTML =
+      '<div onclick="backToMlKeyEq()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回 ' + g.label + '</div>' +
+      '<div class="lube-detail-hero-tag">' + escapeHtml(mlEqlogTag) + ' ' + abcBadgeHtml(eq && eq.abcClass) + '</div>' +
+      '<h2 class="lube-detail-hero-name">' + escapeHtml((eq && eq.name) || g.label) + '</h2>' +
+      '<div class="lube-detail-hero-point">检修档案 · 共 ' + recs.length + ' 条记录</div>';
+  }
+  const body = document.getElementById('ml-eqlog-body');
+  if (!body) return;
+  const parts = g.parts || [];
+  const pills = ['<div class="ml-filter-pill' + (mlEqlogPart === 'all' ? ' active' : '') + '" onclick="setMlEqlogPart(\'all\')">全部记录<span class="n">' + recs.length + '</span></div>']
+    .concat(parts.map(p => {
+      const n = recs.filter(m => mlRecMatchesPart(m, p)).length;
+      return '<div class="ml-filter-pill' + (mlEqlogPart === p.key ? ' active' : '') + '" onclick="setMlEqlogPart(\'' + p.key + '\')">' + p.label + '<span class="n">' + n + '</span></div>';
+    })).join('');
+  let content;
+  if (mlEqlogPart === 'all') {
+    content = recs.length ? recs.map(m => renderMlCard(m, 'eqlog')).join('')
+      : '<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">这台设备还没有检修记录</div><div class="empty-hint">在检修模块登记后会自动出现在这里</div></div>';
+  } else {
+    const p = parts.find(x => x.key === mlEqlogPart);
+    content = p ? renderMlPartTimeline(recs, p) : '';
+  }
+  body.innerHTML = '<div class="ml-filter-bar">' + pills + '</div>' + content;
+}
+
+function renderMlPartTimeline(recs, p) {
+  const list = recs.filter(m => mlRecMatchesPart(m, p));   // 已按日期倒序（最新在前）
+  if (!list.length) {
+    return '<div class="empty" style="padding:40px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无「' + p.label + '」相关记录</div>' +
+      '<div class="empty-hint">登记检修时，故障部位或使用备件里写到「' + p.kw[0] + '」就会自动归到这里</div></div>';
+  }
+  const items = list.map((m, i) => {
+    const next = i > 0 ? list[i - 1] : null;   // 时间上更晚的一次更换
+    const life = next ? _mlDaysBetween(next.repairDate, m.repairDate) : _mlDaysBetween(_today(), m.repairDate);
+    const lifeHtml = next
+      ? '<span class="ml-tl-life">用了 ' + _mlLifeLabel(life) + ' 后更换</span>'
+      : '<span class="ml-tl-life current">在用 · 已 ' + _mlLifeLabel(life) + '</span>';
+    // 品牌/规格：优先显示名称含该零件关键词的备件，没有就显示该次全部备件
+    const hit = (m.spareParts || []).filter(x => p.kw.some(k => (x.name || '').includes(k)));
+    const brandSrc = hit.length ? hit : (m.spareParts || []);
+    const brands = brandSrc.map(x => '<span class="ml-part-chip">' + escapeHtml(x.name || '') + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
+    const note = m.faultCause || m.measures || '';
+    return '<div class="ml-tl-item' + (!next ? ' current' : '') + '"><div class="ml-tl-dot"></div>' +
+      '<div class="ml-tl-date">' + escapeHtml(m.repairDate || '—') + lifeHtml + '</div>' +
+      '<div class="ml-tl-card" onclick="openMlDetail(\'' + m.id + '\',\'eqlog\')">' +
+      (brands ? '<div class="ml-tl-brand">' + brands + '</div>' : '<div class="ml-tl-brand"><span class="ml-part-chip more">未登记备件品牌/规格</span></div>') +
+      (note ? '<div class="ml-tl-note">' + escapeHtml(note) + '</div>' : '') +
+      '</div></div>';
+  }).join('');
+  let avgHtml = '';
+  if (list.length > 1) {
+    const intervals = [];
+    for (let i = 0; i < list.length - 1; i++) {
+      const d = _mlDaysBetween(list[i].repairDate, list[i + 1].repairDate);
+      if (d != null) intervals.push(d);
+    }
+    if (intervals.length) {
+      const avg = Math.round(intervals.reduce((s, x) => s + x, 0) / intervals.length);
+      avgHtml = ' · 平均更换间隔 ' + _mlLifeLabel(avg);
+    }
+  }
+  return '<div style="font-size:12px;color:var(--subtle);margin:2px 0 14px;">共 ' + list.length + ' 次更换记录' + avgHtml + ' · 点卡片看检修详情</div>' +
+    renderMlPartLifeChart(list, p) +
+    '<div class="ml-tl">' + items + '</div>';
+}
+
+/* 零件使用时长对比条形图：每次更换一根条，长度=用了多少天，颜色=品牌（取该次登记的备件名） */
+function renderMlPartLifeChart(list, p) {
+  const asc = [...list].reverse();   // 按时间正序（最早在上）
+  const brandOf = m => {
+    const sp = m.spareParts || [];
+    const hit = sp.find(x => p.kw.some(k => (x.name || '').includes(k))) || sp[0];
+    return (hit && hit.name) ? hit.name : '未登记备件';
+  };
+  const rows = asc.map((m, i) => {
+    const nextDate = i < asc.length - 1 ? asc[i + 1].repairDate : _today();
+    const days = _mlDaysBetween(nextDate, m.repairDate);
+    return { date: m.repairDate || '', days: days == null ? 0 : days, brand: brandOf(m), cur: i === asc.length - 1 };
+  });
+  const max = Math.max(1, ...rows.map(r => r.days));
+  const brands = [...new Set(rows.map(r => r.brand))];
+  const PALETTE = ['#3A5424', '#C77F3B', '#2B8AD9', '#8A5FA8', '#B04A4A', '#6B8E23'];
+  const colorOf = b => PALETTE[brands.indexOf(b) % PALETTE.length];
+  const barRows = rows.map(r =>
+    '<div class="ml-lc-row">' +
+      '<span class="d">' + escapeHtml(r.date.slice(5)) + '</span>' +
+      '<div class="barwrap"><div class="bar' + (r.cur ? ' cur' : '') + '" style="width:' + Math.max(4, Math.round(r.days / max * 100)) + '%;background:' + colorOf(r.brand) + ';"></div></div>' +
+      '<span class="v">' + r.days + '天' + (r.cur ? '<em> ·在用</em>' : '') + '</span>' +
+    '</div>').join('');
+  const legend = brands.map(b => '<span class="ml-lc-leg"><i style="background:' + colorOf(b) + ';"></i>' + escapeHtml(b) + '</span>').join('');
+  return '<div class="ml-lc"><div class="ml-lc-title">每次换上的「' + p.label + '」用了多久（颜色 = 品牌）</div>' + barRows +
+    '<div class="ml-lc-legend">' + legend + '</div></div>';
+}
 
 function filterMaintenanceLogs() {
   let list;
@@ -5676,17 +5954,17 @@ function renderMaintenanceList() {
     container.innerHTML = '<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无检修记录</div><div class="empty-hint">点右下角 ＋ 登记一条</div></div>';
     return;
   }
-  container.innerHTML = list.map(renderMlCard).join('');
+  container.innerHTML = list.map(m => renderMlCard(m)).join('');
 }
 
-function renderMlCard(ml) {
+function renderMlCard(ml, from) {
   const cat = ML_CATEGORY_MAP[ml.category] || { label: '—', color: 'var(--subtle)' };
   const cls = eqClassOf(ml.equipmentId);
   const fp = ml.faultParts || [];
   const parts = fp.slice(0, 3).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('');
   const more = fp.length > 3 ? '<span class="ml-part-chip more">+' + (fp.length - 3) + '</span>' : '';
   const spN = (ml.spareParts || []).length;
-  return '<div class="ml-card' + (ml.deleted ? ' deleted' : '') + '" onclick="openMlDetail(\'' + ml.id + '\')">' +
+  return '<div class="ml-card' + (ml.deleted ? ' deleted' : '') + '" onclick="openMlDetail(\'' + ml.id + '\'' + (from ? ',\'' + from + '\'' : '') + ')">' +
     '<div class="ml-card-top"><span class="ml-card-tag">' + escapeHtml(ml.equipmentTag || '—') + abcBadgeHtml(cls) + '</span><span class="ml-card-cat" style="color:' + cat.color + ';">' + cat.label + '</span></div>' +
     '<div class="ml-card-name">' + escapeHtml(ml.equipmentName || '') + '</div>' +
     (parts || more ? '<div class="ml-card-parts">' + parts + more + '</div>' : '') +
@@ -5695,11 +5973,16 @@ function renderMlCard(ml) {
     '</div>';
 }
 
-function backToMlList() { currentMlId = null; switchModule('maintenance'); }
+function backToMlList() {
+  currentMlId = null;
+  if (mlDetailFrom === 'eqlog' && mlEqlogTag) { mlDetailFrom = ''; renderMlEqLogPage(); switchModule('maintenance-eqlog'); return; }
+  switchModule('maintenance');
+}
 
-function openMlDetail(id) {
+function openMlDetail(id, from) {
   const ml = mlCache.find(m => m.id === id);
   if (!ml) return;
+  mlDetailFrom = from || '';
   currentMlId = id;
   renderMaintenanceDetail(ml);
   switchModule('maintenance-detail');
@@ -8702,6 +8985,10 @@ window.handleMenuAction = handleMenuAction;
 // 检修记录相关
 window.setMlFilter = setMlFilter;
 window.setMlClassFilter = setMlClassFilter;
+window.openMlKeyEqPage = openMlKeyEqPage;
+window.backToMlKeyEq = backToMlKeyEq;
+window.openMlEqLog = openMlEqLog;
+window.setMlEqlogPart = setMlEqlogPart;
 window.openMlPartsSummary = openMlPartsSummary;
 window.exportMlPartsXlsx = exportMlPartsXlsx;
 window.onMlSearchInput = onMlSearchInput;
