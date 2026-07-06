@@ -7235,8 +7235,11 @@ function renderInspectHistCard(h) {
   const delBtn = !h._v2 && canHardDelete(user)
     ? `<button onclick="event.stopPropagation();hardDeleteInspectHistory('${h.id}')" style="margin-top:6px;background:white;color:#C77700;border:1px solid #E4E0D8;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">删除</button>`
     : '';
+  // 点卡片进该设备的点检数据/趋势页（2026-07-06 用户反馈：巡检完就从待巡检消失，趋势入口跟着丢了）
+  const clickAttr = h.equipmentId ? ` onclick="openInspectTrend('${h.equipmentId}')" style="cursor:pointer;"` : '';
+  const trendHint = h.equipmentId ? `<span style="font-size:11px;color:var(--g-deep);margin-top:6px;">📈 点检数据</span>` : '';
   return `
-    <div class="lube-card">
+    <div class="lube-card"${clickAttr}>
       <div class="lube-card-left">
         <div class="lube-card-top">
           <span class="lube-card-tag">${h.equipmentTag}</span>
@@ -7251,6 +7254,7 @@ function renderInspectHistCard(h) {
       </div>
       <div class="lube-card-right">
         <span class="lube-status-tag ${abnCls}">${abnLbl}</span>
+        ${trendHint}
         ${delBtn}
       </div>
     </div>`;
