@@ -6279,10 +6279,12 @@ function addStockPart(id) {
   showToast('已添加，保存记录时将从二级库扣减');
 }
 
-/* ------ 二级库库存联动（2026-07-08）：检修记录选的二级库备件自动扣/回补 ------
-   台账法：每笔自动扣减写 secondstockhistory 时带 mlId 关联；
-   同步时按「记录目标用量 − 台账净扣额」求差额多退少补，
-   已撤销(reverted)/撤销对冲(isCounter)自动剔除，兼容管理员手动撤销单笔。*/
+/* ------ 二级库库存联动（2026-07-08，07-08 晚改为"重写投影"式）------
+   账本记录（secondstockhistory 带 mlId 的）只是检修记录的投影：
+   每次保存/删除/恢复检修记录 → 删掉该 mlId 的全部旧账本笔 → 按当前备件清单
+   重开干净的出库笔（保留各备件最早的出库时间）→ 结存按差额调整。
+   效果：一条检修记录任何时刻在账本里每个备件只有一笔出库 = 当前真实用量；
+   删除（作废）检修记录则出库笔直接消失、库存加回，不留对冲流水。*/
 function mlStockLedger(mlId) {
   const map = {};
   (secondStockHistCache || []).forEach(h => {
@@ -6304,6 +6306,7 @@ function mlTargetStock(spareParts) {
 function buildMlStockPlan(mlId, spareParts) {
   const ledger = mlStockLedger(mlId);
   const target = mlTargetStock(spareParts);
+  const oldEntries = (secondStockHistCache || []).filter(h => h.mlId === mlId);
   const ids = {};
   Object.keys(ledger).forEach(k => { ids[k] = 1; });
   Object.keys(target).forEach(k => { ids[k] = 1; });
@@ -6327,25 +6330,36 @@ function buildMlStockPlan(mlId, spareParts) {
     lines.push((delta > 0 ? '出库 ' : '回补 ') + (it.name || '') + ' ×' + Math.abs(delta) + (it.unit || '') + '（结存 ' + cur + ' → ' + newQty + '）');
   });
   if (errors.length) return { ok: false, msg: errors.join('\n'), moves: [], lines: [] };
-  return { ok: true, moves: moves, lines: lines };
+  return { ok: true, moves: moves, lines: lines, target: target, oldEntries: oldEntries };
 }
-// 把同步计划写入 writeBatch：改结存 + 写带 mlId 的出入库历史
+// 把同步计划写入 writeBatch：结存按差额调整 + 重写账本投影（删旧笔、按当前清单重开）
 function applyMlStockPlanToBatch(batch, plan, ml, reasons) {
   const user = getCurrentUser();
   const now = Date.now();
-  plan.moves.forEach((m, i) => {
+  plan.moves.forEach(m => {
     batch.set(doc(db, 'secondstock', m.it.id), Object.assign({}, m.it, { quantity: m.newQty }));
+  });
+  // 各备件保留最早那笔出库的时间（按天分组不跳日）
+  const firstOutAt = {};
+  plan.oldEntries.forEach(h => {
+    if (h.type !== 'out') return;
+    if (!firstOutAt[h.itemId] || h.createdAt < firstOutAt[h.itemId]) firstOutAt[h.itemId] = h.createdAt;
+  });
+  plan.oldEntries.forEach(h => batch.delete(doc(db, 'secondstockhistory', h.id)));
+  Object.keys(plan.target).forEach((itemId, i) => {
+    const qty = plan.target[itemId];
+    if (!(qty > 0)) return;
     const hid = 'ssh_' + (now + i) + '_' + Math.random().toString(36).slice(2, 7);
     batch.set(doc(db, 'secondstockhistory', hid), {
       id: hid,
-      itemId: m.it.id,
-      type: m.delta > 0 ? 'out' : 'in',
-      quantity: Math.abs(m.delta),
-      reason: m.delta > 0 ? reasons.out : reasons.in,
+      itemId: itemId,
+      type: 'out',
+      quantity: qty,
+      reason: reasons.out,
       mlId: ml.id,
       operatorId: (user && user.empno) || '',
       operatorName: (user && user.name) || '',
-      createdAt: now + i,
+      createdAt: firstOutAt[itemId] || (now + i),
     });
   });
 }
@@ -6366,10 +6380,7 @@ async function submitMaintenance() {
   if (plan.moves.length && !confirm('保存将同步二级库库存：\n\n' + plan.lines.join('\n') + '\n\n确认保存？')) return;
   try {
     const batch = writeBatch(db);
-    applyMlStockPlanToBatch(batch, plan, b, {
-      out: '检修：' + mlEqLabel(b),
-      in: '检修修改回补：' + mlEqLabel(b),
-    });
+    applyMlStockPlanToBatch(batch, plan, b, { out: '检修：' + mlEqLabel(b) });
     batch.set(doc(db, 'maintenancelogs', b.id), Object.assign({}, b));
     await batch.commit();
     showToast(plan.moves.length ? '已保存，二级库库存已同步' : '已保存检修记录');
@@ -6396,13 +6407,10 @@ async function deleteMaintenance() {
   const updated = Object.assign({}, ml, { deleted: true, deletedAt: Date.now(), deletedBy: user.empno, deletedByName: user.name, updatedAt: Date.now() });
   try {
     const batch = writeBatch(db);
-    applyMlStockPlanToBatch(batch, plan, ml, {
-      out: '检修：' + mlEqLabel(ml),
-      in: '检修记录删除回补：' + mlEqLabel(ml),
-    });
+    applyMlStockPlanToBatch(batch, plan, ml, { out: '检修：' + mlEqLabel(ml) });
     batch.set(doc(db, 'maintenancelogs', ml.id), updated);
     await batch.commit();
-    showToast(plan.moves.length ? '已删除，二级库库存已回补' : '已删除');
+    showToast(plan.moves.length ? '已删除，二级库库存已回补、出库记录已移除' : '已删除');
     backToMlList();
   }
   catch (err) { showToast('删除失败：' + err.message); }
@@ -6418,10 +6426,7 @@ async function restoreMaintenance() {
   const updated = Object.assign({}, ml, { deleted: false, updatedAt: Date.now() });
   try {
     const batch = writeBatch(db);
-    applyMlStockPlanToBatch(batch, plan, ml, {
-      out: '检修记录恢复：' + mlEqLabel(ml),
-      in: '检修修改回补：' + mlEqLabel(ml),
-    });
+    applyMlStockPlanToBatch(batch, plan, ml, { out: '检修：' + mlEqLabel(ml) });
     batch.set(doc(db, 'maintenancelogs', ml.id), updated);
     await batch.commit();
     showToast(plan.moves.length ? '已恢复，二级库库存已扣减' : '已恢复');
