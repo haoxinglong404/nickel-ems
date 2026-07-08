@@ -6119,7 +6119,7 @@ function renderMaintenanceDetail(ml) {
   const actionsEl = document.getElementById('ml-actions');
   let btns = '';
   if (ml.deleted) {
-    if (isAdmin(user)) btns = '<button class="wo-act-btn" onclick="restoreMaintenance()">恢复</button><button class="wo-act-btn danger" onclick="hardDeleteMaintenance()">彻底删除</button>';
+    if (isAdmin(user)) btns = '<button class="wo-act-btn" onclick="restoreMaintenance()">恢复</button>';
   } else if (canEditMl(ml, user)) {
     btns = '<button class="wo-act-btn" onclick="openMlEdit(\'' + ml.id + '\')">编辑</button><button class="wo-act-btn danger" onclick="deleteMaintenance()">删除</button>';
   }
@@ -6429,14 +6429,8 @@ async function restoreMaintenance() {
   }
   catch (err) { showToast('恢复失败：' + err.message); }
 }
-async function hardDeleteMaintenance() {
-  const ml = mlCache.find(m => m.id === currentMlId);
-  if (!ml) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员'); return; }
-  if (!confirm('彻底删除后无法恢复，确定？')) return;
-  try { await cloudDeleteMaintenance(ml.id); showToast('已彻底删除'); backToMlList(); }
-  catch (err) { showToast('删除失败：' + err.message); }
-}
+/* 2026-07-08 彻底删除功能已移除：检修记录是设备档案，只许作废（软删可恢复）不许消失，
+   否则二级库带 mlId 的账本记录会成孤儿、两本账对不上。误登记 → 删除（作废）即可。 */
 
 /* ------ 设备详情"相关记录" Tab 联动 ------ */
 
@@ -8709,8 +8703,9 @@ function renderSecondStockDetail(it) {
         const typeLabel = h.type === 'in' ? '入库' : '领用';
         const isReverted = h.reverted;
         const isCounter = h.isCounter;
-        const canRevert = isAdmin(user) && !isReverted && !isCounter;
-        const canDelete = isAdmin(user);
+        // 检修联动记录（带 mlId）不许撤销/删除，唯一入口是改检修记录（2026-07-08 用户定）
+        const canRevert = isAdmin(user) && !isReverted && !isCounter && !h.mlId;
+        const canDelete = isAdmin(user) && !h.mlId;
         let tags = '';
         if (h.mlId) tags += `<span class="parts-hist-ml-tag" onclick="event.stopPropagation();openMlFromSS('${h.mlId}')">🔧 检修</span>`;
         if (isReverted) tags += '<span class="hist-tag reverted">已撤销</span>';
@@ -8936,6 +8931,7 @@ async function revertSecondStockHistory(historyId) {
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
   const h = (secondStockHistCache || []).find(x => x.id === historyId);
   if (!h || h.reverted || h.isCounter) return;
+  if (h.mlId) { showToast('这笔由检修记录自动生成，请到对应检修记录里修改备件（库存会自动同步）'); return; }
   const it = secondStockCache.find(x => x.id === h.itemId);
   if (!it) return;
   const currentQty = it.quantity || 0;
@@ -8966,6 +8962,7 @@ async function hardDeleteSecondStockHistory(historyId) {
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
   const h = (secondStockHistCache || []).find(x => x.id === historyId);
   if (!h) return;
+  if (h.mlId) { showToast('这笔由检修记录自动生成，请到对应检修记录里修改备件（库存会自动同步）'); return; }
   const it = secondStockCache.find(x => x.id === h.itemId);
   if (!it) return;
   const currentQty = it.quantity || 0;
@@ -9614,7 +9611,6 @@ window.renderMlPartPicker = renderMlPartPicker;
 window.pickEquipment = pickEquipment;
 window.deleteMaintenance = deleteMaintenance;
 window.restoreMaintenance = restoreMaintenance;
-window.hardDeleteMaintenance = hardDeleteMaintenance;
 window.filterEqPickerList = filterEqPickerList;
 window.renderDeviceRecords = renderDeviceRecords;
 // 润滑相关
