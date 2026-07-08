@@ -1647,6 +1647,17 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     letter-spacing: 0.05em;
     font-weight: 500;
   }
+  .parts-hist-ml-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    background: var(--g-mist);
+    color: var(--g-forest);
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    cursor: pointer;
+  }
 
   /* ════════ 二级库·出入库历史页 · 2026-07-08 ════════ */
   .ss-hist-page { padding: 16px 18px 90px; max-width: 720px; margin: 0 auto; }
@@ -4998,9 +5009,9 @@ function updateFab() {
   const isAdmin = user && user.role === 'admin';
   fab.classList.toggle('hidden', !(inEquipment && isAdmin));
 
-  // 检修列表：任何登录用户都看到 + 登记
+  // 检修列表：仅管理员看到 + 登记（2026-07-08 收紧：登记检修会联动扣二级库库存）
   const inWorkOrder = moduleName === 'maintenance';
-  if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && user));
+  if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && isAdmin));
 }
 
 /* ========== 用户管理（继承 v0.3） ========== */
@@ -6067,9 +6078,16 @@ function openMlDetail(id, from) {
   switchModule('maintenance-detail');
 }
 
+// 从二级库历史的「🔧 检修」标签跳到对应检修记录（2026-07-08）
+function openMlFromSS(mlId) {
+  if (!mlCache.find(m => m.id === mlId)) { showToast('对应检修记录不存在（可能已被彻底删除）'); return; }
+  openMlDetail(mlId);
+}
+
 function canEditMl(ml, user) {
+  // 2026-07-08 收紧：登记/编辑/删除检修记录仅管理员（记录联动二级库库存）
   if (!user) return false;
-  return isAdmin(user) || ml.createdBy === user.empno;
+  return isAdmin(user);
 }
 
 function renderMaintenanceDetail(ml) {
@@ -6113,6 +6131,7 @@ function renderMaintenanceDetail(ml) {
 function openMlCreate() {
   const user = getCurrentUser();
   if (!user) { showToast('请先登录'); return; }
+  if (!isAdmin(user)) { showToast('仅管理员可登记检修记录'); return; }
   const d = new Date();
   const ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   mlBuffer = {
@@ -6248,26 +6267,112 @@ function addStockPart(id) {
   const src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
   const it = src.find(x => x.id === id);
   if (!it || !mlBuffer) return;
-  const qs = prompt('用了多少 ' + (it.name || '') + '（' + (it.unit || '') + '）？', '1');
+  const stock = it.quantity != null ? it.quantity : 0;
+  const qs = prompt('用了多少 ' + (it.name || '') + '（' + (it.unit || '') + '，当前结存 ' + stock + '）？', '1');
   if (qs === null) return;
+  const qty = parseFloat(qs);
+  if (!(qty > 0)) { showToast('数量必须大于 0'); return; }
   if (!mlBuffer.spareParts) mlBuffer.spareParts = [];
-  mlBuffer.spareParts.push({ name: it.name || '', qty: parseFloat(qs) || 1, unit: it.unit || '', ssId: it.id, materialCode: it.materialCode || '' });
+  mlBuffer.spareParts.push({ name: it.name || '', qty: qty, unit: it.unit || '', ssId: it.id, materialCode: it.materialCode || '' });
   hideSheet();
   refreshMlSpList();
-  showToast('已添加备件（未扣库存）');
+  showToast('已添加，保存记录时将从二级库扣减');
 }
+
+/* ------ 二级库库存联动（2026-07-08）：检修记录选的二级库备件自动扣/回补 ------
+   台账法：每笔自动扣减写 secondstockhistory 时带 mlId 关联；
+   同步时按「记录目标用量 − 台账净扣额」求差额多退少补，
+   已撤销(reverted)/撤销对冲(isCounter)自动剔除，兼容管理员手动撤销单笔。*/
+function mlStockLedger(mlId) {
+  const map = {};
+  (secondStockHistCache || []).forEach(h => {
+    if (h.mlId !== mlId || h.reverted || h.isCounter) return;
+    const q = h.quantity || 0;
+    map[h.itemId] = (map[h.itemId] || 0) + (h.type === 'out' ? q : -q);
+  });
+  return map;
+}
+function mlTargetStock(spareParts) {
+  const map = {};
+  (spareParts || []).forEach(p => {
+    if (!p.ssId) return;
+    map[p.ssId] = (map[p.ssId] || 0) + (parseFloat(p.qty) || 0);
+  });
+  return map;
+}
+// 生成同步计划：校验结存、给出确认文案。target 传 [] 表示全部回补（删除记录用）
+function buildMlStockPlan(mlId, spareParts) {
+  const ledger = mlStockLedger(mlId);
+  const target = mlTargetStock(spareParts);
+  const ids = {};
+  Object.keys(ledger).forEach(k => { ids[k] = 1; });
+  Object.keys(target).forEach(k => { ids[k] = 1; });
+  const moves = [], lines = [], errors = [];
+  Object.keys(ids).forEach(itemId => {
+    const delta = (target[itemId] || 0) - (ledger[itemId] || 0);
+    if (!delta) return;
+    const it = (secondStockCache || []).find(x => x.id === itemId);
+    if (!it) {
+      // 二级库条目已被删：回补无处可补（跳过），扣减则拦住
+      if (delta > 0) errors.push('❌ 备件条目已从二级库删除，无法扣减，请从清单移除后重试');
+      return;
+    }
+    const cur = it.quantity || 0;
+    const newQty = cur - delta;
+    if (delta > 0 && newQty < 0) {
+      errors.push('❌ ' + (it.name || '') + '：需出库 ' + delta + '，结存只有 ' + cur);
+      return;
+    }
+    moves.push({ it: it, delta: delta, newQty: newQty });
+    lines.push((delta > 0 ? '出库 ' : '回补 ') + (it.name || '') + ' ×' + Math.abs(delta) + (it.unit || '') + '（结存 ' + cur + ' → ' + newQty + '）');
+  });
+  if (errors.length) return { ok: false, msg: errors.join('\n'), moves: [], lines: [] };
+  return { ok: true, moves: moves, lines: lines };
+}
+// 把同步计划写入 writeBatch：改结存 + 写带 mlId 的出入库历史
+function applyMlStockPlanToBatch(batch, plan, ml, reasons) {
+  const user = getCurrentUser();
+  const now = Date.now();
+  plan.moves.forEach((m, i) => {
+    batch.set(doc(db, 'secondstock', m.it.id), Object.assign({}, m.it, { quantity: m.newQty }));
+    const hid = 'ssh_' + (now + i) + '_' + Math.random().toString(36).slice(2, 7);
+    batch.set(doc(db, 'secondstockhistory', hid), {
+      id: hid,
+      itemId: m.it.id,
+      type: m.delta > 0 ? 'out' : 'in',
+      quantity: Math.abs(m.delta),
+      reason: m.delta > 0 ? reasons.out : reasons.in,
+      mlId: ml.id,
+      operatorId: (user && user.empno) || '',
+      operatorName: (user && user.name) || '',
+      createdAt: now + i,
+    });
+  });
+}
+function mlEqLabel(ml) { return ((ml.equipmentTag || '') + ' ' + (ml.equipmentName || '')).trim(); }
 
 async function submitMaintenance() {
   const b = mlBuffer;
   if (!b) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可登记检修记录'); return; }
   if (!b.equipmentId) { showToast('请选择设备'); return; }
   if (!b.category) { showToast('请选择检修类别'); return; }
   if (!b.repairDate) { showToast('请填写检修日期'); return; }
   b.repairerName = (b.repairerName || '').trim() || ((getCurrentUser() || {}).name) || '';
   b.updatedAt = Date.now();
+  // 二级库联动：新建=全额扣，编辑=按差额多退少补
+  const plan = buildMlStockPlan(b.id, b.spareParts);
+  if (!plan.ok) { alert('无法保存：\n\n' + plan.msg); return; }
+  if (plan.moves.length && !confirm('保存将同步二级库库存：\n\n' + plan.lines.join('\n') + '\n\n确认保存？')) return;
   try {
-    await cloudSaveMaintenance(b);
-    showToast('已保存检修记录');
+    const batch = writeBatch(db);
+    applyMlStockPlanToBatch(batch, plan, b, {
+      out: '检修：' + mlEqLabel(b),
+      in: '检修修改回补：' + mlEqLabel(b),
+    });
+    batch.set(doc(db, 'maintenancelogs', b.id), Object.assign({}, b));
+    await batch.commit();
+    showToast(plan.moves.length ? '已保存，二级库库存已同步' : '已保存检修记录');
     currentMlId = b.id;
     mlBuffer = null;
     switchModule('maintenance');
@@ -6283,16 +6388,45 @@ async function deleteMaintenance() {
   if (!ml) return;
   const user = getCurrentUser();
   if (!canEditMl(ml, user)) { showToast('无权删除'); return; }
-  if (!confirm('删除这条检修记录？可在"已删除"里恢复。')) return;
+  // 删除记录 → 台账上扣过的全部回补
+  const plan = buildMlStockPlan(ml.id, []);
+  if (!plan.ok) { alert('无法删除：\n\n' + plan.msg); return; }
+  const tip = plan.moves.length ? '\n\n将回补二级库库存：\n' + plan.lines.join('\n') : '';
+  if (!confirm('删除这条检修记录？可在"已删除"里恢复。' + tip)) return;
   const updated = Object.assign({}, ml, { deleted: true, deletedAt: Date.now(), deletedBy: user.empno, deletedByName: user.name, updatedAt: Date.now() });
-  try { await cloudSaveMaintenance(updated); showToast('已删除'); backToMlList(); }
+  try {
+    const batch = writeBatch(db);
+    applyMlStockPlanToBatch(batch, plan, ml, {
+      out: '检修：' + mlEqLabel(ml),
+      in: '检修记录删除回补：' + mlEqLabel(ml),
+    });
+    batch.set(doc(db, 'maintenancelogs', ml.id), updated);
+    await batch.commit();
+    showToast(plan.moves.length ? '已删除，二级库库存已回补' : '已删除');
+    backToMlList();
+  }
   catch (err) { showToast('删除失败：' + err.message); }
 }
 async function restoreMaintenance() {
   const ml = mlCache.find(m => m.id === currentMlId);
   if (!ml) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员'); return; }
+  // 恢复记录 → 重新扣回二级库（结存不足会拦住）
+  const plan = buildMlStockPlan(ml.id, ml.spareParts);
+  if (!plan.ok) { alert('无法恢复：\n\n' + plan.msg + '\n\n可先给对应备件入库后再恢复。'); return; }
+  if (plan.moves.length && !confirm('恢复将重新扣减二级库库存：\n\n' + plan.lines.join('\n') + '\n\n确认恢复？')) return;
   const updated = Object.assign({}, ml, { deleted: false, updatedAt: Date.now() });
-  try { await cloudSaveMaintenance(updated); showToast('已恢复'); renderMaintenanceDetail(updated); }
+  try {
+    const batch = writeBatch(db);
+    applyMlStockPlanToBatch(batch, plan, ml, {
+      out: '检修记录恢复：' + mlEqLabel(ml),
+      in: '检修修改回补：' + mlEqLabel(ml),
+    });
+    batch.set(doc(db, 'maintenancelogs', ml.id), updated);
+    await batch.commit();
+    showToast(plan.moves.length ? '已恢复，二级库库存已扣减' : '已恢复');
+    renderMaintenanceDetail(updated);
+  }
   catch (err) { showToast('恢复失败：' + err.message); }
 }
 async function hardDeleteMaintenance() {
@@ -8578,6 +8712,7 @@ function renderSecondStockDetail(it) {
         const canRevert = isAdmin(user) && !isReverted && !isCounter;
         const canDelete = isAdmin(user);
         let tags = '';
+        if (h.mlId) tags += `<span class="parts-hist-ml-tag" onclick="event.stopPropagation();openMlFromSS('${h.mlId}')">🔧 检修</span>`;
         if (isReverted) tags += '<span class="hist-tag reverted">已撤销</span>';
         if (isCounter) tags += '<span class="hist-tag counter">撤销记录</span>';
         let actions = '';
@@ -8962,6 +9097,7 @@ function renderSSHistoryPage() {
       const typeLabel = h.type === 'in' ? '入库' : '出库';
       const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       let tags = '';
+      if (h.mlId) tags += `<span class="parts-hist-ml-tag" onclick="event.stopPropagation();openMlFromSS('${h.mlId}')">🔧 检修</span> `;
       if (h.reverted) tags += '<span class="parts-hist-reverted-tag">已撤销</span> ';
       if (h.isCounter) tags += '<span class="parts-hist-counter-tag">撤销对冲</span> ';
       const metaBits = [];
@@ -9462,6 +9598,7 @@ window.exportMlPartsXlsx = exportMlPartsXlsx;
 window.onMlSearchInput = onMlSearchInput;
 window.clearMlSearch = clearMlSearch;
 window.openMlDetail = openMlDetail;
+window.openMlFromSS = openMlFromSS;
 window.backToMlList = backToMlList;
 window.openMlCreate = openMlCreate;
 window.openMlEdit = openMlEdit;

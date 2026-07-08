@@ -34,7 +34,7 @@
 - `users` · 用户账号（id = 工号字符串）
 - `equipments` · 设备台账（**422** 台 · id = `eq_seed_XXXX` / `eq_new_XXX` / `eq_v6_XXX`）· 2026-07-01 加 `abcClass` 关键性等级（A/B/C，352 台已赋级 = A30/B69/C253，70 静设备未分类）
 - ~~`workorders` · 工单~~ —— **2026-07-01 废弃**（工单模块整体删除，换成检修模块；云端集合用 `清空旧工单_F12脚本.js` 清空，rules 白名单暂留以便删）
-- `maintenancelogs` · **检修记录**（id = `ml_时间戳_随机`）—— 2026-07-01 新增，替代工单
+- `maintenancelogs` · **检修记录**（id = `ml_时间戳_随机`）—— 2026-07-01 新增，替代工单；**2026-07-08 起选二级库备件自动扣库存**（联动 secondstock/secondstockhistory）
 - `lubepoints` · 润滑点（**871** 个 · id = `lp_XXXX` / `lp_v6_001` / … / `lp_v13_NNN`(拆上下轴承) / `lp_v14_NNN`(污水泵结构统一) / `lp_v15_NNN`(浓密机减速机拆8点) / `lp_v16_NNN`(电机拆前/后轴承) / `lp_v17_NNN`(201B给料槽搅拌补齐轴承)）
 - `lubehistory` · 润滑执行记录
 - ~~`spareparts` · 备件~~ —— **2026-06-21 废弃删除**（前端模块已移除，云端集合用 F12 脚本清空）
@@ -42,7 +42,7 @@
 - ~~`tools` · 工器具台账~~ —— **2026-06-21 废弃删除**（前端模块 + 购物车整体移除）
 - ~~`toolhistory` · 工器具出入库历史~~ —— 同上废弃
 - `secondstock` · **二级库（现场库存台账）**（id = `ss_imp_NNN` 种子 / `ss_时间戳_随机` 新增）—— 2026-06-21 新增模块，替代旧备件
-- `secondstockhistory` · 二级库出入库历史（id = `ssh_时间戳_随机`）
+- `secondstockhistory` · 二级库出入库历史（id = `ssh_时间戳_随机`）—— 2026-07-08 起带 `mlId` 字段的 = 检修记录自动扣减/回补（台账差额法的账本）
 - `inspecttemplates` · **巡检模板**（**32 个** · id = `tpl_<key>`）—— 2026-04-29 新增；**2026-07-04 升级 v2 数值点检 + 07-05 现场核实变体**：24 个 v2 结构化模板（`v:2` + `groups[{g,pts:[{p,ms:[{n,t:'num'/'chk',u,max,min,std,mth}]}]}]`，含离心泵 5 种密封变体/搅拌器 4 变体/浓硫酸隔膜泵等）+ 8 个 v1 勾选模板（items 数组；**静设备无"设备停机未运行"项**）；每个模板带 `rev`（=`INSPECT_TPL_REV`）内容修订号，**改模板内容必须 +1 并配新迁移 marker**
 - `inspecthistory` · 巡检执行记录（id = `ih_时间戳_随机`）—— v2 设备只在**有异常时**写（带 `src:'v2'` 供历史 tab 去重），v1 设备照旧每次写
 - `inspectmonthly` · **月度数值点检表**（id = `im_<eqId>_<YYYYMM>`）—— 2026-07-04 新增：一台设备一月一文档，`days["日"]={at,by,byId,stopped,v:{测点key:数值或0/1},abn:[超限key],notes:{},note}`；**只订阅当月+上月**（where month in）→ 读取量恒定不随历史增长；同一天重复提交 = 覆盖当天（订正通道）
@@ -221,11 +221,11 @@
 
 ## 🚀 下次会话应该知道的上下文
 
-当前版本：**v0.13**（v0.12 → 二级库出入库历史页 + 润滑历史页：按天分组、今天/近7天/近30天筛选、汇总条、导出）
+当前版本：**v0.14**（v0.13 → 检修记录联动二级库自动扣库存 + 检修登记收紧为仅管理员）
 
 **底部导航**：设备 / 巡检 / **检修** / 二级库 / 润滑 / 我的（**横滑 flex**）
 > ⚠️ 注意：**工单模块已于 2026-07-01 整体删除**，换成「检修记录」（`data-nav="maintenance"`，沿用原工单骨架：list/detail/create 三页 + 复用设备选择器 + `mlBuffer` 桥接）。工器具/旧备件模块 2026-06-21 已删，`data-nav="parts"` 指向二级库。
-> **检修模块**（`maintenance` module）：无审批，谁都能登记；改/删自己登记的；admin 删除+恢复+硬删。字段 `equipmentId/Tag/Name`·`category`(fault/planned/preventive)·`repairDate`·`faultParts[]`(标签多选)·`faultCause`·`measures`·`spareParts[]`(可从二级库挑/手填，**不扣库存**)·`repairerName`·`note`·软删 `deleted`。常量 `ML_CATEGORY_MAP`/`COMMON_FAULT_PARTS`/`ABC_CLASS_MAP`。设备详情"相关记录"tab 改读 `mlCache`。
+> **检修模块**（`maintenance` module）：**2026-07-08 收紧为仅 admin 可登记/编辑/删除**（原"谁都能登记"，因联动扣库存改掉；其他人只读）。字段 `equipmentId/Tag/Name`·`category`(fault/planned/preventive)·`repairDate`·`faultParts[]`(标签多选)·`faultCause`·`measures`·`spareParts[]`(可从二级库挑/手填，**二级库的自动扣库存·手填的不扣**)·`repairerName`·`note`·软删 `deleted`。常量 `ML_CATEGORY_MAP`/`COMMON_FAULT_PARTS`/`ABC_CLASS_MAP`。设备详情"相关记录"tab 改读 `mlCache`。
 > **设备 A/B/C 分级**：`abcClass` 字段(''/A/B/C)，设备卡/检修记录/详情显示徽章(`.abc-badge`)，设备编辑页有下拉。352 台已写云端(A30/B69/C253)，70 静设备未分类。**本地 SEED 未同步 abcClass**(主 SEED id 按位置生成+位号迁移，注入易错、生产读云端不受影响，故意不动)。桌面 `设备ABC分级清单_草稿_2026-07-01.xlsx` 留档。
 
 **模块结构**：
@@ -262,6 +262,7 @@
 | `inspect_tpl_v2_20260704` | 巡检模板升级 v2 数值点检结构（21 个覆盖写入；**预览模式跳过**，上线后线上页面首次加载时执行）|
 
 **最近做的改动**（按时间倒序）：
+1. **检修记录联动二级库自动扣库存 + 检修登记收紧仅 admin**（2026-07-08，用户确认后已 push）：用户要求"检修选了备件就自动从二级库扣数量"，并决定检修登记权限收紧。**①权限**：`openMlCreate`/`canEditMl`/`submitMaintenance`/FAB 显隐全部改仅 admin（原"谁都能登记、改删自己的"），其他人检修模块只读。**②台账差额法**（核心设计）：每笔自动扣减写 `secondstockhistory` 时带 `mlId` 关联字段；同步时算 `目标用量(spareParts 带 ssId 条目汇总) − 台账净扣额(mlStockLedger，剔除 reverted/isCounter)` = 差额，>0 出库 / <0 回补——天然兼容 admin 手动撤销单笔（撤销后再编辑记录会重新对齐）。**③函数**：`mlStockLedger`/`mlTargetStock`/`buildMlStockPlan`(校验结存+确认文案)/`applyMlStockPlanToBatch`(writeBatch 原子写：检修记录+结存+历史)。新建=全额扣、编辑=差额多退少补、软删=全回补、恢复=重扣(结存不足拦)、硬删不动(软删时已补)；结存不足 alert 拦截；手填备件(无 ssId)不碰库存。**④UI**：`addStockPart` prompt 显示当前结存+校验>0；出库历史 reason 自动填"检修：位号 设备名"；二级库详情页+历史页带 `mlId` 的记录显示「🔧 检修」标签(`.parts-hist-ml-tag`)，点击 `openMlFromSS` 跳检修详情(已硬删则 toast)。**⑤已实测**（预览+真实云端，测试数据已全部清理、结存回原值）：新建扣2/编辑2→3补扣1/编辑3→1回补2/99999拦截/删除回补/恢复再扣/历史页标签跳转，控制台 0 报错。无数据迁移、无 rules 变更（复用现有集合）。
 1. **二级库出入库历史页 + 润滑历史页**（2026-07-08）：用户要"直接看到今天出库/润滑了什么"。两个模块各加「📋 历史」入口按钮（页头导出旁，**全员可见**）→ 整页历史视图（新 module `parts-history` / `lube-history`，各带独立顶栏，switchModule 里 hideMain + navKey 归回 parts/lube）。**结构相同**：类型 tab（二级库=出库/入库/全部，默认出库；润滑=全部/脂/油，默认全部，按 `actualOil` 含"脂"判断同 getLubeKind 口径）+ 自然日时间筛选（今天/近7天/近30天/全部，默认今天）+ 汇总条（二级库剔除已撤销/撤销对冲；润滑加脂按 g、换油按 L 分开合计）+ 按天分组卡片（今天/昨天/N月N日·周X）+「↓导出」按当前筛选导 Excel。**返回链路**：`openSecondStockDetail(id, from)` / `openLubeDetail(id, from)` 加第二参 + `ssDetailFrom`/`lubeDetailFrom`，从历史页进详情返回文字变"返回出入库历史/润滑历史"并原路返回（同 openMlDetail 套路）；两个详情顶栏返回文字 span 补了 id。订阅回调加"历史页活跃时重渲染"。CSS 复用：润滑历史页直接用二级库的 `.ss-hist-*` 类。纯前端展示，无数据迁移、无 rules 变更。预览已用真实云端数据验证（当天 4 笔出库/281 条润滑历史全对上）。
 1. **巡检到期改为"自然日 + 早上 6 点"更新**（2026-07-07）：`calcNextInspectAt` 从"上次巡检时刻 + N×24h"改为"上次巡检的日历日 + N 天的 06:00"——A 类今天任何时间巡检，明天 06:00 准时回到待巡检，工人早班跑巡回不会因为"还差俩小时才满 24h"漏设备。周期本身不变（A=1/B=2/C=7 天）。**同日顺手修 `formatRelTime`**：今天/昨天/N 天前也改按自然日算（原来昨天下午的记录今天上午看不满 24h 误显示"今天"，用户发现）。
 1. **巡检：静设备全部移出 + 趋势页显示勾选测点 + 等级筛选**（2026-07-06）：①**静设备不做点检**（用户定：设备太多工作量太大）：`getInspectTplKeyForEq` 对 压力容器/贮槽/非标静设备 直接 return null（70 台），巡检范围 388→**318 台**（A30/B69/C219，全部有等级）；v1 勾选模板只剩 刮泥机3+给料器1 在用，静设备模板（pv_*/tank/non_standard/ns_no_vib）SEED 里保留未删。②**趋势页全测点显示**：原来只显示 num 测点，现在 chk（正常/异常）测点也显示——`getTrendChkSeries` 读月表 0/1 值，渲染每日点条 `.ins-chk-strip`（绿=正常 红=异常，点小方块 showToast 当天判定+备注），统计"检查 N 次·异常 M 次"；hero 计数改"N 个测点（数值 X + 勾选 Y）"。③**巡检列表加等级筛选行**：`#inspect-class-row`（区域/类型行下面独立一行，全部等级/A类/B类/C类，`inspectClassFilter`，可与区域/类型/搜索叠加）。④**历史/异常卡片可点进趋势**（同日追加，用户反馈：设备巡检完就从待巡检消失、趋势入口跟着丢）：`renderInspectHistCard` 整卡 onclick=`openInspectTrend(equipmentId)` + 右侧"📈 点检数据"提示；v1 设备点了 toast 提示非数值点检；删除按钮已有 stopPropagation 不冲突。**顺手**：`window.showToast` 补暴露（chk 点条内联 onclick 需要，之前一直没在 window 上）。**注意：线上已在真实使用**——2026-07-06 已有工人（潘东旭）提交 v2 点检 35 条历史，rules 已发布、迁移已跑，v2 上线三步已完成。检修列表"全部等级"筛选条下加**重点设备条**（⭐两组，`ML_KEY_EQ_GROUPS` 按设备名匹配：给料泵 `name==='高压釜给料泵'` 6 台 / 搅拌器 `/^高压釜\d隔室搅拌$/` 21 台；每组带 `parts` 重点零件关键词配置）。**三级整页结构**（用户明确不要半屏 sheet）：检修列表 → `maintenance-keyeq`（组内设备卡=位号+ABC徽章+记录数+最近日期）→ `maintenance-eqlog`（单台检修档案：`全部记录` tab + 零件 tab）。**零件更换时间线** `renderMlPartTimeline`：归类**按故障部位标签精确匹配**（`parts[].tags`，07-05 用户反馈模糊搜文本会把"隔膜补油阀"误归隔膜后改的；`kw` 仅用于时间线上提取备件品牌）。给料泵：单向阀/隔膜/隔热组件(tags 含"隔热段"兼容旧记录)；搅拌器：机械密封/减速机/桨叶(tags 含搅拌桨/叶轮)。**登记表单联动** `mlFormFaultPartOptions`：选中重点设备时该组零件标签自动排在"故障部位"选项最前（工人直接点选，归类才准），节点=更换日期+「用了 N 天（约X周/月）后更换」（最新一条=「在用·已 N 天」）+该次备件品牌规格芯片+原因摘要，顶部显平均更换间隔；**使用时长对比条形图** `renderMlPartLifeChart`（条长∝天数、颜色=备件名、图例、在用=半透明+标注）——给采购对比供应商寿命用。**返回链路**：`openMlDetail(id, from)` 加第二参 + `mlDetailFrom`，从档案页进详情返回回档案页；`backToMlKeyEq` 按当前设备 `mlEqlogGroup()` 归组返回。switchModule 两个新 module（keyeq/eqlog）都隐藏顶栏底栏、导航高亮"检修"。`renderMlCard(ml, from)` 加参（⚠️ `renderMaintenanceList` 已改 `.map(m=>renderMlCard(m))`，不能直接 `.map(renderMlCard)` 否则 map 的 index 会被当 from）。曾做过预览演示数据 `previewMlDemoRecords()`（9 条 106A 假记录演示时间线），**用户验收后同日已删除**，线上/预览都不会出现。上一版做过又被替换的"主列表只看一台"过滤也已删干净。
