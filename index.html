@@ -1648,6 +1648,82 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     font-weight: 500;
   }
 
+  /* ════════ 二级库·出入库历史页 · 2026-07-08 ════════ */
+  .ss-hist-page { padding: 16px 18px 90px; max-width: 720px; margin: 0 auto; }
+  .ss-hist-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .ss-hist-title {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .ss-hist-type-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .ss-hist-type-tab {
+    padding: 10px 8px;
+    min-height: 44px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    transition: all .15s;
+  }
+  .ss-hist-type-tab.active {
+    border-color: var(--g-deep);
+    background: var(--g-mist);
+    color: var(--g-forest);
+  }
+  .ss-hist-range-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .ss-hist-sum {
+    background: var(--g-mist);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--g-forest);
+    line-height: 1.6;
+  }
+  .ss-hist-sum strong { font-weight: 600; }
+  .ss-hist-day {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--subtle);
+    margin: 16px 0 8px;
+  }
+  .ss-hist-day:first-of-type { margin-top: 0; }
+  .ss-hist-card { cursor: pointer; }
+  .ss-hist-card:active { background: var(--g-mist); }
+  .ss-hist-card .parts-hist-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+  }
+
 
 
   /* ════════ 登录欢迎卡片 ════════ */
@@ -2700,7 +2776,13 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <!-- 润滑详情顶栏 -->
   <header class="detail-back" id="topbar-lube-detail" style="display:none;" onclick="backToLubeList()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    <span class="detail-back-text">返回润滑列表</span>
+    <span class="detail-back-text" id="lube-detail-back-text">返回润滑列表</span>
+  </header>
+
+  <!-- 润滑历史顶栏 · 2026-07-08 -->
+  <header class="detail-back" id="topbar-lube-history" style="display:none;" onclick="backFromLubeHistory()">
+    <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="detail-back-text">润滑历史</span>
   </header>
 
   <!-- 润滑执行顶栏 -->
@@ -2712,7 +2794,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <!-- 二级库详情顶栏 -->
   <header class="detail-back" id="topbar-parts-detail" style="display:none;" onclick="backToSecondStockList()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    <span class="detail-back-text">返回二级库列表</span>
+    <span class="detail-back-text" id="parts-detail-back-text">返回二级库列表</span>
   </header>
 
   <!-- 二级库 新增/编辑 顶栏（仅管理员）-->
@@ -2725,6 +2807,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <header class="detail-back" id="topbar-parts-txn" style="display:none;" onclick="cancelSecondStockTxn()">
     <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     <span class="detail-back-text" id="parts-txn-title">出库</span>
+  </header>
+
+  <!-- 二级库 出入库历史 顶栏 · 2026-07-08 -->
+  <header class="detail-back" id="topbar-parts-history" style="display:none;" onclick="backFromSSHistory()">
+    <svg class="detail-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="detail-back-text">出入库历史</span>
   </header>
 
   <main class="content" id="main-content">
@@ -2860,6 +2948,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             <button class="export-btn admin-only" id="ss-add-btn" onclick="openSecondStockEdit('')" title="新增（仅管理员）" style="display:none;"><span class="export-btn-arrow">＋</span>新增</button>
             <button class="export-btn admin-only" id="ss-batch-btn" onclick="showSheet('secondStockBatch')" title="批量导入（仅管理员）" style="display:none;"><span class="export-btn-arrow">📥</span>批量导入</button>
+            <button class="export-btn" onclick="openSecondStockHistory()" title="出入库历史"><span class="export-btn-arrow">📋</span>出入库历史</button>
             <button class="export-btn" onclick="exportSecondStockXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
           </div>
         </div>
@@ -2906,11 +2995,19 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
     </section>
 
+    <!-- 二级库 出入库历史（全员可看）· 2026-07-08 -->
+    <section class="module" data-module="parts-history">
+      <div id="ss-history-body"></div>
+    </section>
+
     <section class="module" data-module="lube">
       <div class="section-header">
         <div class="section-label-row">
           <div class="section-label">Lubrication · 润滑管理</div>
-          <button class="export-btn" onclick="exportLubeXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            <button class="export-btn" onclick="openLubeHistory()" title="润滑历史"><span class="export-btn-arrow">📋</span>润滑历史</button>
+            <button class="export-btn" onclick="exportLubeXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+          </div>
         </div>
         <h1 class="section-title" id="lube-section-title">Schedule</h1>
         <div class="section-sub" id="lube-section-sub">—</div>
@@ -2929,6 +3026,11 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
       <div id="lube-list-container"></div>
       <div class="eq-load-more" id="lube-load-more" style="display:none;" onclick="lubeLoadMore()">加载更多 ↓</div>
+    </section>
+
+    <!-- 润滑历史（全员可看）· 2026-07-08 -->
+    <section class="module" data-module="lube-history">
+      <div id="lube-history-body"></div>
     </section>
 
     <!-- 润滑点详情 -->
@@ -4353,13 +4455,15 @@ function switchModule(name) {
   const isWoCreate = name==='maintenance-create';
   const isLubeDetail = name==='lube-detail';
   const isLubeExec = name==='lube-execute';
+  const isLubeHistory = name==='lube-history';
   const isPartsDetail = name==='parts-detail';
   const isPartsTxn = name==='parts-txn';
   const isPartsEdit = name==='parts-edit';
+  const isPartsHistory = name==='parts-history';
   const isInspectDetail = name==='inspect-detail';
   const isInspectTrend = name==='inspect-trend';
   const isMlKeyEq = name==='maintenance-keyeq' || name==='maintenance-eqlog';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isPartsDetail || isPartsTxn || isPartsEdit || isInspectDetail || isInspectTrend || isMlKeyEq;
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isLubeHistory || isPartsDetail || isPartsTxn || isPartsEdit || isPartsHistory || isInspectDetail || isInspectTrend || isMlKeyEq;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -4372,19 +4476,23 @@ function switchModule(name) {
   if (lpdet) lpdet.style.display = isLubeDetail ? 'flex' : 'none';
   const lpexec = document.getElementById('topbar-lube-exec');
   if (lpexec) lpexec.style.display = isLubeExec ? 'flex' : 'none';
+  const lphist = document.getElementById('topbar-lube-history');
+  if (lphist) lphist.style.display = isLubeHistory ? 'flex' : 'none';
   const ppdet = document.getElementById('topbar-parts-detail');
   if (ppdet) ppdet.style.display = isPartsDetail ? 'flex' : 'none';
   const pptxn = document.getElementById('topbar-parts-txn');
   if (pptxn) pptxn.style.display = isPartsTxn ? 'flex' : 'none';
   const ppedit = document.getElementById('topbar-parts-edit');
   if (ppedit) ppedit.style.display = isPartsEdit ? 'flex' : 'none';
+  const pphist = document.getElementById('topbar-parts-history');
+  if (pphist) pphist.style.display = isPartsHistory ? 'flex' : 'none';
   document.getElementById('bottom-nav').style.display = hideMain ? 'none' : '';
 
   // 底部导航激活处理
   if (navKey === 'maintenance-detail' || navKey === 'maintenance-create' || navKey === 'maintenance-keyeq' || navKey === 'maintenance-eqlog') navKey = 'maintenance';
   if (navKey === 'equipment-detail' || navKey === 'equipment-edit') navKey = 'equipment';
-  if (navKey === 'lube-detail' || navKey === 'lube-execute') navKey = 'lube';
-  if (navKey === 'parts-detail' || navKey === 'parts-txn' || navKey === 'parts-edit') navKey = 'parts';
+  if (navKey === 'lube-detail' || navKey === 'lube-execute' || navKey === 'lube-history') navKey = 'lube';
+  if (navKey === 'parts-detail' || navKey === 'parts-txn' || navKey === 'parts-edit' || navKey === 'parts-history') navKey = 'parts';
   if (navKey === 'inspect-detail' || navKey === 'inspect-trend') navKey = 'inspect';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const ni2 = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
@@ -5256,6 +5364,9 @@ function subscribeLubeHistory() {
         if (lp) renderLubeDetail(lp);
       }
     }
+    // 刷新润滑历史页（如果正打开）· 2026-07-08
+    const lubeHistMod = document.querySelector('.module[data-module="lube-history"]');
+    if (lubeHistMod && lubeHistMod.classList.contains('active') && typeof renderLubeHistoryPage === 'function') renderLubeHistoryPage();
   }, (err) => {
     console.error('[Firebase] 订阅润滑记录失败', err);
   });
@@ -6673,13 +6784,21 @@ function lubeLoadMore() {
 
 function backToLubeList() {
   currentLubePointId = null;
+  if (lubeDetailFrom === 'history') {
+    lubeDetailFrom = '';
+    openLubeHistory();
+    return;
+  }
   switchModule('lube');
 }
 
-function openLubeDetail(id) {
+function openLubeDetail(id, from) {
   const lp = lubePointsCache.find(p => p.id === id);
   if (!lp) { showToast('润滑点不存在'); return; }
   currentLubePointId = id;
+  lubeDetailFrom = from === 'history' ? 'history' : '';
+  const backText = document.getElementById('lube-detail-back-text');
+  if (backText) backText.textContent = lubeDetailFrom === 'history' ? '返回润滑历史' : '返回润滑列表';
   renderLubeDetail(lp);
   switchModule('lube-detail');
 }
@@ -6917,6 +7036,150 @@ function cancelLubeExec() {
   lubeExecBuffer = null;
   if (currentLubePointId) switchModule('lube-detail');
   else switchModule('lube');
+}
+
+/* ------ 润滑历史页（全员可看）· 2026-07-08 ------ */
+let lubeHistKind = 'all';    // all / grease / oil
+let lubeHistRange = 'today'; // today / 7d / 30d / all
+let lubeDetailFrom = '';     // '' = 从列表进详情；'history' = 从润滑历史页进详情
+
+// 与详情页"加脂/换油"标签同口径：按实际油号是否含"脂"判断（老记录 operationType 不可靠）
+function lubeHistIsGrease(h) {
+  return String(h.actualOil || '').includes('脂');
+}
+function lubeHistAt(h) { return h.lubeAt || h.createdAt || 0; }
+
+function openLubeHistory() {
+  renderLubeHistoryPage();
+  switchModule('lube-history');
+}
+
+function backFromLubeHistory() {
+  switchModule('lube');
+}
+
+function setLubeHistKind(k) { lubeHistKind = k; renderLubeHistoryPage(); }
+function setLubeHistRange(r) { lubeHistRange = r; renderLubeHistoryPage(); }
+
+function lubeHistRangeStart() {
+  if (lubeHistRange === 'all') return 0;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (lubeHistRange === '7d') d.setDate(d.getDate() - 6);
+  if (lubeHistRange === '30d') d.setDate(d.getDate() - 29);
+  return d.getTime();
+}
+
+function filterLubeHistory() {
+  const start = lubeHistRangeStart();
+  return (lubeHistoryCache || []).filter(h => {
+    if (lubeHistAt(h) < start) return false;
+    if (lubeHistKind === 'grease' && !lubeHistIsGrease(h)) return false;
+    if (lubeHistKind === 'oil' && lubeHistIsGrease(h)) return false;
+    return true;
+  }).sort((a, b) => lubeHistAt(b) - lubeHistAt(a));
+}
+
+function renderLubeHistoryPage() {
+  const body = document.getElementById('lube-history-body');
+  if (!body) return;
+  const records = filterLubeHistory();
+  const rangeLabel = SS_HIST_RANGE_LABELS[lubeHistRange] || '';
+  const r2 = x => Math.round(x * 100) / 100;
+  const sumOf = arr => r2(arr.reduce((s, h) => s + (parseFloat(h.actualAmount) || 0), 0));
+  const devCount = arr => new Set(arr.map(h => h.tag || '')).size;
+  const greaseR = records.filter(lubeHistIsGrease);
+  const oilR = records.filter(h => !lubeHistIsGrease(h));
+  let sumHtml;
+  if (lubeHistKind === 'grease') {
+    sumHtml = `${rangeLabel}加脂 <strong>${greaseR.length} 笔</strong> · 合计 <strong>${sumOf(greaseR)} g</strong> · 涉及 <strong>${devCount(greaseR)} 台</strong>设备`;
+  } else if (lubeHistKind === 'oil') {
+    sumHtml = `${rangeLabel}换油 <strong>${oilR.length} 笔</strong> · 合计 <strong>${sumOf(oilR)} L</strong> · 涉及 <strong>${devCount(oilR)} 台</strong>设备`;
+  } else {
+    sumHtml = `${rangeLabel}润滑 <strong>${records.length} 笔</strong> · 加脂 <strong>${sumOf(greaseR)} g</strong>（${greaseR.length} 笔）· 换油 <strong>${sumOf(oilR)} L</strong>（${oilR.length} 笔）· 涉及 <strong>${devCount(records)} 台</strong>设备`;
+  }
+
+  const tabsHtml = `
+    <div class="ss-hist-type-tabs">
+      <button class="ss-hist-type-tab ${lubeHistKind === 'all' ? 'active' : ''}" onclick="setLubeHistKind('all')">全部</button>
+      <button class="ss-hist-type-tab ${lubeHistKind === 'grease' ? 'active' : ''}" onclick="setLubeHistKind('grease')">🛢️ 脂润滑</button>
+      <button class="ss-hist-type-tab ${lubeHistKind === 'oil' ? 'active' : ''}" onclick="setLubeHistKind('oil')">⛽ 油润滑</button>
+    </div>
+    <div class="ss-hist-range-row">
+      ${Object.entries(SS_HIST_RANGE_LABELS).map(([k, lbl]) =>
+        `<button class="random-loc-pill ${lubeHistRange === k ? 'active' : ''}" onclick="setLubeHistRange('${k}')">${lbl}</button>`).join('')}
+    </div>`;
+
+  let listHtml = '';
+  if (records.length === 0) {
+    const kindLbl = lubeHistKind === 'grease' ? '加脂' : lubeHistKind === 'oil' ? '换油' : '润滑';
+    listHtml = `
+      <div class="empty" style="padding:60px 20px;">
+        <div class="empty-mark">—</div>
+        <div class="empty-title">${rangeLabel}暂无${kindLbl}记录</div>
+        <div class="empty-hint">no records</div>
+      </div>`;
+  } else {
+    let lastDay = '';
+    records.forEach(h => {
+      const at = lubeHistAt(h);
+      const d = new Date(at);
+      const dayKey = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      if (dayKey !== lastDay) {
+        lastDay = dayKey;
+        listHtml += `<div class="ss-hist-day">${ssHistDayLabel(at)}</div>`;
+      }
+      const isGrease = lubeHistIsGrease(h);
+      const unit = isGrease ? 'g' : 'L';
+      const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      const metaBits = [];
+      if (h.tag) metaBits.push(escapeHtml(h.tag));
+      if (h.actualOil) metaBits.push(escapeHtml(h.actualOil));
+      metaBits.push(escapeHtml(h.operatorName || h.operatorId || '—'));
+      metaBits.push(hm);
+      const clickable = h.lubePointId ? ` onclick="openLubeDetail('${h.lubePointId}','history')"` : '';
+      listHtml += `
+        <div class="parts-hist-item ss-hist-card"${clickable}>
+          <div class="parts-hist-top">
+            <span class="parts-hist-type ${isGrease ? 'out' : 'in'}">${isGrease ? '加脂' : '换油'}</span>
+            <span class="parts-hist-name">${escapeHtml(h.name || '—')} · ${escapeHtml(h.point || '—')}</span>
+            <span class="parts-hist-qty" style="color:var(--g-deep);white-space:nowrap;">${h.actualAmount != null && h.actualAmount !== '' ? h.actualAmount : '—'} ${unit}</span>
+          </div>
+          <div class="parts-hist-meta">${metaBits.join(' · ')}${h.note ? '<br>备注：' + escapeHtml(h.note) : ''}</div>
+        </div>`;
+    });
+  }
+
+  body.innerHTML = `
+    <div class="ss-hist-page">
+      <div class="ss-hist-head">
+        <div>
+          <div class="section-label">History · 润滑历史</div>
+          <div class="ss-hist-title">Lube log</div>
+        </div>
+        <button class="export-btn" onclick="exportLubeHistoryXlsx()" title="导出当前筛选的记录"><span class="export-btn-arrow">↓</span>导出</button>
+      </div>
+      ${tabsHtml}
+      <div class="ss-hist-sum">${sumHtml}</div>
+      ${listHtml}
+    </div>`;
+}
+
+async function exportLubeHistoryXlsx() {
+  const records = filterLubeHistory();
+  if (records.length === 0) { showToast('当前筛选没有记录'); return; }
+  const kindLabel = lubeHistKind === 'grease' ? '加脂' : lubeHistKind === 'oil' ? '换油' : '润滑';
+  const rangeLabel = SS_HIST_RANGE_LABELS[lubeHistRange] || '';
+  const rows = [['序号', '时间', '类型', '位号', '设备名称', '润滑点', '实际油号', '实际量', '单位', '操作人', '备注']];
+  records.forEach((h, i) => {
+    const d = new Date(lubeHistAt(h));
+    const ts = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const isGrease = lubeHistIsGrease(h);
+    rows.push([i + 1, ts, isGrease ? '加脂' : '换油', h.tag || '', h.name || '', h.point || '',
+      h.actualOil || '', h.actualAmount != null ? h.actualAmount : '', isGrease ? 'g' : 'L',
+      h.operatorName || h.operatorId || '', h.note || '']);
+  });
+  await _exportSheets([[kindLabel + '历史', rows]], `润滑${kindLabel}历史_${rangeLabel}_` + _today() + '.xlsx');
 }
 
 /* ------ 设备详情的"润滑点" Tab ------ */
@@ -8052,6 +8315,8 @@ function subscribeSecondStockHistory() {
       const it = secondStockCache.find(x => x.id === currentSSId);
       if (it) renderSecondStockDetail(it);
     }
+    const hist = document.querySelector('.module[data-module="parts-history"]');
+    if (hist && hist.classList.contains('active')) renderSSHistoryPage();
   }, err => console.error('[二级库] 历史订阅失败', err));
 }
 
@@ -8257,13 +8522,21 @@ function secondStockLoadMore() {
 /* ----- 详情 ----- */
 function backToSecondStockList() {
   currentSSId = null;
+  if (ssDetailFrom === 'history') {
+    ssDetailFrom = '';
+    openSecondStockHistory();
+    return;
+  }
   switchModule('parts');
 }
 
-function openSecondStockDetail(id) {
+function openSecondStockDetail(id, from) {
   const it = ssDataSource().find(x => x.id === id);
   if (!it) { showToast('记录不存在'); return; }
   currentSSId = id;
+  ssDetailFrom = from === 'history' ? 'history' : '';
+  const backText = document.getElementById('parts-detail-back-text');
+  if (backText) backText.textContent = ssDetailFrom === 'history' ? '返回出入库历史' : '返回二级库列表';
   renderSecondStockDetail(it);
   switchModule('parts-detail');
 }
@@ -8576,6 +8849,169 @@ async function hardDeleteSecondStockHistory(historyId) {
   } catch (e) {
     showToast('删除失败：' + (e && e.message || e));
   }
+}
+
+/* ----- 出入库历史页（全员可看）· 2026-07-08 ----- */
+let ssHistType = 'out';     // out / in / all
+let ssHistRange = 'today';  // today / 7d / 30d / all
+let ssDetailFrom = '';      // '' = 从列表进详情；'history' = 从历史页进详情
+
+const SS_HIST_RANGE_LABELS = { today: '今天', '7d': '近7天', '30d': '近30天', all: '全部' };
+
+function openSecondStockHistory() {
+  renderSSHistoryPage();
+  switchModule('parts-history');
+}
+
+function backFromSSHistory() {
+  switchModule('parts');
+}
+
+function setSSHistType(t) { ssHistType = t; renderSSHistoryPage(); }
+function setSSHistRange(r) { ssHistRange = r; renderSSHistoryPage(); }
+
+// 时间范围起点（自然日 00:00，同巡检的自然日口径）
+function ssHistRangeStart() {
+  if (ssHistRange === 'all') return 0;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (ssHistRange === '7d') d.setDate(d.getDate() - 6);
+  if (ssHistRange === '30d') d.setDate(d.getDate() - 29);
+  return d.getTime();
+}
+
+function filterSSHistory() {
+  const start = ssHistRangeStart();
+  return (secondStockHistCache || []).filter(h => {
+    if ((h.createdAt || 0) < start) return false;
+    if (ssHistType !== 'all' && h.type !== ssHistType) return false;
+    return true;
+  }).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+}
+
+function ssHistDayLabel(ts) {
+  const d = new Date(ts);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  const diff = Math.round((today.getTime() - day.getTime()) / 86400000);
+  const md = (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  const wk = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
+  if (diff === 0) return '今天 · ' + md;
+  if (diff === 1) return '昨天 · ' + md;
+  const yearPrefix = d.getFullYear() !== today.getFullYear() ? d.getFullYear() + '年' : '';
+  return yearPrefix + md + ' · ' + wk;
+}
+
+function renderSSHistoryPage() {
+  const body = document.getElementById('ss-history-body');
+  if (!body) return;
+  const itemMap = {};
+  ssDataSource().forEach(it => { itemMap[it.id] = it; });
+  const records = filterSSHistory();
+  const rangeLabel = SS_HIST_RANGE_LABELS[ssHistRange] || '';
+
+  // 汇总口径：不含已撤销记录和撤销对冲记录（真实发生的量）
+  const valid = records.filter(h => !h.reverted && !h.isCounter);
+  const sumOf = arr => arr.reduce((s, h) => s + (h.quantity || 0), 0);
+  const outR = valid.filter(h => h.type === 'out');
+  const inR = valid.filter(h => h.type === 'in');
+  let sumHtml;
+  if (ssHistType === 'out') {
+    const kinds = new Set(outR.map(h => h.itemId)).size;
+    sumHtml = `${rangeLabel}出库 <strong>${outR.length} 笔</strong> · 合计 <strong>${sumOf(outR)} 件</strong> · 涉及 <strong>${kinds} 种</strong>备件`;
+  } else if (ssHistType === 'in') {
+    const kinds = new Set(inR.map(h => h.itemId)).size;
+    sumHtml = `${rangeLabel}入库 <strong>${inR.length} 笔</strong> · 合计 <strong>${sumOf(inR)} 件</strong> · 涉及 <strong>${kinds} 种</strong>备件`;
+  } else {
+    sumHtml = `${rangeLabel}共 <strong>${valid.length} 笔</strong> · 出库 <strong>${sumOf(outR)} 件</strong>（${outR.length} 笔）· 入库 <strong>${sumOf(inR)} 件</strong>（${inR.length} 笔）`;
+  }
+
+  const tabsHtml = `
+    <div class="ss-hist-type-tabs">
+      <button class="ss-hist-type-tab ${ssHistType === 'out' ? 'active' : ''}" onclick="setSSHistType('out')">出库</button>
+      <button class="ss-hist-type-tab ${ssHistType === 'in' ? 'active' : ''}" onclick="setSSHistType('in')">入库</button>
+      <button class="ss-hist-type-tab ${ssHistType === 'all' ? 'active' : ''}" onclick="setSSHistType('all')">全部</button>
+    </div>
+    <div class="ss-hist-range-row">
+      ${Object.entries(SS_HIST_RANGE_LABELS).map(([k, lbl]) =>
+        `<button class="random-loc-pill ${ssHistRange === k ? 'active' : ''}" onclick="setSSHistRange('${k}')">${lbl}</button>`).join('')}
+    </div>`;
+
+  let listHtml = '';
+  if (records.length === 0) {
+    const typeLbl = ssHistType === 'out' ? '出库' : ssHistType === 'in' ? '入库' : '出入库';
+    listHtml = `
+      <div class="empty" style="padding:60px 20px;">
+        <div class="empty-mark">—</div>
+        <div class="empty-title">${rangeLabel}暂无${typeLbl}记录</div>
+        <div class="empty-hint">no records</div>
+      </div>`;
+  } else {
+    let lastDay = '';
+    records.forEach(h => {
+      const d = new Date(h.createdAt || 0);
+      const dayKey = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      if (dayKey !== lastDay) {
+        lastDay = dayKey;
+        listHtml += `<div class="ss-hist-day">${ssHistDayLabel(h.createdAt || 0)}</div>`;
+      }
+      const it = itemMap[h.itemId];
+      const name = it ? (it.name || '—') : '（条目已删除）';
+      const unit = it ? (it.unit || '') : '';
+      const sign = h.type === 'in' ? '+' : '−';
+      const typeLabel = h.type === 'in' ? '入库' : '出库';
+      const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      let tags = '';
+      if (h.reverted) tags += '<span class="parts-hist-reverted-tag">已撤销</span> ';
+      if (h.isCounter) tags += '<span class="parts-hist-counter-tag">撤销对冲</span> ';
+      const metaBits = [];
+      if (h.reason) metaBits.push(escapeHtml(h.reason));
+      metaBits.push(escapeHtml(h.operatorName || h.operatorId || '—'));
+      metaBits.push(hm);
+      listHtml += `
+        <div class="parts-hist-item ss-hist-card${h.reverted ? ' reverted' : ''}" onclick="openSecondStockDetail('${h.itemId}','history')">
+          <div class="parts-hist-top">
+            <span class="parts-hist-type ${h.type}">${typeLabel}</span>
+            <span class="parts-hist-name">${escapeHtml(name)}</span>
+            <span class="parts-hist-qty ${h.type}" style="white-space:nowrap;">${sign}${h.quantity || 0} ${escapeHtml(unit)}</span>
+          </div>
+          <div class="parts-hist-meta">${tags}${metaBits.join(' · ')}</div>
+        </div>`;
+    });
+  }
+
+  body.innerHTML = `
+    <div class="ss-hist-page">
+      <div class="ss-hist-head">
+        <div>
+          <div class="section-label">History · 出入库历史</div>
+          <div class="ss-hist-title">Stock log</div>
+        </div>
+        <button class="export-btn" onclick="exportSSHistoryXlsx()" title="导出当前筛选的记录"><span class="export-btn-arrow">↓</span>导出</button>
+      </div>
+      ${tabsHtml}
+      <div class="ss-hist-sum">${sumHtml}</div>
+      ${listHtml}
+    </div>`;
+}
+
+async function exportSSHistoryXlsx() {
+  const itemMap = {};
+  ssDataSource().forEach(it => { itemMap[it.id] = it; });
+  const records = filterSSHistory();
+  if (records.length === 0) { showToast('当前筛选没有记录'); return; }
+  const typeLabel = ssHistType === 'out' ? '出库' : ssHistType === 'in' ? '入库' : '出入库';
+  const rangeLabel = SS_HIST_RANGE_LABELS[ssHistRange] || '';
+  const rows = [['序号', '时间', '类型', '备件名称(含规格)', '数量', '单位', '用途/说明', '操作人', '状态']];
+  records.forEach((h, i) => {
+    const it = itemMap[h.itemId];
+    const d = new Date(h.createdAt || 0);
+    const ts = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    rows.push([i + 1, ts, h.type === 'in' ? '入库' : '出库', it ? (it.name || '') : '（条目已删除）',
+      h.quantity || 0, it ? (it.unit || '') : '', h.reason || '', h.operatorName || h.operatorId || '',
+      h.reverted ? '已撤销' : h.isCounter ? '撤销对冲' : '']);
+  });
+  await _exportSheets([[typeLabel + '历史', rows]], `二级库${typeLabel}历史_${rangeLabel}_` + _today() + '.xlsx');
 }
 
 /* ----- 导出 Excel ----- */
@@ -9078,6 +9514,18 @@ window.deleteSecondStockItem = deleteSecondStockItem;
 window.revertSecondStockHistory = revertSecondStockHistory;
 window.hardDeleteSecondStockHistory = hardDeleteSecondStockHistory;
 window.exportSecondStockXlsx = exportSecondStockXlsx;
+// 出入库历史页 · 2026-07-08
+window.openSecondStockHistory = openSecondStockHistory;
+window.backFromSSHistory = backFromSSHistory;
+window.setSSHistType = setSSHistType;
+window.setSSHistRange = setSSHistRange;
+window.exportSSHistoryXlsx = exportSSHistoryXlsx;
+// 润滑历史页 · 2026-07-08
+window.openLubeHistory = openLubeHistory;
+window.backFromLubeHistory = backFromLubeHistory;
+window.setLubeHistKind = setLubeHistKind;
+window.setLubeHistRange = setLubeHistRange;
+window.exportLubeHistoryXlsx = exportLubeHistoryXlsx;
 window.downloadSSBatchTemplate = downloadSSBatchTemplate;
 window.onSSBatchFileChange = onSSBatchFileChange;
 window.submitSecondStockBatch = submitSecondStockBatch;
