@@ -3017,7 +3017,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
           <div class="section-label">Lubrication · 润滑管理</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             <button class="export-btn" onclick="openLubeHistory()" title="润滑历史"><span class="export-btn-arrow">📋</span>润滑历史</button>
-            <button class="export-btn" onclick="exportLubeXlsx()" title="导出 Excel"><span class="export-btn-arrow">↓</span>导出</button>
+            <button class="export-btn" onclick="exportLubeWudingXlsx()" title="导出设备室《设备润滑五定表》格式台账（油/脂两个 sheet）"><span class="export-btn-arrow">↓</span>导出五定表</button>
+            <button class="export-btn" onclick="exportLubeXlsx()" title="导出系统明细 Excel（润滑点清单 + 执行记录）"><span class="export-btn-arrow">↓</span>导出</button>
           </div>
         </div>
         <h1 class="section-title" id="lube-section-title">Schedule</h1>
@@ -9383,13 +9384,18 @@ let _xlsxLib = null;
 async function loadXlsxLib() {
   if (_xlsxLib) return _xlsxLib;
   if (window.XLSX) { _xlsxLib = window.XLSX; return _xlsxLib; }
-  await new Promise((resolve, reject) => {
+  const loadScript = (src) => new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.src = src;
     s.onload = resolve;
     s.onerror = () => reject(new Error('XLSX 库加载失败，请检查网络'));
     document.head.appendChild(s);
   });
+  // xlsx-js-style = SheetJS 0.18.5 的带样式分支（API 兼容），五定表导出需要边框/字体/填充样式。
+  // 它的 bundle 不内嵌 codepage 编码表，先加载 cpexcel 兜底旧版 .xls 导入的中文编码
+  // （必须在主库之前加载；加载失败不阻塞——只影响极老的 .xls 文件读取）
+  await loadScript('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/cpexcel.js').catch(() => {});
+  await loadScript('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js');
   _xlsxLib = window.XLSX;
   if (!_xlsxLib) throw new Error('XLSX 库加载失败');
   return _xlsxLib;
@@ -9535,10 +9541,172 @@ async function exportLubeXlsx() {
   ], '润滑_' + _today() + '.xlsx');
 }
 
+/* ========== 设备室《设备润滑五定表》导出 (2026-07-09) ==========
+   还原设备室模板结构（油/脂两个 sheet · 左五定表 + 右初次~第8次润滑记录），
+   但不写公式、不加 sheet 保护——标记列直接算好写纯文字。 */
+function _wdKindOf(lp) {
+  const k = getLubeKind(lp);
+  if (k === 'unspecified') return lp.operationType === 'grease' ? 'grease' : 'oil';
+  return k;
+}
+const _WD_AREA_RANK = { '201': 0, '201B': 0.5, '202': 1, '203': 2, '316-1': 3, '218': 4, '923': 5, '546': 6 };
+
+function buildLubeWudingSheets() {
+  const points = (lubePointsCache || []).slice();
+  const history = (lubeHistoryCache || []).slice();
+  const byPoint = new Map();
+  history.forEach(h => {
+    if (!h.lubePointId) return;
+    if (!byPoint.has(h.lubePointId)) byPoint.set(h.lubePointId, []);
+    byPoint.get(h.lubePointId).push(h);
+  });
+  byPoint.forEach(list => list.sort((a, b) => (a.lubeAt || a.createdAt || 0) - (b.lubeAt || b.createdAt || 0)));
+
+  points.sort((a, b) => {
+    const ra = _WD_AREA_RANK[a.area] ?? 99, rb = _WD_AREA_RANK[b.area] ?? 99;
+    if (ra !== rb) return ra - rb;
+    const t = String(a.tag || '').localeCompare(String(b.tag || ''));
+    if (t !== 0) return t;
+    return String(a.point || '').localeCompare(String(b.point || ''));
+  });
+
+  const GROUPS = ['初次润滑', '第1次润滑', '第2次润滑', '第3次润滑', '第4次润滑', '第5次润滑', '第6次润滑', '第7次润滑', '第8次润滑'];
+  const SUB = ['补油/换油', '用油牌号', '用油量', '操作日期', '操作人', '标记'];
+
+  function buildSheet(kind) {
+    // 油台账多一列"首次换油周期"（设备室模板即如此，值留空）
+    const fixed = kind === 'oil'
+      ? ['序号', '子项', '设备位号', '设备名称', '润滑部位', '规定用油牌号', '规定用油量', '首次换油周期', '正常换油周期']
+      : ['序号', '子项', '设备位号', '设备名称', '润滑部位', '规定用油牌号', '规定用油量', '换油周期'];
+    const nFixed = fixed.length;
+    const nCols = nFixed + GROUPS.length * 6;
+
+    const r1 = new Array(nCols).fill('');
+    r1[0] = '设备润滑五定表'; r1[nFixed] = '设备润滑记录';
+    const r2 = new Array(nCols).fill('');
+    fixed.forEach((h, i) => { r2[i] = h; });
+    GROUPS.forEach((g, gi) => { r2[nFixed + gi * 6] = g; });
+    const r3 = new Array(nCols).fill('');
+    GROUPS.forEach((g, gi) => SUB.forEach((s, si) => { r3[nFixed + gi * 6 + si] = s; }));
+    const rows = [r1, r2, r3];
+
+    const merges = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: nFixed - 1 } },
+      { s: { r: 0, c: nFixed }, e: { r: 0, c: nCols - 1 } },
+    ];
+    for (let i = 0; i < nFixed; i++) merges.push({ s: { r: 1, c: i }, e: { r: 2, c: i } });
+    GROUPS.forEach((g, gi) => merges.push({ s: { r: 1, c: nFixed + gi * 6 }, e: { r: 1, c: nFixed + gi * 6 + 5 } }));
+
+    const pts = points.filter(p => _wdKindOf(p) === kind);
+    pts.forEach((p, i) => {
+      const row = new Array(nCols).fill('');
+      row[0] = i + 1;
+      row[1] = p.area === '201B' ? '201' : (p.area || '');
+      row[2] = p.tag ? ((String(p.tag).startsWith('201B') ? '109B-' : '109-') + p.tag) : '';
+      row[3] = p.name || '';
+      row[4] = p.point || '';
+      row[5] = p.standardOil || '';
+      row[6] = (p.standardAmount != null && p.standardAmount !== '') ? p.standardAmount : '';
+      // 周期列口径：绝大多数点有 periodHours（运行小时，设备室模板即用小时数）；
+      // 只有 periodDays 的少数点写「N天」明示单位——两字段口径不同，不能折算成假小时混同列
+      const period = p.maintenanceFree ? '免维护' : (p.periodHours || (p.periodDays ? p.periodDays + '天' : ''));
+      if (kind === 'oil') { row[8] = period; } else { row[7] = period; }
+
+      // 初次润滑 = 最早一笔；第1~8次 = 其后按时间正序（超过 8 笔只保留最近 8 笔）
+      const recs = byPoint.get(p.id) || [];
+      let rest = recs.slice(1);
+      if (rest.length > 8) rest = rest.slice(rest.length - 8);
+      const groups = [recs[0] || null, ...rest];
+      groups.forEach((h, gi) => {
+        if (!h) return;
+        const base = nFixed + gi * 6;
+        row[base] = kind === 'grease' ? '补油' : '换油';  // 按 sheet 油种定，别按 actualOil 猜（有"酯"错字/空值记录）
+        row[base + 1] = h.actualOil || '';
+        row[base + 2] = (h.actualAmount != null && h.actualAmount !== '') ? h.actualAmount : '';
+        row[base + 3] = _fmtDate(h.lubeAt || h.createdAt);
+        row[base + 4] = h.operatorName || '';
+        row[base + 5] = '已润滑';
+      });
+      // 最后一笔之后的下一个空组：按当前状态标 已超期 / 未润滑
+      const filled = groups.filter(Boolean).length;
+      if (filled < GROUPS.length && !p.maintenanceFree) {
+        const st = getLubeStatus(p);
+        const mark = st === 'overdue' ? '已超期' : (st === 'pending-init' ? '未润滑' : '');
+        if (mark) row[nFixed + filled * 6 + 5] = mark;
+      }
+      rows.push(row);
+    });
+
+    // 列宽照抄设备室模板
+    const cols = [];
+    const fixedW = kind === 'oil' ? [5.6, 9, 24.6, 27.9, 17.9, 19.9, 9, 11.2, 11.2] : [5.6, 9, 24.6, 27.9, 17.9, 19.9, 9, 11.2];
+    fixedW.forEach(w => cols.push({ wch: w }));
+    for (let g = 0; g < GROUPS.length; g++) [8.8, 17.9, 9, 11, 9, 9].forEach(w => cols.push({ wch: w }));
+
+    return {
+      name: kind === 'oil' ? '高压酸浸车间润滑油台账' : '高压酸浸车间润滑脂台账',
+      rows, merges, cols, nFixed, nCols, count: pts.length,
+    };
+  }
+
+  return [buildSheet('oil'), buildSheet('grease')];
+}
+
+async function exportLubeWudingXlsx() {
+  if (!(lubePointsCache || []).length) { showToast('暂无润滑点数据'); return; }
+  const btns = document.querySelectorAll('.export-btn');
+  btns.forEach(b => b.disabled = true);
+  setCloudStatus('syncing', '生成 Excel...');
+  try {
+    const XLSX = await loadXlsxLib();
+    const wb = XLSX.utils.book_new();
+    const BK = { style: 'thin', color: { rgb: '000000' } };
+    const BORDER = { top: BK, bottom: BK, left: BK, right: BK };
+    const S_TITLE = { font: { name: '宋体', sz: 12, bold: true }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+    const S_HEAD = { font: { name: '宋体', sz: 10, bold: true }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER, fill: { patternType: 'solid', fgColor: { rgb: 'F2F2F2' } } };
+    const S_DATA = { font: { name: '等线', sz: 10 }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
+    const S_LEFT = { font: { name: '等线', sz: 10 }, alignment: { horizontal: 'left', vertical: 'center', wrapText: true }, border: BORDER };
+    const S_OK = { font: { name: '等线', sz: 10, color: { rgb: '006100' } }, fill: { patternType: 'solid', fgColor: { rgb: 'C6EFCE' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+    const S_OVER = { font: { name: '等线', sz: 10, color: { rgb: '9C0006' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FFC7CE' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+    const S_PEND = { font: { name: '等线', sz: 10, color: { rgb: '9C6500' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FFEB9C' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+    for (const sh of buildLubeWudingSheets()) {
+      const ws = XLSX.utils.aoa_to_sheet(sh.rows);
+      ws['!merges'] = sh.merges;
+      ws['!cols'] = sh.cols;
+      ws['!rows'] = [{ hpt: 24 }, { hpt: 20 }, { hpt: 20 }];
+      for (let r = 0; r < sh.rows.length; r++) {
+        for (let c = 0; c < sh.nCols; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          if (!ws[addr]) ws[addr] = { t: 's', v: '' };  // 合并/空单元格也要有边框
+          const cell = ws[addr];
+          if (r === 0) cell.s = S_TITLE;
+          else if (r <= 2) cell.s = S_HEAD;
+          else if (cell.v === '已润滑') cell.s = S_OK;
+          else if (cell.v === '已超期') cell.s = S_OVER;
+          else if (cell.v === '未润滑') cell.s = S_PEND;
+          else if (c === 3 || c === 4) cell.s = S_LEFT;
+          else cell.s = S_DATA;
+        }
+      }
+      XLSX.utils.book_append_sheet(wb, ws, sh.name);
+    }
+    XLSX.writeFile(wb, '晨曦项目-高压酸浸车间-设备润滑台账_' + _today() + '.xlsx');
+    setCloudStatus('online', '已同步');
+    showToast('已导出设备润滑五定表');
+  } catch (err) {
+    console.error('[Export] 五定表导出失败', err);
+    setCloudStatus('error', '导出失败');
+    showToast('导出失败：' + err.message);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
 
 /* ========== 暴露给内联 onclick 使用（ES Module 中默认不是全局作用域） ========== */
 window.exportEquipmentsXlsx = exportEquipmentsXlsx;
 window.exportLubeXlsx = exportLubeXlsx;
+window.exportLubeWudingXlsx = exportLubeWudingXlsx;
+window.buildLubeWudingSheets = buildLubeWudingSheets;  // 便于 F12 调试核对
 window.switchModule = switchModule;  // 2026-04-23: 暴露给备件 tab 等内联 onclick
 
 // 巡检模块（2026-04-29 v11）

@@ -59,3 +59,6 @@ secrets.json
 _gen_lube_audit.py
 _pending_lube_fixes.json
 *审核.html
+
+# 五定表模板填充脚本（本地跑，数据从预览会话导出，不进仓库）
+填五定表_*.py
