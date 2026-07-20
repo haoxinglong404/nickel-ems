@@ -3072,7 +3072,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <div class="section-sub" id="inspect-section-sub">—</div>
       </div>
       <div class="lube-op-tabs" id="inspect-tabs">
-        <button class="lube-op-tab active" onclick="switchInspectTab('todo')">📋 待巡检</button>
+        <button class="lube-op-tab active" onclick="switchInspectTab('todo')">📋 待点检</button>
         <button class="lube-op-tab" onclick="switchInspectTab('abnormal')">⚠️ 异常</button>
         <button class="lube-op-tab" onclick="switchInspectTab('history')">📜 历史</button>
       </div>
@@ -3096,7 +3096,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div class="edit-form" id="inspect-detail-body"></div>
       <div class="edit-actions">
         <button class="edit-btn edit-btn-cancel" onclick="cancelInspect()">取消</button>
-        <button class="edit-btn edit-btn-save" onclick="submitInspect()">完成巡检</button>
+        <button class="edit-btn edit-btn-save" onclick="submitInspect()">完成点检</button>
       </div>
     </section>
 
@@ -3152,7 +3152,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" data-nav="equipment"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">设备</span></div>
-    <div class="nav-item" data-nav="inspect"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span class="nav-label">巡检</span></div>
+    <div class="nav-item" data-nav="inspect"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span class="nav-label">点检</span></div>
     <div class="nav-item" data-nav="maintenance"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14.6 6.4a3.5 3.5 0 0 0-4.7 4.7l-6.3 6.3 2 2 6.3-6.3a3.5 3.5 0 0 0 4.7-4.7l-2.3 2.3-2-.5-.5-2z"/></svg><span class="nav-label">检修</span></div>
     <div class="nav-item" data-nav="parts"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/></svg><span class="nav-label">二级库</span></div>
     <div class="nav-item" data-nav="lube"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v6M8 9h8l-1 12H9z"/><circle cx="12" cy="15" r="1.5"/></svg><span class="nav-label">润滑</span></div>
@@ -5100,7 +5100,7 @@ function showSheet(type, arg) {
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        <strong style="color:var(--ink);">✓ 设备 + 巡检 + 检修 + 润滑 + 二级库</strong><br>
+        <strong style="color:var(--ink);">✓ 设备 + 点检 + 检修 + 润滑 + 二级库</strong><br>
         5 大模块齐备 · 云端同步 · 完整审计追踪。<br><br>
         <strong style="color:var(--ink);">开发路线：</strong><br>
         · <strong style="color:#3A5424;">阶段 2-5：5 大模块 ✓</strong><br>
@@ -5575,7 +5575,7 @@ async function applyInspectTplV2IfNeeded() {
   if (/^(localhost|127\.0\.0\.1|)$/.test(location.hostname)) return;
   const markerSnap = await getDoc(doc(db, 'meta', INSPECT_TPL_V2_MARKER));
   if (markerSnap.exists()) return;
-  setCloudStatus('syncing', '升级巡检模板 v2...');
+  setCloudStatus('syncing', '升级点检模板 v2...');
   const batch = writeBatch(db);
   SEED_INSPECTION_TEMPLATES.forEach(t => {
     batch.set(doc(db, 'inspecttemplates', 'tpl_' + t.key), {
@@ -5601,7 +5601,7 @@ async function seedInspectionTemplatesIfEmpty() {
   const snap = await getDocs(collection(db, 'inspecttemplates'));
   if (snap.empty) {
     console.log('[Seed] 云端 inspecttemplates 为空，上传 ' + SEED_INSPECTION_TEMPLATES.length + ' 个模板');
-    setCloudStatus('syncing', '首次上传巡检模板...');
+    setCloudStatus('syncing', '首次上传点检模板...');
     const batch = writeBatch(db);
     SEED_INSPECTION_TEMPLATES.forEach(t => {
       batch.set(doc(db, 'inspecttemplates', 'tpl_' + t.key), {
@@ -5612,7 +5612,7 @@ async function seedInspectionTemplatesIfEmpty() {
       });
     });
     await batch.commit();
-    showToast('已上传 ' + SEED_INSPECTION_TEMPLATES.length + ' 个巡检模板');
+    showToast('已上传 ' + SEED_INSPECTION_TEMPLATES.length + ' 个点检模板');
   }
   // 写入 marker（幂等）
   await setDoc(doc(db, 'meta', INSPECT_MARKER), {
@@ -5660,7 +5660,7 @@ function getInspectStatus(eq) {
   const tpl = getInspectTemplateForEquipment(eq);
   if (!tpl) return { code: 'no-tpl', label: '无模板', tone: 'gray' };
   const last = getLatestInspectFor(eq.id);
-  if (!last) return { code: 'pending-init', label: '未初始巡检', tone: 'gray' };
+  if (!last) return { code: 'pending-init', label: '未初始点检', tone: 'gray' };
   const next = calcNextInspectAt(last.inspectAt, getInspectCycleDays(eq, tpl));
   const now = Date.now();
   if (now < next) {
@@ -7471,7 +7471,7 @@ function renderInspectOverview() {
     const cardHtml = (lbl, num, cls) =>
       `<div class="lube-ov-card ${cls}" onclick="switchInspectTab('todo')"><div class="lube-ov-num">${num}</div><div class="lube-ov-lbl">${lbl}</div></div>`;
     ov.innerHTML = ''
-      + cardHtml('全部待巡检', countTodo,    '')
+      + cardHtml('全部待点检', countTodo,    '')
       + cardHtml('逾期',       countOverdue, 'overdue')
       + cardHtml('到期',       countDue,     'due')
       + cardHtml('未初始',     countPending, 'pending-init');
@@ -7540,7 +7540,7 @@ function renderInspectOverview() {
   countEl.textContent = `共 ${cards.length} 台设备`;
   let emptyMsg = '没有匹配的设备';
   if (!cards.length && !inspectSearchText && !inspectAreaFilter && !inspectTypeFilter && !inspectClassFilter) {
-    emptyMsg = '🎉 全部巡检已完成';
+    emptyMsg = '🎉 全部点检已完成';
   }
   container.innerHTML = cards.length ? cards.map(renderInspectCard).join('') : emptyHtml(emptyMsg);
 
@@ -7552,7 +7552,7 @@ function renderInspectOverview() {
 function renderInspectCard({ eq, status }) {
   const tplName = eq.type;
   const last = getLatestInspectFor(eq.id);
-  const lastInfo = last ? formatRelTime(last.inspectAt) : '从未巡检';
+  const lastInfo = last ? formatRelTime(last.inspectAt) : '从未点检';
   let statusCls = 'pending-init';
   if (status.code === 'overdue') statusCls = 'overdue';
   else if (status.code === 'due') statusCls = 'due';
@@ -7630,12 +7630,12 @@ function renderInspectHistCard(h) {
 async function hardDeleteInspectHistory(historyId) {
   const user = getCurrentUser();
   if (!canHardDelete(user)) {
-    showToast('只有管理员可以删除巡检记录');
+    showToast('只有管理员可以删除点检记录');
     return;
   }
   const h = inspectHistCache.find(x => x.id === historyId);
   if (!h) { showToast('记录不存在'); return; }
-  if (!confirm(`确认删除这条巡检记录？\n${h.equipmentTag} · ${h.equipmentName}\n${formatRelTime(h.inspectAt)} · ${h.inspectorName || ''}\n\n（不可恢复）`)) return;
+  if (!confirm(`确认删除这条点检记录？\n${h.equipmentTag} · ${h.equipmentName}\n${formatRelTime(h.inspectAt)} · ${h.inspectorName || ''}\n\n（不可恢复）`)) return;
   try {
     setCloudStatus('syncing', '删除中...');
     await deleteDoc(doc(db, 'inspecthistory', historyId));
@@ -7666,7 +7666,7 @@ function openInspectDetail(eqId) {
   const eq = loadEquipments().find(e => e.id === eqId);
   if (!eq) { showToast('设备未找到'); return; }
   const tpl = getInspectTemplateForEquipment(eq);
-  if (!tpl) { showToast('该设备类型暂无巡检模板'); return; }
+  if (!tpl) { showToast('该设备类型暂无点检模板'); return; }
 
   if (tpl.v === 2) {
     // v2 数值点检：模板拉平成指标行
@@ -7711,7 +7711,7 @@ function renderInspectDetail() {
       <div class="lube-detail-hero-tag">${eq.tag}</div>
       <h2 class="lube-detail-hero-name">${eq.name || ''}</h2>
       <div class="lube-detail-hero-point">${eq.type || ''} · 模板：${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · 周期 ${getInspectCycleDays(eq, tpl)} 天</div>
-      ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);">上次巡检：${formatRelTime(last.inspectAt)} · ${last.inspectorName || ''}</div>` : ''}
+      ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);">上次点检：${formatRelTime(last.inspectAt)} · ${last.inspectorName || ''}</div>` : ''}
     `;
   }
 
