@@ -183,6 +183,49 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .ml-lc-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft); }
   .ml-lc-leg { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
   .ml-lc-leg i { width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
+  /* ------ 检修数据看板（Repairs ⇄ Dashboard 视图切换，2026-07-23） ------ */
+  .ml-title-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .ml-title-row .section-title { margin-bottom:0; }
+  .ml-view-btn { display:inline-flex; align-items:center; gap:5px; padding:7px 16px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--muted); font-size:13px; font-family:var(--font-sans); cursor:pointer; }
+  .ml-view-btn.active { background:var(--g-deep); border-color:var(--g-deep); color:#fff; }
+  .mlb-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+  .mlb-stat { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .mlb-stat .lbl { font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .mlb-stat .val { font-family:var(--font-mono); font-size:26px; line-height:1.1; color:var(--ink); }
+  .mlb-stat .val em { font-style:normal; font-size:12px; color:var(--subtle); margin-left:2px; }
+  .mlb-stat.warn .val { color:#B26A1F; }
+  .mlb-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; }
+  .mlb-card-title { font-size:13px; font-weight:600; color:var(--ink); margin-bottom:12px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .mlb-card-title .sub { font-size:11px; color:var(--subtle); font-weight:400; }
+  .mlb-donut-wrap { display:flex; align-items:center; gap:18px; }
+  .mlb-donut-wrap svg { flex:0 0 auto; }
+  .mlb-legend { flex:1; min-width:0; }
+  .mlb-leg-row { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .mlb-leg-row:last-child { margin-bottom:0; }
+  .mlb-leg-row i { width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
+  .mlb-leg-row .n { margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--ink); }
+  .mlb-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer; }
+  .mlb-bar-row:last-child { margin-bottom:0; }
+  .mlb-bar-row .lbl { flex:0 0 auto; width:78px; font-size:11px; color:var(--muted); text-align:right; }
+  .mlb-bar-row .barwrap { flex:1; display:flex; background:var(--surface); border-radius:5px; height:16px; overflow:hidden; }
+  .mlb-bar-row .seg { height:100%; }
+  .mlb-bar-row .v { flex:0 0 auto; font-family:var(--font-mono); font-size:11px; color:var(--ink); min-width:20px; text-align:right; }
+  .mlb-trend { display:flex; align-items:flex-end; gap:8px; height:96px; padding:0 2px; }
+  .mlb-trend .colwrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:3px; }
+  .mlb-trend .num { font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+  .mlb-trend .bar { width:100%; max-width:38px; background:var(--g-primary); border-radius:4px 4px 0 0; }
+  .mlb-trend .bar.zero { height:2px; background:var(--line); border-radius:0; }
+  .mlb-trend-x { display:flex; gap:8px; padding:0 2px; margin-top:4px; }
+  .mlb-trend-x span { flex:1; text-align:center; font-family:var(--font-mono); font-size:10px; color:var(--subtle); }
+  .mlb-cv-row { margin-bottom:12px; }
+  .mlb-cv-row:last-child { margin-bottom:0; }
+  .mlb-cv-row .name { font-size:12px; color:var(--ink); margin-bottom:4px; word-break:break-all; }
+  .mlb-cv-row .meta { font-size:11px; color:var(--subtle); margin-top:3px; font-family:var(--font-mono); }
+  .mlb-warn-card { background:#FBF2E3; border:1px solid #E8D2AC; border-radius:12px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; }
+  .mlb-warn-card .who { font-size:13px; color:#6B4A16; font-weight:600; }
+  .mlb-warn-card .who .part { font-weight:400; color:#9A6E2B; }
+  .mlb-warn-card .life { font-family:var(--font-mono); font-size:11px; color:#9A6E2B; text-align:right; flex:0 0 auto; }
+  .mlb-ok { font-size:12px; color:var(--g-forest); background:var(--g-mist); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
 
 .eq-empty-result { text-align:center; padding:60px 20px; color:var(--muted); }
 .eq-empty-result-title { font-size:15px; margin-bottom:6px; font-weight:500; }
@@ -2908,9 +2951,13 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
           <div class="section-label">Maintenance Log · 检修记录</div>
           <button class="export-btn" onclick="openMlPartsSummary()" title="备件消耗汇总"><span class="export-btn-arrow">📊</span>备件消耗</button>
         </div>
-        <h1 class="section-title">Repairs</h1>
+        <div class="ml-title-row">
+          <h1 class="section-title" id="ml-title">Repairs</h1>
+          <button class="ml-view-btn" id="ml-view-btn" onclick="toggleMlView()">📊 看板</button>
+        </div>
         <div class="section-sub" id="ml-section-sub">故障部位 · 原因 · 措施 · 备件</div>
       </div>
+      <div id="ml-list-view">
       <div class="ml-filter-bar" id="ml-filter-bar"></div>
       <div class="ml-filter-bar" id="ml-class-filter-bar"></div>
       <div class="ml-filter-bar" id="ml-keyeq-bar"></div>
@@ -2921,6 +2968,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       </div>
       <div class="eq-list-meta"><div class="eq-list-count" id="ml-list-count">—</div></div>
       <div id="ml-list-container"></div>
+      </div>
+      <div id="ml-board-view" style="display:none;"></div>
     </section>
 
     <!-- 检修记录详情 -->
@@ -5698,10 +5747,12 @@ let mlDetailFrom = '';       // 检修详情返回目标：'' = 检修列表 / '
    kw = 备件名关键词（时间线上提取品牌规格用）。这些 label 会自动加进该设备登记表单的故障部位标签里 ------ */
 const ML_KEY_EQ_GROUPS = [
   // 2026-07-10 改名后兼容："N系列-高压釜给料泵-A泵"；「-」紧跟泵字，排除"高压釜给料泵区污水泵/用空压机"
+  // parts 顺序 = 备件名归属优先级（先命中先得）：O形圈这类通用名放在靠后的零件兜底
+  // 隔热组件构成（2026-07-23 用户确认）：导杆、衬套（导套）、活塞、分离盘、隔热段盲板O形圈
   { key: 'feedpump', label: '高压釜给料泵', match: n => n === '高压釜给料泵' || /系列-高压釜给料泵-/.test(n), parts: [
-    { key: 'checkvalve', label: '单向阀',   tags: ['单向阀'],           kw: ['单向阀', '止逆'] },
+    { key: 'checkvalve', label: '单向阀',   tags: ['单向阀'],           kw: ['单向阀', '止逆', '阀盖'] },
     { key: 'diaphragm',  label: '隔膜',     tags: ['隔膜'],             kw: ['隔膜'] },
-    { key: 'heatshield', label: '隔热组件', tags: ['隔热组件', '隔热段'], kw: ['隔热'] },
+    { key: 'heatshield', label: '隔热组件', tags: ['隔热组件', '隔热段'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
   ] },
   { key: 'agitator', label: '高压釜搅拌器', match: n => /高压釜\d隔室搅拌$/.test(n), parts: [
     { key: 'mechseal', label: '机械密封', tags: ['机械密封'],                kw: ['机械密封', '机封'] },
@@ -5795,7 +5846,7 @@ function renderMlFilterBar() {
 function setMlClassFilter(c) { mlClassFilter = c; renderMaintenanceList(); }
 function openMlKeyEqPage(key) { mlKeyEqGroupKey = key; renderMlKeyEqPage(); switchModule('maintenance-keyeq'); }
 function backToMlKeyEq() { if (mlEqlogTag) mlKeyEqGroupKey = mlEqlogGroup().key; renderMlKeyEqPage(); switchModule('maintenance-keyeq'); }
-function openMlEqLog(tag) { mlEqlogTag = tag; mlEqlogPart = 'all'; renderMlEqLogPage(); switchModule('maintenance-eqlog'); }
+function openMlEqLog(tag) { mlEqlogFrom = ''; mlEqlogTag = tag; mlEqlogPart = 'all'; renderMlEqLogPage(); switchModule('maintenance-eqlog'); }
 function setMlEqlogPart(k) { mlEqlogPart = k; renderMlEqLogPage(); }
 
 /* ------ 重点设备检修档案页（整页，替代半屏弹层） ------ */
@@ -5844,6 +5895,12 @@ function mlRecMatchesPart(m, part) {
   const fps = (m.faultParts || []).map(x => (x || '').trim());
   return (part.tags || []).some(t => fps.includes(t));
 }
+/* 备件名归属组内哪个重点零件：按 parts 顺序先命中先得，返回零件 key（没归属返回 ''） */
+function mlSpareOwner(name, gParts) {
+  name = name || '';
+  for (const q of gParts) { if ((q.kw || []).some(k => name.includes(k))) return q.key; }
+  return '';
+}
 function _mlDaysBetween(later, earlier) {
   const a = new Date(later), b = new Date(earlier);
   if (isNaN(a) || isNaN(b)) return null;
@@ -5863,7 +5920,9 @@ function renderMlEqLogPage() {
   const hero = document.getElementById('ml-eqlog-hero');
   if (hero) {
     hero.innerHTML =
-      '<div onclick="backToMlKeyEq()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回 ' + g.label + '</div>' +
+      (mlEqlogFrom === 'board'
+        ? '<div onclick="mlbBackToBoard()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回看板</div>'
+        : '<div onclick="backToMlKeyEq()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回 ' + g.label + '</div>') +
       '<div class="lube-detail-hero-tag">' + escapeHtml(mlEqlogTag) + ' ' + abcBadgeHtml(eq && eq.abcClass) + '</div>' +
       '<h2 class="lube-detail-hero-name">' + escapeHtml((eq && eq.name) || g.label) + '</h2>' +
       '<div class="lube-detail-hero-point">检修档案 · 共 ' + recs.length + ' 条记录</div>';
@@ -5893,15 +5952,18 @@ function renderMlPartTimeline(recs, p) {
     return '<div class="empty" style="padding:40px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无「' + p.label + '」相关记录</div>' +
       '<div class="empty-hint">登记检修时在「故障部位」里选上「' + p.label + '」标签，就会自动归到这里</div></div>';
   }
+  const gParts = (mlEqlogGroup() || {}).parts || [];
   const items = list.map((m, i) => {
     const next = i > 0 ? list[i - 1] : null;   // 时间上更晚的一次更换
     const life = next ? _mlDaysBetween(next.repairDate, m.repairDate) : _mlDaysBetween(_today(), m.repairDate);
     const lifeHtml = next
       ? '<span class="ml-tl-life">用了 ' + _mlLifeLabel(life) + ' 后更换</span>'
       : '<span class="ml-tl-life current">在用 · 已 ' + _mlLifeLabel(life) + '</span>';
-    // 品牌/规格：优先显示名称含该零件关键词的备件，没有就显示该次全部备件
-    const hit = (m.spareParts || []).filter(x => p.kw.some(k => (x.name || '').includes(k)));
-    const brandSrc = hit.length ? hit : (m.spareParts || []);
+    // 品牌/规格：优先显示归属本零件的备件（mlSpareOwner 按关键词+组内优先级判定）；
+    // 没有时仅当该次只修了这一个重点零件才显示全部备件（一次修多个零件不猜）
+    const hit = (m.spareParts || []).filter(x => mlSpareOwner(x.name, gParts) === p.key);
+    const soloPart = gParts.filter(x => mlRecMatchesPart(m, x)).length === 1;
+    const brandSrc = hit.length ? hit : (soloPart ? (m.spareParts || []) : []);
     const brands = brandSrc.map(x => '<span class="ml-part-chip">' + escapeHtml(x.name || '') + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
     const note = m.faultCause || m.measures || '';
     return '<div class="ml-tl-item' + (!next ? ' current' : '') + '"><div class="ml-tl-dot"></div>' +
@@ -5931,10 +5993,14 @@ function renderMlPartTimeline(recs, p) {
 /* 零件使用时长对比条形图：每次更换一根条，长度=用了多少天，颜色=品牌（取该次登记的备件名） */
 function renderMlPartLifeChart(list, p) {
   const asc = [...list].reverse();   // 按时间正序（最早在上）
+  const gp2 = (mlEqlogGroup() || {}).parts || [];
   const brandOf = m => {
     const sp = m.spareParts || [];
-    const hit = sp.find(x => p.kw.some(k => (x.name || '').includes(k))) || sp[0];
-    return (hit && hit.name) ? hit.name : '未登记备件';
+    const hit = sp.find(x => mlSpareOwner(x.name, gp2) === p.key);
+    if (hit && hit.name) return hit.name;
+    // 该次检修只涉及这一个重点零件时才兜底取第一个备件；修了多个零件不猜
+    if (gp2.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && sp[0].name) return sp[0].name;
+    return '未登记备件';
   };
   const rows = asc.map((m, i) => {
     const nextDate = i < asc.length - 1 ? asc[i + 1].repairDate : _today();
@@ -5954,6 +6020,213 @@ function renderMlPartLifeChart(list, p) {
   const legend = brands.map(b => '<span class="ml-lc-leg"><i style="background:' + colorOf(b) + ';"></i>' + escapeHtml(b) + '</span>').join('');
   return '<div class="ml-lc"><div class="ml-lc-title">每次换上的「' + p.label + '」用了多久（颜色 = 品牌）</div>' + barRows +
     '<div class="ml-lc-legend">' + legend + '</div></div>';
+}
+
+/* ========== 检修数据看板（记录列表 ⇄ 可视化看板，2026-07-23） ==========
+   聚焦重点零件：给料泵 单向阀/隔膜/隔热组件 + 搅拌器 机械密封；
+   数据全部来自 mlCache + ML_KEY_EQ_GROUPS 标签精确匹配，纯前端展示无写操作 */
+let mlView = 'list';          // 'list' 记录列表 / 'board' 数据看板
+let mlBoardSeries = '1';      // '1' / '2' / '3'（只看单个系列，避免页面拥挤）
+let mlEqlogFrom = '';         // 'board' = 从看板进的单台档案，返回时回看板
+
+const MLB_PART_DEFS = [
+  { gkey: 'feedpump', pkey: 'checkvalve', label: '单向阀',   color: '#3A5424' },
+  { gkey: 'feedpump', pkey: 'diaphragm',  label: '隔膜',     color: '#C77F3B' },
+  { gkey: 'feedpump', pkey: 'heatshield', label: '隔热组件', color: '#2B8AD9' },
+  { gkey: 'agitator', pkey: 'mechseal',   label: '高压釜搅拌器机械密封', color: '#8A5FA8' },
+];
+function mlbPartOf(gkey, pkey) {
+  const g = ML_KEY_EQ_GROUPS.find(x => x.key === gkey);
+  return g ? (g.parts || []).find(p => p.key === pkey) : null;
+}
+function mlbSeriesOf(name) { const m = /^([123])系列-/.exec(name || ''); return m ? m[1] : ''; }
+function mlbShortName(u) {
+  const n = u.name || '';
+  let m = /高压釜给料泵-([A-Z])泵/.exec(n);
+  if (m) return '给料泵' + m[1];
+  m = /高压釜(\d)隔室搅拌/.exec(n);
+  if (m) return m[1] + '隔室搅拌';
+  return u.tag || n;
+}
+
+function toggleMlView() { mlView = mlView === 'list' ? 'board' : 'list'; applyMlView(); }
+function applyMlView() {
+  const board = mlView === 'board';
+  const lv = document.getElementById('ml-list-view');
+  const bv = document.getElementById('ml-board-view');
+  const btn = document.getElementById('ml-view-btn');
+  const title = document.getElementById('ml-title');
+  const sub = document.getElementById('ml-section-sub');
+  if (lv) lv.style.display = board ? 'none' : '';
+  if (bv) bv.style.display = board ? '' : 'none';
+  if (btn) { btn.textContent = board ? '📋 记录' : '📊 看板'; btn.classList.toggle('active', board); }
+  if (title) title.textContent = board ? 'Dashboard' : 'Repairs';
+  if (sub) sub.textContent = board ? '高压釜给料泵 · 高压釜搅拌器 重点零件' : '故障部位 · 原因 · 措施 · 备件';
+  if (board) renderMlBoard();
+}
+function setMlBoardSeries(s) { mlBoardSeries = s; renderMlBoard(); }
+function mlbOpenEqlog(tag, part) { mlEqlogFrom = 'board'; mlEqlogTag = tag; mlEqlogPart = part || 'all'; renderMlEqLogPage(); switchModule('maintenance-eqlog'); }
+function mlbBackToBoard() { mlEqlogFrom = ''; mlView = 'board'; switchModule('maintenance'); }
+
+/* 每台重点设备各零件统计：次数 / 在用天数 / 历史平均间隔 / 是否超寿命 */
+function mlbUnitStats() {
+  const live = mlCache.filter(m => !m.deleted);
+  const out = [];
+  ML_KEY_EQ_GROUPS.forEach(g => {
+    const defs = MLB_PART_DEFS.filter(d => d.gkey === g.key);
+    if (!defs.length) return;
+    mlKeyEqUnits(g.key).forEach(u => {
+      const recs = live.filter(m => m.equipmentTag === u.tag || m.equipmentId === u.id)
+        .sort((a, b) => (b.repairDate || '').localeCompare(a.repairDate || ''));
+      const parts = {};
+      defs.forEach(d => {
+        const p = mlbPartOf(d.gkey, d.pkey);
+        const list = p ? recs.filter(m => mlRecMatchesPart(m, p)) : [];
+        const inUse = list.length ? _mlDaysBetween(_today(), list[0].repairDate) : null;
+        const intervals = [];
+        for (let i = 0; i < list.length - 1; i++) {
+          const dd = _mlDaysBetween(list[i].repairDate, list[i + 1].repairDate);
+          if (dd != null) intervals.push(dd);
+        }
+        const avg = intervals.length ? Math.round(intervals.reduce((s, x) => s + x, 0) / intervals.length) : null;
+        parts[d.pkey] = { count: list.length, inUse, avg, over: avg != null && inUse != null && inUse > avg, records: list };
+      });
+      out.push({ tag: u.tag, series: mlbSeriesOf(u.name), short: mlbShortName(u), gkey: g.key, parts });
+    });
+  });
+  return out;
+}
+
+/* 环形图：stroke-dasharray 手绘，viewBox 42 周长≈100 */
+function mlbDonutSvg(counts, total, subLabel) {
+  let acc = 0;
+  const segs = counts.filter(c => c.n > 0).map(c => {
+    const len = c.n / total * 100;
+    const seg = '<circle cx="21" cy="21" r="15.9155" fill="none" stroke="' + c.color + '" stroke-width="6.5" stroke-dasharray="' + len.toFixed(2) + ' ' + (100 - len).toFixed(2) + '" stroke-dashoffset="' + (25 - acc).toFixed(2) + '"></circle>';
+    acc += len;
+    return seg;
+  }).join('');
+  return '<svg width="116" height="116" viewBox="0 0 42 42">' + segs +
+    '<text x="21" y="20.6" text-anchor="middle" style="font-size:7.5px;font-weight:600;" fill="var(--ink)">' + total + '次</text>' +
+    '<text x="21" y="27" text-anchor="middle" style="font-size:3.9px;" fill="var(--subtle)">' + escapeHtml(subLabel) + '</text></svg>';
+}
+
+/* 一个系列块 = 系列标题 + 环形图卡 + 各台设备条形图卡 */
+function mlbSeriesBlockHtml(stats, sk) {
+  const defs = MLB_PART_DEFS;
+  const counts = defs.map(d => ({ label: d.label, color: d.color, n: stats.reduce((s, x) => s + ((x.parts[d.pkey] || {}).count || 0), 0) }));
+  const total = counts.reduce((s, c) => s + c.n, 0);
+  let html = '';
+  if (!total) return html + '<div class="mlb-card" style="color:var(--subtle);font-size:12px;">本系列还没有重点零件的检修记录</div>';
+  const legend = counts.map(c =>
+    '<div class="mlb-leg-row"><i style="background:' + c.color + ';"></i>' + c.label + '<span class="n">' + c.n + ' 次</span></div>').join('');
+  html += '<div class="mlb-card"><div class="mlb-card-title">更换次数占比<span class="sub">按零件 · 累计</span></div>' +
+    '<div class="mlb-donut-wrap">' + mlbDonutSvg(counts, total, sk + '系列') + '<div class="mlb-legend">' + legend + '</div></div></div>';
+  const units = [...stats].sort((a, b) => (a.gkey === b.gkey ? a.short.localeCompare(b.short, 'zh-CN') : (a.gkey === 'feedpump' ? -1 : 1)));
+  const max = Math.max(1, ...units.map(u => defs.reduce((s, d) => s + ((u.parts[d.pkey] || {}).count || 0), 0)));
+  const rows = units.map(u => {
+    const n = defs.reduce((s, d) => s + ((u.parts[d.pkey] || {}).count || 0), 0);
+    const segsH = defs.map(d => {
+      const c = (u.parts[d.pkey] || {}).count || 0;
+      return c ? '<div class="seg" style="width:' + (c / max * 100).toFixed(1) + '%;background:' + d.color + ';"></div>' : '';
+    }).join('');
+    return '<div class="mlb-bar-row" onclick="mlbOpenEqlog(\'' + escapeAttr(u.tag) + '\')"><span class="lbl">' + escapeHtml(u.short) + '</span><div class="barwrap">' + segsH + '</div><span class="v">' + n + '</span></div>';
+  }).join('');
+  html += '<div class="mlb-card"><div class="mlb-card-title">各台设备更换次数<span class="sub">分段色 = 零件 · 点行看单台档案</span></div>' + rows + '</div>';
+  return html;
+}
+
+/* 近 6 个月趋势柱状图 */
+function mlbTrendHtml(stats) {
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'), label: (d.getMonth() + 1) + '月', n: 0 });
+  }
+  stats.forEach(s => MLB_PART_DEFS.forEach(d => ((s.parts[d.pkey] || {}).records || []).forEach(m => {
+    const hit = months.find(x => x.key === (m.repairDate || '').slice(0, 7));
+    if (hit) hit.n++;
+  })));
+  const max = Math.max(1, ...months.map(x => x.n));
+  const cols = months.map(x =>
+    '<div class="colwrap">' + (x.n ? '<span class="num">' + x.n + '</span><div class="bar" style="height:' + Math.max(6, Math.round(x.n / max * 74)) + 'px;"></div>' : '<div class="bar zero"></div>') + '</div>').join('');
+  const labels = months.map(x => '<span>' + x.label + '</span>').join('');
+  return '<div class="mlb-card"><div class="mlb-card-title">月度更换趋势<span class="sub">近 6 个月 · 按零件计次</span></div>' +
+    '<div class="mlb-trend">' + cols + '</div><div class="mlb-trend-x">' + labels + '</div></div>';
+}
+
+/* 单向阀分厂家/规格寿命统计（三个系列合计；厂家/规格 = 该次检修登记的备件名） */
+function mlbCheckvalveBrandStats(allStats) {
+  const gParts = (ML_KEY_EQ_GROUPS.find(g => g.key === 'feedpump') || {}).parts || [];
+  const map = new Map();
+  allStats.filter(s => s.gkey === 'feedpump').forEach(s => {
+    const list = (s.parts.checkvalve || {}).records || [];   // 已按日期倒序（最新在前）
+    list.forEach((m, i) => {
+      const sp = m.spareParts || [];
+      const hit = sp.find(x => mlSpareOwner(x.name, gParts) === 'checkvalve');
+      // 名称没匹配上时：仅当该次只修了单向阀这一个重点零件才把备件归它，否则不猜
+      const solo = !hit && gParts.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && sp[0].name;
+      const name = (hit && hit.name) ? hit.name.trim() : (solo ? sp[0].name.trim() : '未登记厂家/规格');
+      const next = i > 0 ? list[i - 1] : null;   // 时间上更晚的一次更换
+      const days = next ? _mlDaysBetween(next.repairDate, m.repairDate) : _mlDaysBetween(_today(), m.repairDate);
+      const cur = map.get(name) || { name, lives: [], inuse: [] };
+      if (days != null) (next ? cur.lives : cur.inuse).push(days);
+      map.set(name, cur);
+    });
+  });
+  return [...map.values()].map(b => ({
+    name: b.name,
+    n: b.lives.length,
+    inuseN: b.inuse.length,
+    avg: b.lives.length ? Math.round(b.lives.reduce((s, x) => s + x, 0) / b.lives.length) : null,
+    inuseMax: b.inuse.length ? Math.max(...b.inuse) : null,
+  })).sort((a, b) => ((b.avg || 0) - (a.avg || 0)) || ((b.inuseMax || 0) - (a.inuseMax || 0)));
+}
+function mlbCheckvalveCardHtml(allStats) {
+  const rows = mlbCheckvalveBrandStats(allStats);
+  if (!rows.length) return '';
+  const max = Math.max(1, ...rows.map(r => Math.max(r.avg || 0, r.inuseMax || 0)));
+  const html = rows.map(r => {
+    const val = r.avg != null ? r.avg : r.inuseMax;
+    const isCur = r.avg == null;   // 还没换下过 = 寿命未走完，浅色条
+    const meta = r.avg != null
+      ? '平均寿命 ' + r.avg + ' 天 · ' + r.n + ' 次换下' + (r.inuseN ? ' · 在用 ' + r.inuseN + ' 个' : '')
+      : '在用 ' + r.inuseMax + ' 天 · 还没换下过（寿命待观察）';
+    return '<div class="mlb-cv-row">' +
+      '<div class="name">' + escapeHtml(r.name) + '</div>' +
+      '<div class="mlb-bar-row" style="cursor:default;margin-bottom:0;"><div class="barwrap"><div class="seg" style="width:' + Math.max(4, Math.round(val / max * 100)) + '%;background:#3A5424;' + (isCur ? 'opacity:.45;' : '') + '"></div></div><span class="v" style="min-width:44px;">' + val + '天</span></div>' +
+      '<div class="meta">' + meta + '</div></div>';
+  }).join('');
+  return '<div class="mlb-card"><div class="mlb-card-title">单向阀 厂家/规格 寿命对比<span class="sub">三个系列合计 · 厂家/规格取检修登记的备件名 · 浅色 = 在用未换下</span></div>' + html + '</div>';
+}
+
+function renderMlBoard() {
+  const bv = document.getElementById('ml-board-view');
+  if (!bv) return;
+  const all = mlbUnitStats();
+  const cur = all.filter(s => s.series === mlBoardSeries);
+  const pills = [{ k: '1', l: '1系列' }, { k: '2', l: '2系列' }, { k: '3', l: '3系列' }].map(t =>
+    '<div class="ml-filter-pill' + (mlBoardSeries === t.k ? ' active' : '') + '" onclick="setMlBoardSeries(\'' + t.k + '\')">' + t.l + '</div>').join('');
+  let total = 0;
+  const warns = [];
+  cur.forEach(s => MLB_PART_DEFS.forEach(d => {
+    const ps = s.parts[d.pkey];
+    if (!ps) return;
+    total += ps.count;
+    if (ps.over) warns.push({ s, d, ps });
+  }));
+  const statsHtml = '<div class="mlb-stats">' +
+    '<div class="mlb-stat"><div class="lbl">重点零件累计更换</div><div class="val">' + total + '<em>次</em></div></div>' +
+    '<div class="mlb-stat' + (warns.length ? ' warn' : '') + '"><div class="lbl">超寿命预警</div><div class="val">' + warns.length + '<em>处</em></div></div></div>';
+  const warnHtml = warns.length
+    ? '<div class="mlb-card-title" style="margin-bottom:8px;">⚠️ 超寿命预警<span class="sub">在用天数已超该台该件的历史平均更换间隔</span></div>' +
+      warns.map(w => '<div class="mlb-warn-card" onclick="mlbOpenEqlog(\'' + escapeAttr(w.s.tag) + '\',\'' + w.d.pkey + '\')">' +
+        '<span class="who">' + w.s.series + '系列 ' + escapeHtml(w.s.short) + '<span class="part"> · ' + w.d.label + '</span></span>' +
+        '<span class="life">在用 ' + w.ps.inUse + ' 天 / 平均 ' + w.ps.avg + ' 天</span></div>').join('')
+    : (total ? '<div class="mlb-ok">✓ 当前没有超寿命的重点零件（同一零件有 2 次以上更换记录才会计算平均寿命）</div>' : '');
+  const blocks = mlbSeriesBlockHtml(cur, mlBoardSeries);
+  bv.innerHTML = '<div class="ml-filter-bar">' + pills + '</div>' + statsHtml + warnHtml + blocks + mlbCheckvalveCardHtml(all) + mlbTrendHtml(cur);
 }
 
 function filterMaintenanceLogs() {
@@ -6003,6 +6276,7 @@ async function exportMlPartsXlsx() {
 }
 
 function renderMaintenanceList() {
+  applyMlView();   // 同步 记录列表/数据看板 视图显隐（看板态会顺带重渲看板）
   renderMlFilterBar();
   const list = filterMaintenanceLogs();
   const cnt = document.getElementById('ml-list-count');
@@ -9730,6 +10004,10 @@ window.openMlKeyEqPage = openMlKeyEqPage;
 window.backToMlKeyEq = backToMlKeyEq;
 window.openMlEqLog = openMlEqLog;
 window.setMlEqlogPart = setMlEqlogPart;
+window.toggleMlView = toggleMlView;
+window.setMlBoardSeries = setMlBoardSeries;
+window.mlbOpenEqlog = mlbOpenEqlog;
+window.mlbBackToBoard = mlbBackToBoard;
 window.openMlPartsSummary = openMlPartsSummary;
 window.exportMlPartsXlsx = exportMlPartsXlsx;
 window.onMlSearchInput = onMlSearchInput;
