@@ -105,6 +105,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    // 当个事儿办（缓办事项清单）· 2026-07-27
+    match /todos/{id} {
+      allow read, write: if isSignedIn();
+    }
+
     // 一次性迁移幂等标记
     match /meta/{id} {
       allow read, write: if isSignedIn();

@@ -188,6 +188,17 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .ml-title-row .section-title { margin-bottom:0; }
   .ml-view-btn { display:inline-flex; align-items:center; gap:5px; padding:7px 16px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--muted); font-size:13px; font-family:var(--font-sans); cursor:pointer; }
   .ml-view-btn.active { background:var(--g-deep); border-color:var(--g-deep); color:#fff; }
+  /* ------ 当个事儿办（缓办事项清单，2026-07-27） ------ */
+  .td-status-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:500; flex:0 0 auto; }
+  .td-status-pending { background:var(--surface); color:var(--muted); }
+  .td-status-ready { background:#FAEEDA; color:#854F0B; }
+  .td-status-done { background:var(--g-mist); color:var(--g-forest); }
+  .td-card-title { font-size:15px; color:var(--ink); font-weight:500; margin-bottom:6px; line-height:1.5; }
+  .td-noeq { display:inline-block; padding:2px 8px; border-radius:6px; border:1px solid var(--line); color:var(--subtle); font-size:11px; }
+  .td-prep { font-size:13px; color:var(--muted); line-height:1.55; margin-bottom:8px; word-break:break-word; }
+  .td-quick-btns { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .td-quick-btn { flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink); font-size:12px; font-family:var(--font-sans); cursor:pointer; }
+  .td-quick-btn.primary { background:var(--g-deep); border-color:var(--g-deep); color:#fff; }
   .mlb-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
   .mlb-stat { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
   .mlb-stat .lbl { font-size:12px; color:var(--muted); margin-bottom:4px; }
@@ -2953,7 +2964,9 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         </div>
         <div class="ml-title-row">
           <h1 class="section-title" id="ml-title">Repairs</h1>
-          <button class="ml-view-btn" id="ml-view-btn" onclick="toggleMlView()">📊 看板</button>
+          <button class="ml-view-btn active" id="ml-list-btn" onclick="setMlView('list')">📋 记录</button>
+          <button class="ml-view-btn" id="ml-view-btn" onclick="setMlView('board')">📊 看板</button>
+          <button class="ml-view-btn" id="ml-todo-btn" onclick="setMlView('todo')">🗒️ 当个事儿办</button>
         </div>
         <div class="section-sub" id="ml-section-sub">故障部位 · 原因 · 措施 · 备件</div>
       </div>
@@ -2970,6 +2983,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div id="ml-list-container"></div>
       </div>
       <div id="ml-board-view" style="display:none;"></div>
+      <div id="ml-todo-view" style="display:none;"></div>
     </section>
 
     <!-- 检修记录详情 -->
@@ -2997,6 +3011,22 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
       <div class="edit-actions">
         <button class="edit-btn edit-btn-cancel" onclick="cancelMlEdit()">取消</button>
         <button class="edit-btn edit-btn-save" onclick="submitMaintenance()">保存</button>
+      </div>
+    </section>
+
+    <!-- 当个事儿办 · 详情（列表是检修页内 ml-todo-view 同页视图）2026-07-27 -->
+    <section class="module" data-module="todo-detail">
+      <div class="lube-detail-hero" id="td-detail-hero"></div>
+      <div class="edit-form" id="td-detail-body"></div>
+    </section>
+
+    <!-- 当个事儿办 · 新增/编辑 -->
+    <section class="module" data-module="todo-edit">
+      <div class="lube-detail-hero" id="td-edit-hero"></div>
+      <div class="edit-form" id="td-form-body"></div>
+      <div class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" onclick="cancelTdEdit()">取消</button>
+        <button class="edit-btn edit-btn-save" onclick="submitTodo()">保存</button>
       </div>
     </section>
 
@@ -4217,7 +4247,7 @@ async function seedIfEmpty() {
   const usersSnap = await getDocs(collection(db, 'users'));
   if (usersSnap.empty) {
     console.log('[Seed] 云端 users 为空，上传管理员账号');
-    const adminUser = { empno:'6725102247', name:'总管理员', role:'admin', password:'15086370152hxl', createdAt: Date.now() };
+    const adminUser = { empno:'6725102247', name:'郝行龙', role:'admin', password:'15086370152hxl', createdAt: Date.now() };
     await setDoc(doc(db, 'users', adminUser.empno), adminUser);
   }
 
@@ -4472,6 +4502,7 @@ function switchModule(name) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   let navKey = name;
   if (name === 'maintenance-detail' || name === 'maintenance-create' || name === 'maintenance-keyeq' || name === 'maintenance-eqlog') navKey = 'maintenance';
+  if (name === 'todo-detail' || name === 'todo-edit') navKey = 'maintenance';
   if (name === 'equipment-detail' || name === 'equipment-edit') navKey = 'equipment';
   const navItem = document.querySelector(`.nav-item[data-nav="${navKey}"]`);
   if (navItem) navItem.classList.add('active');
@@ -4491,7 +4522,8 @@ function switchModule(name) {
   const isInspectDetail = name==='inspect-detail';
   const isInspectTrend = name==='inspect-trend';
   const isMlKeyEq = name==='maintenance-keyeq' || name==='maintenance-eqlog';
-  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isLubeHistory || isPartsDetail || isPartsTxn || isPartsEdit || isPartsHistory || isInspectDetail || isInspectTrend || isMlKeyEq;
+  const isTodoPage = name==='todo-detail' || name==='todo-edit';
+  const hideMain = isEqDetail || isEqEdit || isWoDetail || isWoCreate || isLubeDetail || isLubeExec || isLubeHistory || isPartsDetail || isPartsTxn || isPartsEdit || isPartsHistory || isInspectDetail || isInspectTrend || isMlKeyEq || isTodoPage;
 
   document.getElementById('topbar-main').style.display = hideMain ? 'none' : '';
   document.getElementById('topbar-detail').style.display = isEqDetail ? 'flex' : 'none';
@@ -5027,7 +5059,8 @@ function updateFab() {
   fab.classList.toggle('hidden', !(inEquipment && isAdmin));
 
   // 检修列表：仅管理员看到 + 登记（2026-07-08 收紧：登记检修会联动扣二级库库存）
-  const inWorkOrder = moduleName === 'maintenance';
+  // 2026-07-27：当个事儿办视图下也隐藏（该视图有自己的「＋ 记一件」按钮）
+  const inWorkOrder = moduleName === 'maintenance' && (typeof mlView === 'undefined' || mlView !== 'todo');
   if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && isAdmin));
 }
 
@@ -5127,6 +5160,22 @@ function showSheet(type, arg) {
       <div class="eq-picker-list" id="ml-part-list"></div>
       <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
     setTimeout(() => renderMlPartPicker(''), 10);
+  } else if (type==='tdDone') {
+    // 当个事儿办：标记已办（应用内弹层，不用原生 prompt——部分环境会拦掉）2026-07-27
+    const t = (typeof todoCache !== 'undefined' ? todoCache : []).find(x => x.id === arg);
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">标记已办</div>
+      <div class="sheet-sub">${escapeHtml((t && t.title) || '')}</div>
+      <div class="sheet-form-group"><div class="sheet-form-label">完成备注（选填）</div>
+        <textarea class="edit-textarea" id="td-done-note" placeholder="怎么办结的，选填">${escapeHtml((t && t.doneNote) || '')}</textarea>
+      </div>
+      <button class="sheet-btn primary" onclick="confirmTdDone()">✓ 确认已办</button>
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+  } else if (type==='tdDelete') {
+    const t = (typeof todoCache !== 'undefined' ? todoCache : []).find(x => x.id === arg);
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">这件事儿不办了？</div>
+      <div class="sheet-sub">${escapeHtml((t && t.title) || '')} · 以后可在「不办了」里找回恢复</div>
+      <button class="sheet-btn danger" onclick="confirmTdDelete()">确认不办了</button>
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='mlPartsSummary') {
     const recs = filterMaintenanceLogs();
     const agg = aggregateMlSpareParts(recs);
@@ -6025,7 +6074,7 @@ function renderMlPartLifeChart(list, p) {
 /* ========== 检修数据看板（记录列表 ⇄ 可视化看板，2026-07-23） ==========
    聚焦重点零件：给料泵 单向阀/隔膜/隔热组件 + 搅拌器 机械密封；
    数据全部来自 mlCache + ML_KEY_EQ_GROUPS 标签精确匹配，纯前端展示无写操作 */
-let mlView = 'list';          // 'list' 记录列表 / 'board' 数据看板
+let mlView = 'list';          // 'list' 记录列表 / 'board' 数据看板 / 'todo' 当个事儿办（2026-07-27 加第三视图）
 let mlBoardSeries = '1';      // '1' / '2' / '3'（只看单个系列，避免页面拥挤）
 let mlEqlogFrom = '';         // 'board' = 从看板进的单台档案，返回时回看板
 
@@ -6049,20 +6098,30 @@ function mlbShortName(u) {
   return u.tag || n;
 }
 
-function toggleMlView() { mlView = mlView === 'list' ? 'board' : 'list'; applyMlView(); }
+// 2026-07-27：记录/看板/当个事儿办 三个独立按钮直选视图（不再来回 toggle）
+function setMlView(v) { mlView = v; applyMlView(); }
 function applyMlView() {
   const board = mlView === 'board';
+  const todo = mlView === 'todo';
   const lv = document.getElementById('ml-list-view');
   const bv = document.getElementById('ml-board-view');
+  const tv = document.getElementById('ml-todo-view');
   const btn = document.getElementById('ml-view-btn');
+  const tbtn = document.getElementById('ml-todo-btn');
   const title = document.getElementById('ml-title');
   const sub = document.getElementById('ml-section-sub');
-  if (lv) lv.style.display = board ? 'none' : '';
+  if (lv) lv.style.display = (board || todo) ? 'none' : '';
   if (bv) bv.style.display = board ? '' : 'none';
-  if (btn) { btn.textContent = board ? '📋 记录' : '📊 看板'; btn.classList.toggle('active', board); }
-  if (title) title.textContent = board ? 'Dashboard' : 'Repairs';
-  if (sub) sub.textContent = board ? '高压釜给料泵 · 高压釜搅拌器 重点零件' : '故障部位 · 原因 · 措施 · 备件';
+  if (tv) tv.style.display = todo ? '' : 'none';
+  const lbtn = document.getElementById('ml-list-btn');
+  if (lbtn) lbtn.classList.toggle('active', !board && !todo);
+  if (btn) btn.classList.toggle('active', board);
+  if (tbtn) tbtn.classList.toggle('active', todo);
+  if (title) title.textContent = board ? 'Dashboard' : (todo ? 'To-dos' : 'Repairs');
+  if (sub) sub.textContent = board ? '高压釜给料泵 · 高压釜搅拌器 重点零件' : (todo ? '暂时不干、准备后面干的活 · 可关联设备也可不关联' : '故障部位 · 原因 · 措施 · 备件');
   if (board) renderMlBoard();
+  if (todo) renderTodoPage();
+  updateFab();   // 当个事儿办视图下隐藏「＋登记检修」浮钮（视图内有自己的 ＋记一件）
 }
 function setMlBoardSeries(s) { mlBoardSeries = s; renderMlBoard(); }
 function mlbOpenEqlog(tag, part) { mlEqlogFrom = 'board'; mlEqlogTag = tag; mlEqlogPart = part || 'all'; renderMlEqLogPage(); switchModule('maintenance-eqlog'); }
@@ -6391,6 +6450,7 @@ function openMlCreate() {
     deleted: false,
   };
   document.getElementById('ml-edit-title').textContent = '登记检修';
+  eqPickTarget = 'ml';
   renderMlForm();
   switchModule('maintenance-create');
 }
@@ -6403,6 +6463,7 @@ function openMlEdit(id) {
   if (!mlBuffer.spareParts) mlBuffer.spareParts = [];
   if (!mlBuffer.faultParts) mlBuffer.faultParts = [];
   document.getElementById('ml-edit-title').textContent = '编辑检修记录';
+  eqPickTarget = 'ml';
   renderMlForm();
   switchModule('maintenance-create');
 }
@@ -6484,7 +6545,18 @@ function renderMlForm() {
 
 function pickEquipment(id) {
   const eq = loadEquipments().find(e => e.id === id);
-  if (!eq || !mlBuffer) return;
+  if (!eq) return;
+  // 2026-07-27：设备选择 sheet 被 检修表单 / 当个事儿办表单 共用，按 eqPickTarget 路由
+  if (eqPickTarget === 'todo') {
+    if (!tdBuffer) return;
+    tdBuffer.equipmentId = eq.id;
+    tdBuffer.equipmentTag = eq.tag;
+    tdBuffer.equipmentName = eq.name;
+    hideSheet();
+    renderTdForm();
+    return;
+  }
+  if (!mlBuffer) return;
   mlBuffer.equipmentId = eq.id;
   mlBuffer.equipmentTag = eq.tag;
   mlBuffer.equipmentName = eq.name;
@@ -6744,6 +6816,374 @@ function renderEqPickerList(keyword) {
   `).join('');
 }
 
+
+/* ==========================================================
+   当个事儿办（缓办事项清单）2026-07-27
+   暂时不干、准备后面干的活：可关联设备也可不关联；
+   状态 待办 pending → 已做好准备 ready → 已办 done；
+   仅 admin 可增改/流转/作废，其他角色只读；作废=软删可恢复，无彻底删除
+   ========================================================== */
+let todoCache = [];
+let todoUnsub = null;
+let currentTdId = null;
+let tdFilter = 'pending';   // pending / ready / done / all / deleted
+let tdBuffer = null;
+let tdEditFrom = '';        // 'detail' = 从详情页进的编辑，取消后回详情
+let eqPickTarget = 'ml';    // 设备选择 sheet 的写入目标：'ml' 检修表单 / 'todo' 待办表单
+// 桥接到 window：表单内联 oninput="tdBuffer.x = ..." 需要（模块 let 不在 window 上，同 mlBuffer 套路）
+Object.defineProperty(window, 'tdBuffer', { get() { return tdBuffer; }, set(v) { tdBuffer = v; }, configurable: true });
+
+const TD_STATUS_MAP = {
+  'pending': { label: '待办',       cls: 'td-status-pending' },
+  'ready':   { label: '已做好准备', cls: 'td-status-ready' },
+  'done':    { label: '已办',       cls: 'td-status-done' },
+};
+
+async function cloudSaveTodo(t) {
+  setCloudStatus('syncing', '保存中...');
+  try {
+    await setDoc(doc(db, 'todos', t.id), Object.assign({}, t, { updatedAt: Date.now() }));
+    setCloudStatus('online', '已同步');
+  } catch (err) {
+    console.error('[Firebase] 保存待办失败', err);
+    setCloudStatus('error', '同步失败：' + err.message);
+    throw err;
+  }
+}
+
+function subscribeTodos() {
+  if (todoUnsub) todoUnsub();
+  todoUnsub = onSnapshot(collection(db, 'todos'), (snap) => {
+    todoCache = snap.docs.map(d => d.data());
+    todoCache.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    updateTdHeaderCount();
+    if (tdViewActive()) renderTodoPage();
+    if (currentTdId) {
+      const dm = document.querySelector('.module[data-module="todo-detail"]');
+      if (dm && dm.classList.contains('active')) {
+        const t = todoCache.find(x => x.id === currentTdId);
+        if (t) renderTodoDetail(t);
+      }
+    }
+  }, (err) => {
+    // 规则未发布时不阻塞其他模块，仅控制台提示
+    console.warn('[Firebase] todos 订阅失败（firestore.rules 是否已加 todos 白名单并发布？）', err);
+  });
+}
+function tdViewActive() {
+  const mod = document.querySelector('.module[data-module="maintenance"]');
+  return !!(mod && mod.classList.contains('active')) && mlView === 'todo';
+}
+
+// 检修页头按钮上的未办结数（待办 + 已做好准备）
+function updateTdHeaderCount() {
+  const btn = document.getElementById('ml-todo-btn');
+  if (!btn) return;
+  const n = todoCache.filter(t => !t.deleted && t.status !== 'done').length;
+  btn.textContent = '🗒️ 当个事儿办' + (n ? ' ' + n : '');
+}
+
+function setTdFilter(f) { tdFilter = f; renderTodoPage(); }
+
+function filterTodos() {
+  if (tdFilter === 'deleted') return todoCache.filter(t => t.deleted);
+  const live = todoCache.filter(t => !t.deleted);
+  // 「待办」= 所有还没办的（含已做好准备——备好了但还没干，依然是待办）
+  if (tdFilter === 'pending') return live.filter(t => t.status !== 'done');
+  return live.filter(t => (t.status || 'pending') === tdFilter);
+}
+
+function renderTodoPage() {
+  const view = document.getElementById('ml-todo-view');
+  if (!view) return;
+  const user = getCurrentUser();
+  const admin = isAdmin(user);
+  const live = todoCache.filter(t => !t.deleted);
+  if (tdFilter === 'all') tdFilter = 'pending';   // 兼容旧状态：「全部」tab 已移除
+  const tabs = [
+    { key: 'pending', label: '待办',       n: live.filter(t => t.status !== 'done').length },
+    { key: 'ready',   label: '已做好准备', n: live.filter(t => t.status === 'ready').length },
+    { key: 'done',    label: '已办',       n: live.filter(t => t.status === 'done').length },
+  ];
+  if (admin) tabs.push({ key: 'deleted', label: '不办了', n: todoCache.filter(t => t.deleted).length });
+  const pills = tabs.map(tb =>
+    '<div class="ml-filter-pill' + (tdFilter === tb.key ? ' active' : '') + '" onclick="setTdFilter(\'' + tb.key + '\')">' + tb.label + '<span class="n">' + tb.n + '</span></div>'
+  ).join('');
+  const list = filterTodos();
+  const cards = list.length
+    ? list.map(t => renderTdCard(t)).join('')
+    : '<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">这里还没记事儿</div><div class="empty-hint">' + (admin ? '点「＋ 记一件」把要办的事记下来' : '管理员还没记事项') + '</div></div>';
+  view.innerHTML =
+    '<div class="ml-filter-bar" style="margin-bottom:2px;">' + pills + '</div>' +
+    '<div class="eq-list-meta"><div class="eq-list-count">' + list.length + ' 件</div>' +
+      (admin ? '<button class="ml-view-btn" onclick="openTdCreate()">＋ 记一件</button>' : '') + '</div>' +
+    cards;
+}
+
+function renderTdCard(t) {
+  const st = TD_STATUS_MAP[t.status] || TD_STATUS_MAP.pending;
+  const admin = isAdmin(getCurrentUser());
+  const eqHtml = t.equipmentId
+    ? '<span class="ml-card-tag">' + escapeHtml(t.equipmentTag || '') + abcBadgeHtml(eqClassOf(t.equipmentId)) + '</span>'
+    : '<span class="td-noeq">未关联设备</span>';
+  let quick = '';
+  if (admin && !t.deleted) {
+    if (t.status === 'pending' || !t.status) {
+      quick = '<div class="td-quick-btns">' +
+        '<button class="td-quick-btn" onclick="event.stopPropagation();tdSetStatus(\'' + t.id + '\',\'ready\')">→ 已做好准备</button>' +
+        '<button class="td-quick-btn primary" onclick="event.stopPropagation();tdSetStatus(\'' + t.id + '\',\'done\')">✓ 已办</button>' +
+        '</div>';
+    } else if (t.status === 'ready') {
+      quick = '<div class="td-quick-btns">' +
+        '<button class="td-quick-btn primary" onclick="event.stopPropagation();tdSetStatus(\'' + t.id + '\',\'done\')">✓ 已办</button>' +
+        '</div>';
+    }
+  }
+  return '<div class="ml-card' + (t.deleted ? ' deleted' : '') + '" onclick="openTdDetail(\'' + t.id + '\')">' +
+    '<div class="ml-card-top">' + eqHtml + '<span class="td-status-badge ' + st.cls + '">' + st.label + '</span></div>' +
+    '<div class="td-card-title">' + escapeHtml(t.title || '') + '</div>' +
+    (t.prep ? '<div class="td-prep">📦 准备：' + escapeHtml(t.prep) + '</div>' : '') +
+    (!t.prep && t.detail ? '<div class="ml-card-cause">' + escapeHtml(t.detail) + '</div>' : '') +
+    '<div class="ml-card-meta"><span>' + formatShortTime(t.createdAt) + ' 加入</span><span class="ml-card-dot">·</span><span>' + escapeHtml(t.createdByName || '—') + '</span>' +
+      (t.status === 'done' && t.doneAt ? '<span class="ml-card-dot">·</span><span>' + formatShortTime(t.doneAt) + ' 办结</span>' : '') + '</div>' +
+    quick +
+    '</div>';
+}
+
+function openTdDetail(id) {
+  const t = todoCache.find(x => x.id === id);
+  if (!t) return;
+  currentTdId = id;
+  renderTodoDetail(t);
+  switchModule('todo-detail');
+}
+function backToTdList() { currentTdId = null; mlView = 'todo'; switchModule('maintenance'); }
+
+function renderTodoDetail(t) {
+  const st = TD_STATUS_MAP[t.status] || TD_STATUS_MAP.pending;
+  const hero = document.getElementById('td-detail-hero');
+  const body = document.getElementById('td-detail-body');
+  if (!hero || !body) return;
+  hero.innerHTML =
+    '<div onclick="backToTdList()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回当个事儿办</div>' +
+    (t.equipmentId
+      ? '<div style="font-family:var(--font-mono);font-size:12px;color:var(--g-deep);font-weight:600;margin-bottom:6px;">' + escapeHtml(t.equipmentTag || '') + ' ' + abcBadgeHtml(eqClassOf(t.equipmentId)) + '</div>'
+      : '<div style="margin-bottom:6px;"><span class="td-noeq">未关联设备</span></div>') +
+    '<div style="font-size:20px;color:var(--ink);font-weight:500;margin-bottom:10px;line-height:1.45;">' + escapeHtml(t.title || '') + '</div>' +
+    '<span class="td-status-badge ' + st.cls + '">' + st.label + '</span>';
+  const user = getCurrentUser();
+  const admin = isAdmin(user);
+  let actions = '';
+  if (admin) {
+    if (t.deleted) {
+      actions = '<button class="wo-act-btn" onclick="tdRestore(\'' + t.id + '\')">恢复</button>';
+    } else {
+      actions =
+        ((t.status || 'pending') === 'pending' ? '<button class="wo-act-btn" onclick="tdSetStatus(\'' + t.id + '\',\'ready\')">→ 已做好准备</button>' : '') +
+        (t.status !== 'done'
+          ? '<button class="wo-act-btn" onclick="tdSetStatus(\'' + t.id + '\',\'done\')">✓ 标记已办</button>'
+          : '<button class="wo-act-btn" onclick="tdSetStatus(\'' + t.id + '\',\'pending\')">↩ 退回待办</button>') +
+        '<button class="wo-act-btn" onclick="openTdEdit(\'' + t.id + '\',\'detail\')">编辑</button>' +
+        '<button class="wo-act-btn danger" onclick="tdDelete(\'' + t.id + '\')">不办了</button>';
+    }
+  }
+  body.innerHTML =
+    (t.deleted ? '<div class="ml-deleted-banner">这件事儿不办了</div>' : '') +
+    (t.equipmentId ? '<div class="ml-field"><div class="ml-field-label">关联设备</div><div class="ml-field-val">' + escapeHtml(((t.equipmentTag || '') + ' ' + (t.equipmentName || '')).trim()) + '</div></div>' : '') +
+    '<div class="ml-field"><div class="ml-field-label">详细说明</div><div class="ml-field-val ml-pre">' + (t.detail ? escapeHtml(t.detail) : '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">需要准备</div><div class="ml-field-val ml-pre">' + (t.prep ? escapeHtml(t.prep) : '—') + '</div></div>' +
+    '<div class="ml-field"><div class="ml-field-label">加入</div><div class="ml-field-val ml-muted">' + formatShortTime(t.createdAt) + ' · ' + escapeHtml(t.createdByName || '—') + '</div></div>' +
+    (t.readyAt ? '<div class="ml-field"><div class="ml-field-label">备好时间</div><div class="ml-field-val ml-muted">' + formatShortTime(t.readyAt) + '</div></div>' : '') +
+    (t.doneAt ? '<div class="ml-field"><div class="ml-field-label">办结时间</div><div class="ml-field-val ml-muted">' + formatShortTime(t.doneAt) + (t.doneByName ? ' · ' + escapeHtml(t.doneByName) : '') + '</div></div>' : '') +
+    (t.doneNote ? '<div class="ml-field"><div class="ml-field-label">完成备注</div><div class="ml-field-val ml-pre">' + escapeHtml(t.doneNote) + '</div></div>' : '') +
+    (actions ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;">' + actions + '</div>' : '');
+}
+
+/* ------ 新增 / 编辑 ------ */
+function openTdCreate() {
+  const user = getCurrentUser();
+  if (!user) { showToast('请先登录'); return; }
+  if (!isAdmin(user)) { showToast('仅管理员可添加待办'); return; }
+  tdEditFrom = '';
+  tdBuffer = {
+    id: 'td_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    title: '',
+    equipmentId: '', equipmentTag: '', equipmentName: '',
+    detail: '', prep: '',
+    status: 'pending',
+    readyAt: null, doneAt: null, doneNote: '', doneBy: '', doneByName: '',
+    createdBy: user.empno, createdByName: user.name,
+    createdAt: Date.now(), updatedAt: Date.now(),
+    deleted: false,
+  };
+  renderTdForm();
+  switchModule('todo-edit');
+}
+
+function openTdEdit(id, from) {
+  const t = todoCache.find(x => x.id === id);
+  if (!t) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可编辑'); return; }
+  tdEditFrom = from || '';
+  tdBuffer = JSON.parse(JSON.stringify(t));
+  renderTdForm();
+  switchModule('todo-edit');
+}
+
+function tdOpenEqPicker() { eqPickTarget = 'todo'; showSheet('pickEquipment'); }
+function tdClearEquipment() {
+  if (!tdBuffer) return;
+  tdBuffer.equipmentId = ''; tdBuffer.equipmentTag = ''; tdBuffer.equipmentName = '';
+  renderTdForm();
+}
+function pickTdStatus(s) { if (tdBuffer) { tdBuffer.status = s; renderTdForm(); } }
+
+function renderTdForm() {
+  const b = tdBuffer;
+  if (!b) return;
+  const isNew = !todoCache.find(x => x.id === b.id);
+  const heroEl = document.getElementById('td-edit-hero');
+  if (heroEl) heroEl.innerHTML =
+    '<div onclick="cancelTdEdit()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 取消</div>' +
+    '<div style="font-size:20px;color:var(--ink);font-weight:500;">' + (isNew ? '记一件事儿' : '编辑待办') + '</div>';
+  const cls = eqClassOf(b.equipmentId);
+  const deviceTrigger = b.equipmentId
+    ? '<button class="eq-picker-trigger" onclick="tdOpenEqPicker()"><div class="eq-picker-selected"><span class="tag">' + escapeHtml(b.equipmentTag) + abcBadgeHtml(cls) + '</span><span class="name">' + escapeHtml(b.equipmentName) + '</span></div><span class="eq-picker-arrow">›</span></button>' +
+      '<button class="wo-act-btn" style="margin-top:8px;" onclick="tdClearEquipment()">× 改为不关联设备</button>'
+    : '<button class="eq-picker-trigger empty" onclick="tdOpenEqPicker()">选择设备（不是设备上的事可不选）…<span class="eq-picker-arrow">›</span></button>';
+  const stOpts = Object.keys(TD_STATUS_MAP).map(k =>
+    '<span class="tag-chip' + (b.status === k ? ' selected' : '') + '" onclick="pickTdStatus(\'' + k + '\')">' + TD_STATUS_MAP[k].label + '</span>').join('');
+  document.getElementById('td-form-body').innerHTML =
+    '<div class="edit-group-label">① 要办的事</div>' +
+    '<div class="edit-field"><div class="edit-field-label required">事项名称</div><input class="edit-input" id="f-td-title" value="' + escapeAttr(b.title || '') + '" placeholder="如：更换 303A 机械密封" oninput="tdBuffer.title = this.value"></div>' +
+    '<div class="edit-field"><div class="edit-field-label">关联设备（可选）</div>' + deviceTrigger + '</div>' +
+    '<div class="edit-field"><div class="edit-field-label">详细说明</div><textarea class="edit-textarea" id="f-td-detail" placeholder="为什么要办、现在为什么先不办（选填）" oninput="tdBuffer.detail = this.value">' + escapeHtml(b.detail || '') + '</textarea></div>' +
+    '<div class="edit-group-label">② 需要准备什么</div>' +
+    '<div class="edit-field"><div class="edit-field-label">配件 / 材料 / 工具</div><textarea class="edit-textarea" id="f-td-prep" placeholder="如：机封 ×1（等到货）、专用扳手（选填）" oninput="tdBuffer.prep = this.value">' + escapeHtml(b.prep || '') + '</textarea></div>' +
+    '<div class="edit-group-label">③ 当前状态</div>' +
+    '<div class="edit-field"><div class="tag-chips">' + stOpts + '</div></div>' +
+    (b.status === 'done' ? '<div class="edit-field"><div class="edit-field-label">完成备注</div><textarea class="edit-textarea" id="f-td-donenote" placeholder="怎么办结的（选填）" oninput="tdBuffer.doneNote = this.value">' + escapeHtml(b.doneNote || '') + '</textarea></div>' : '');
+}
+
+async function submitTodo() {
+  const b = tdBuffer;
+  if (!b) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可保存'); return; }
+  if (!(b.title || '').trim()) { showToast('请填写事项名称'); return; }
+  b.title = b.title.trim();
+  if (b.status === 'ready' && !b.readyAt) b.readyAt = Date.now();
+  if (b.status === 'done' && !b.doneAt) {
+    const u = getCurrentUser();
+    b.doneAt = Date.now();
+    b.doneBy = (u && u.empno) || '';
+    b.doneByName = (u && u.name) || '';
+  }
+  if (b.status !== 'done') { b.doneAt = null; b.doneBy = ''; b.doneByName = ''; }
+  if (b.status === 'pending') b.readyAt = null;
+  try {
+    await cloudSaveTodo(b);
+    showToast('已保存');
+    tdBuffer = null; tdEditFrom = '';
+    mlView = 'todo';
+    switchModule('maintenance');
+  } catch (err) {
+    showToast('保存失败：' + err.message);
+  }
+}
+
+function cancelTdEdit() {
+  const from = tdEditFrom;
+  tdBuffer = null; tdEditFrom = '';
+  if (from === 'detail' && currentTdId) {
+    const t = todoCache.find(x => x.id === currentTdId);
+    if (t) { renderTodoDetail(t); switchModule('todo-detail'); return; }
+  }
+  mlView = 'todo';
+  switchModule('maintenance');
+}
+
+/* ------ 状态流转 / 不办了 / 恢复 ------
+   已办/不办了 走应用内底部弹层确认（不用原生 prompt/confirm——部分浏览器环境会拦掉原生弹窗，
+   点了没反应；弹层在手机上体验也更好）2026-07-27 */
+let tdSheetId = null;   // 弹层正在操作的待办 id
+
+async function tdSetStatus(id, status) {
+  const t = todoCache.find(x => x.id === id);
+  if (!t) return;
+  const user = getCurrentUser();
+  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  if (status === 'done') { tdSheetId = id; showSheet('tdDone', id); return; }
+  const upd = Object.assign({}, t, { status: status });
+  if (status === 'ready' && !upd.readyAt) upd.readyAt = Date.now();
+  upd.doneAt = null; upd.doneBy = ''; upd.doneByName = '';
+  if (status === 'pending') upd.readyAt = null;
+  try {
+    await cloudSaveTodo(upd);
+    showToast('已标记为「' + (TD_STATUS_MAP[status] || {}).label + '」');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+async function confirmTdDone() {
+  const t = todoCache.find(x => x.id === tdSheetId);
+  if (!t) { hideSheet(); return; }
+  const user = getCurrentUser();
+  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  const noteEl = document.getElementById('td-done-note');
+  const upd = Object.assign({}, t, {
+    status: 'done',
+    doneNote: (noteEl && noteEl.value.trim()) || '',
+    doneAt: Date.now(),
+    doneBy: user.empno,
+    doneByName: user.name,
+  });
+  if (!upd.readyAt) upd.readyAt = null;
+  hideSheet();
+  try {
+    await cloudSaveTodo(upd);
+    showToast('已标记为「已办」');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+function tdDelete(id) {
+  const t = todoCache.find(x => x.id === id);
+  if (!t) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  tdSheetId = id;
+  showSheet('tdDelete', id);
+}
+
+async function confirmTdDelete() {
+  const t = todoCache.find(x => x.id === tdSheetId);
+  if (!t) { hideSheet(); return; }
+  const user = getCurrentUser();
+  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  const upd = Object.assign({}, t, { deleted: true, deletedAt: Date.now(), deletedBy: user.empno, deletedByName: user.name });
+  hideSheet();
+  try {
+    await cloudSaveTodo(upd);
+    showToast('已标记为「不办了」');
+    backToTdList();
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
+
+async function tdRestore(id) {
+  const t = todoCache.find(x => x.id === id);
+  if (!t) return;
+  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可恢复'); return; }
+  const upd = Object.assign({}, t, { deleted: false });
+  try {
+    await cloudSaveTodo(upd);
+    showToast('已恢复');
+  } catch (err) {
+    showToast('操作失败：' + err.message);
+  }
+}
 
 /* ==========================================================
    润滑 UI 层
@@ -10004,7 +10444,7 @@ window.openMlKeyEqPage = openMlKeyEqPage;
 window.backToMlKeyEq = backToMlKeyEq;
 window.openMlEqLog = openMlEqLog;
 window.setMlEqlogPart = setMlEqlogPart;
-window.toggleMlView = toggleMlView;
+window.setMlView = setMlView;
 window.setMlBoardSeries = setMlBoardSeries;
 window.mlbOpenEqlog = mlbOpenEqlog;
 window.mlbBackToBoard = mlbBackToBoard;
@@ -10031,6 +10471,22 @@ window.deleteMaintenance = deleteMaintenance;
 window.restoreMaintenance = restoreMaintenance;
 window.filterEqPickerList = filterEqPickerList;
 window.renderDeviceRecords = renderDeviceRecords;
+// 当个事儿办 · 2026-07-27
+window.setTdFilter = setTdFilter;
+window.openTdDetail = openTdDetail;
+window.backToTdList = backToTdList;
+window.openTdCreate = openTdCreate;
+window.openTdEdit = openTdEdit;
+window.cancelTdEdit = cancelTdEdit;
+window.submitTodo = submitTodo;
+window.pickTdStatus = pickTdStatus;
+window.tdOpenEqPicker = tdOpenEqPicker;
+window.tdClearEquipment = tdClearEquipment;
+window.tdSetStatus = tdSetStatus;
+window.confirmTdDone = confirmTdDone;
+window.tdDelete = tdDelete;
+window.confirmTdDelete = confirmTdDelete;
+window.tdRestore = tdRestore;
 // 润滑相关
 window.setLubeFilter = setLubeFilter;
 window.setLubeOp = setLubeOp;
@@ -10125,6 +10581,7 @@ async function init() {
     subscribeUsers();
     subscribeEquipments();
     subscribeMaintenance();
+    subscribeTodos();
     subscribeLubePoints();
     subscribeLubeHistory();
     subscribeInspectTemplates();
