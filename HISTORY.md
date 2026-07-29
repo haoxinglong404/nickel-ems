@@ -5,6 +5,7 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **二级库领用/入库后详情页结存不实时刷新 bugfix**（2026-07-29，用户反馈：登记一笔领用后结存不变，要返回列表再进来才更新）：根因=`submitSecondStockTxn` 保存成功后只 `switchModule('parts-detail')` 切回详情页、**没有重新渲染**；而 `subscribeSecondStock`/`subscribeSecondStockHistory` 的 onSnapshot 回调只在「详情页处于 active」时才重画详情——保存瞬间 active 的是 `parts-txn` 表单页，云端推送到了也不画，切回去看到的还是进页面时的旧 DOM（对照：`submitSecondStockEdit` 一直有重渲染两行所以编辑没这问题，唯独领用/入库漏了）。修法=保存成功切回详情后补 `renderSecondStockDetail(fresh || {...it, quantity: newQty})`（先从 `secondStockCache` 取最新——Firestore 本地 latency compensation 在 await 返回前就已更新缓存，兜底用手算结存的对象防缓存未及时到）。纯代码 2 行，无云端/字段/rules 变更。验证：esprima 语法解析通过、1.07MB 正常、localhost preview 加载 0 报错、onclick 函数在 window 上齐全（真实领用写库未测——不污染生产台账，逻辑照抄编辑保存那条已验证路径）。
 1. **「当个事儿办」缓办事项模块（检修页第三视图）+ 已办/不办了应用内弹层 + 账号实名**（2026-07-27，用户提出并逐轮验收；v0.17 已 push）：
    - **需求**：记录"平时不能干/暂时不干、准备后面再干"的活，设备上的和非设备的都有——可关联设备也可不关联；状态 待办 → 已做好准备（需提前备配件/材料/工具的活）→ 已办。
    - **形态演进（用户逐轮拍板）**：初版做成独立子页（hero+返回键）→ 用户要"和看板一样同页切换" → 改为检修页第三视图 `mlView='todo'`（`#ml-todo-view`，`applyMlView` 三态控制显隐/标题 Repairs⇄Dashboard⇄To-dos/副标题/FAB 显隐）→ 用户再要"记录也单独按钮" → 最终标题旁 **📋记录/📊看板/🗒️当个事儿办 三个独立胶囊按钮**（`setMlView(v)` 直选、当前视图高亮；旧 `toggleMlView`/`toggleTdView` 已删）。当个事儿办按钮带未办结计数（pending+ready，`updateTdHeaderCount`）。

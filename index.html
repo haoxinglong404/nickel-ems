@@ -9512,6 +9512,9 @@ async function submitSecondStockTxn() {
     ssTxnBuffer = null;
     currentSSId = it.id;
     switchModule('parts-detail');
+    // 保存瞬间详情页不激活、订阅回调不会重画它，切回来后要手动重渲染（否则结存显示旧值）
+    const fresh = secondStockCache.find(x => x.id === it.id);
+    renderSecondStockDetail(fresh || { ...it, quantity: newQty });
   } catch (e) {
     showToast('操作失败：' + (e && e.message || e));
   }
