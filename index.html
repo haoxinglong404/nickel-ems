@@ -199,6 +199,11 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .td-quick-btns { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
   .td-quick-btn { flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink); font-size:12px; font-family:var(--font-sans); cursor:pointer; }
   .td-quick-btn.primary { background:var(--g-deep); border-color:var(--g-deep); color:#fff; }
+  /* 待办关联设备多选（2026-07-29）：表单里的设备胶囊 + 选择弹层的已选高亮 */
+  .td-eq-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .td-eq-names { font-size:13px; color:var(--muted); margin:-2px 0 6px; line-height:1.5; word-break:break-word; }
+  .td-eq-chip { display:inline-flex; align-items:center; gap:4px; background:var(--g-mist); color:var(--g-forest); border-radius:999px; padding:8px 8px 8px 14px; font-size:13px; font-family:var(--font-mono); font-weight:500; }
+  .td-eq-chip .x { cursor:pointer; font-size:16px; color:var(--g-deep); padding:2px 8px; line-height:1; }
   .mlb-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
   .mlb-stat { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
   .mlb-stat .lbl { font-size:12px; color:var(--muted); margin-bottom:4px; }
@@ -844,6 +849,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     cursor: pointer;
   }
   .eq-picker-item:active { background: var(--surface); }
+  .eq-picker-item.selected { background: var(--g-mist); margin: 0 -20px; padding-left: 20px; padding-right: 20px; }
+  .eq-picker-check { float: right; color: var(--g-forest); font-size: 12px; font-weight: 600; }
   .eq-picker-item .tag {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -5146,12 +5153,14 @@ function showSheet(type, arg) {
       ${hasMobile?`<button class="sheet-btn danger" onclick="confirmSetMobile(true)">清除手机号（不再被 @）</button>`:''}
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='pickEquipment') {
-    // 选择设备 sheet
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">选择设备</div><div class="sheet-sub">共 ${loadEquipments().length} 台设备</div>
+    // 选择设备 sheet：检修表单单选；当个事儿办表单多选（点选/取消，选完点完成）2026-07-29
+    const tdMulti = eqPickTarget === 'todo' && !!tdBuffer;
+    _eqPickerFilter = '';
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${tdMulti?'选择设备（可多选）':'选择设备'}</div><div class="sheet-sub">${tdMulti?'点一台选一台，再点一次取消已选':`共 ${loadEquipments().length} 台设备`}</div>
       <input class="eq-search-in-sheet" id="eq-picker-search" placeholder="搜索位号或名称…" oninput="filterEqPickerList(this.value)">
       <div class="eq-picker-list" id="eq-picker-list"></div>
-      <button class="sheet-btn" style="margin-top:14px;" onclick="hideSheet()">取消</button>`;
-    setTimeout(() => renderEqPickerList(''), 10);
+      <button class="sheet-btn${tdMulti?' primary':''}" style="margin-top:14px;" id="eq-picker-done-btn" onclick="${tdMulti?'tdEqPickerDone()':'hideSheet()'}">${tdMulti?'完成':'取消'}</button>`;
+    setTimeout(() => { renderEqPickerList(''); if (tdMulti) updateTdPickerDoneBtn(); }, 10);
   } else if (type==='pickMlPart') {
     // 从二级库选备件（检修记录用）
     const _src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
@@ -6517,8 +6526,8 @@ function renderMlForm() {
   const b = mlBuffer;
   const cls = eqClassOf(b.equipmentId);
   const deviceTrigger = b.equipmentId
-    ? '<button class="eq-picker-trigger" onclick="showSheet(\'pickEquipment\')"><div class="eq-picker-selected"><span class="tag">' + escapeHtml(b.equipmentTag) + abcBadgeHtml(cls) + '</span><span class="name">' + escapeHtml(b.equipmentName) + '</span></div><span class="eq-picker-arrow">›</span></button>'
-    : '<button class="eq-picker-trigger empty" onclick="showSheet(\'pickEquipment\')">选择设备…<span class="eq-picker-arrow">›</span></button>';
+    ? '<button class="eq-picker-trigger" onclick="mlOpenEqPicker()"><div class="eq-picker-selected"><span class="tag">' + escapeHtml(b.equipmentTag) + abcBadgeHtml(cls) + '</span><span class="name">' + escapeHtml(b.equipmentName) + '</span></div><span class="eq-picker-arrow">›</span></button>'
+    : '<button class="eq-picker-trigger empty" onclick="mlOpenEqPicker()">选择设备…<span class="eq-picker-arrow">›</span></button>';
   const catOpts = Object.keys(ML_CATEGORY_MAP).map(k =>
     '<span class="tag-chip' + (b.category === k ? ' selected' : '') + '" onclick="pickMlCategory(\'' + k + '\')">' + ML_CATEGORY_MAP[k].label + '</span>').join('');
   const partOpts = mlFormFaultPartOptions(b);
@@ -6543,16 +6552,20 @@ function renderMlForm() {
     '<div class="edit-field"><textarea class="edit-textarea" id="f-ml-note" placeholder="选填" oninput="mlBuffer.note = this.value">' + escapeHtml(b.note || '') + '</textarea></div>';
 }
 
+function mlOpenEqPicker() { eqPickTarget = 'ml'; showSheet('pickEquipment'); }
 function pickEquipment(id) {
   const eq = loadEquipments().find(e => e.id === id);
   if (!eq) return;
   // 2026-07-27：设备选择 sheet 被 检修表单 / 当个事儿办表单 共用，按 eqPickTarget 路由
+  // 2026-07-29：待办表单改多选——点一台加一台、再点取消，弹层不关，选完点「完成」
   if (eqPickTarget === 'todo') {
     if (!tdBuffer) return;
-    tdBuffer.equipmentId = eq.id;
-    tdBuffer.equipmentTag = eq.tag;
-    tdBuffer.equipmentName = eq.name;
-    hideSheet();
+    if (!Array.isArray(tdBuffer.equipments)) tdBuffer.equipments = tdEqs(tdBuffer);
+    const i = tdBuffer.equipments.findIndex(x => x.id === eq.id);
+    if (i >= 0) tdBuffer.equipments.splice(i, 1);
+    else tdBuffer.equipments.push({ id: eq.id, tag: eq.tag, name: eq.name || '' });
+    renderEqPickerList(_eqPickerFilter);
+    updateTdPickerDoneBtn();
     renderTdForm();
     return;
   }
@@ -6563,6 +6576,14 @@ function pickEquipment(id) {
   hideSheet();
   renderMlForm();
 }
+function updateTdPickerDoneBtn() {
+  const btn = document.getElementById('eq-picker-done-btn');
+  if (btn && tdBuffer) {
+    const n = (tdBuffer.equipments || []).length;
+    btn.textContent = n ? '完成（已选 ' + n + ' 台）' : '完成';
+  }
+}
+function tdEqPickerDone() { hideSheet(); renderTdForm(); }
 
 /* ------ 从二级库选备件 ------ */
 function renderMlPartPicker(kw) {
@@ -6807,9 +6828,11 @@ function renderEqPickerList(keyword) {
     container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--subtle);font-size:13px;">未找到匹配的设备</div>`;
     return;
   }
+  // 待办表单多选模式：已选的高亮 + 打勾（2026-07-29）
+  const sel = (eqPickTarget === 'todo' && tdBuffer) ? new Set((tdBuffer.equipments || []).map(x => x.id)) : null;
   container.innerHTML = list.map(e => `
-    <div class="eq-picker-item" onclick="pickEquipment('${e.id}')">
-      <div class="tag">${e.tag}</div>
+    <div class="eq-picker-item${sel && sel.has(e.id) ? ' selected' : ''}" onclick="pickEquipment('${e.id}')">
+      <div class="tag">${e.tag}${sel && sel.has(e.id) ? '<span class="eq-picker-check">✓ 已选</span>' : ''}</div>
       <div class="name">${escapeHtml(e.name)}</div>
       <div class="meta">${e.type || ''} · ${e.area || ''}</div>
     </div>
@@ -6838,6 +6861,31 @@ const TD_STATUS_MAP = {
   'ready':   { label: '已做好准备', cls: 'td-status-ready' },
   'done':    { label: '已办',       cls: 'td-status-done' },
 };
+
+// 关联设备统一读取（2026-07-29 起支持多台）：新字段 equipments 数组，
+// 老记录只有单设备字段 equipmentId/Tag/Name → 包装成单元素数组，云端无需迁移
+function tdEqs(t) {
+  if (Array.isArray(t.equipments) && t.equipments.length) return t.equipments;
+  if (t.equipmentId) return [{ id: t.equipmentId, tag: t.equipmentTag || '', name: t.equipmentName || '' }];
+  return [];
+}
+
+// 多段字符串省略显示（位号/设备名通用）：算公共前缀截到最后一个"-"，首个显全称、后续只显剩余段
+// 如 203-PE-PP-306A / 306B；N系列-给料泵-A泵 / B泵；公共前缀不含"-"则各显全称
+function tdAbbrevStrs(strs) {
+  if (strs.length <= 1) return strs.slice();
+  let lcp = strs[0];
+  for (let k = 1; k < strs.length; k++) {
+    const t = strs[k];
+    let i = 0;
+    while (i < lcp.length && i < t.length && lcp[i] === t[i]) i++;
+    lcp = lcp.slice(0, i);
+  }
+  const cut = lcp.lastIndexOf('-');
+  if (cut < 1) return strs.slice();
+  const plen = cut + 1;
+  return strs.map((t, i) => (i === 0 ? t : (t.slice(plen) || t)));
+}
 
 async function cloudSaveTodo(t) {
   setCloudStatus('syncing', '保存中...');
@@ -6923,9 +6971,22 @@ function renderTodoPage() {
 function renderTdCard(t) {
   const st = TD_STATUS_MAP[t.status] || TD_STATUS_MAP.pending;
   const admin = isAdmin(getCurrentUser());
-  const eqHtml = t.equipmentId
-    ? '<span class="ml-card-tag">' + escapeHtml(t.equipmentTag || '') + abcBadgeHtml(eqClassOf(t.equipmentId)) + '</span>'
-    : '<span class="td-noeq">未关联设备</span>';
+  const eqs = tdEqs(t);
+  let eqHtml, eqNameHtml = '';
+  if (!eqs.length) {
+    eqHtml = '<span class="td-noeq">未关联设备</span>';
+  } else {
+    if (eqs.length === 1) {
+      eqHtml = '<span class="ml-card-tag">' + escapeHtml(eqs[0].tag || '') + abcBadgeHtml(eqClassOf(eqs[0].id)) + '</span>';
+    } else {
+      // 每台位号后带各自的 A/B/C 徽章
+      eqHtml = '<span class="ml-card-tag">' + tdAbbrevStrs(eqs.map(e => e.tag || '')).map((x, i) => escapeHtml(x) + abcBadgeHtml(eqClassOf(eqs[i].id))).join(' · ') + '</span> <span class="td-noeq">共 ' + eqs.length + ' 台</span>';
+    }
+    // 设备名称行：光看位号不直观；多台同名只显一次，同前缀省略合并
+    const names = eqs.map(e => (e.name || '').trim()).filter(Boolean);
+    const uniq = [...new Set(names)];
+    if (names.length) eqNameHtml = '<div class="td-eq-names">' + (uniq.length === 1 ? escapeHtml(uniq[0]) : tdAbbrevStrs(names).map(x => escapeHtml(x)).join(' · ')) + '</div>';
+  }
   let quick = '';
   if (admin && !t.deleted) {
     if (t.status === 'pending' || !t.status) {
@@ -6941,6 +7002,7 @@ function renderTdCard(t) {
   }
   return '<div class="ml-card' + (t.deleted ? ' deleted' : '') + '" onclick="openTdDetail(\'' + t.id + '\')">' +
     '<div class="ml-card-top">' + eqHtml + '<span class="td-status-badge ' + st.cls + '">' + st.label + '</span></div>' +
+    eqNameHtml +
     '<div class="td-card-title">' + escapeHtml(t.title || '') + '</div>' +
     (t.prep ? '<div class="td-prep">📦 准备：' + escapeHtml(t.prep) + '</div>' : '') +
     (!t.prep && t.detail ? '<div class="ml-card-cause">' + escapeHtml(t.detail) + '</div>' : '') +
@@ -6966,8 +7028,14 @@ function renderTodoDetail(t) {
   if (!hero || !body) return;
   hero.innerHTML =
     '<div onclick="backToTdList()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回当个事儿办</div>' +
-    (t.equipmentId
-      ? '<div style="font-family:var(--font-mono);font-size:12px;color:var(--g-deep);font-weight:600;margin-bottom:6px;">' + escapeHtml(t.equipmentTag || '') + ' ' + abcBadgeHtml(eqClassOf(t.equipmentId)) + '</div>'
+    (tdEqs(t).length
+      ? '<div style="font-family:var(--font-mono);font-size:12px;color:var(--g-deep);font-weight:600;margin-bottom:6px;">' +
+        (tdEqs(t).length === 1
+          ? escapeHtml(tdEqs(t)[0].tag || '') + ' ' + abcBadgeHtml(eqClassOf(tdEqs(t)[0].id))
+          : (function (es) {
+              return tdAbbrevStrs(es.map(e => e.tag || '')).map((x, i) => escapeHtml(x) + abcBadgeHtml(eqClassOf(es[i].id))).join(' · ') + ' <span class="td-noeq">共 ' + es.length + ' 台</span>';
+            })(tdEqs(t))) +
+        '</div>'
       : '<div style="margin-bottom:6px;"><span class="td-noeq">未关联设备</span></div>') +
     '<div style="font-size:20px;color:var(--ink);font-weight:500;margin-bottom:10px;line-height:1.45;">' + escapeHtml(t.title || '') + '</div>' +
     '<span class="td-status-badge ' + st.cls + '">' + st.label + '</span>';
@@ -6989,7 +7057,7 @@ function renderTodoDetail(t) {
   }
   body.innerHTML =
     (t.deleted ? '<div class="ml-deleted-banner">这件事儿不办了</div>' : '') +
-    (t.equipmentId ? '<div class="ml-field"><div class="ml-field-label">关联设备</div><div class="ml-field-val">' + escapeHtml(((t.equipmentTag || '') + ' ' + (t.equipmentName || '')).trim()) + '</div></div>' : '') +
+    (tdEqs(t).length ? '<div class="ml-field"><div class="ml-field-label">关联设备' + (tdEqs(t).length > 1 ? '（' + tdEqs(t).length + ' 台）' : '') + '</div><div class="ml-field-val">' + tdEqs(t).map(e => escapeHtml(((e.tag || '') + ' ' + (e.name || '')).trim()) + abcBadgeHtml(eqClassOf(e.id))).join('<br>') + '</div></div>' : '') +
     '<div class="ml-field"><div class="ml-field-label">详细说明</div><div class="ml-field-val ml-pre">' + (t.detail ? escapeHtml(t.detail) : '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">需要准备</div><div class="ml-field-val ml-pre">' + (t.prep ? escapeHtml(t.prep) : '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">加入</div><div class="ml-field-val ml-muted">' + formatShortTime(t.createdAt) + ' · ' + escapeHtml(t.createdByName || '—') + '</div></div>' +
@@ -7008,7 +7076,8 @@ function openTdCreate() {
   tdBuffer = {
     id: 'td_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     title: '',
-    equipmentId: '', equipmentTag: '', equipmentName: '',
+    equipments: [],
+    equipmentId: '', equipmentTag: '', equipmentName: '',   // 旧单设备字段：保存时镜像首台，兼容 07-27 老结构
     detail: '', prep: '',
     status: 'pending',
     readyAt: null, doneAt: null, doneNote: '', doneBy: '', doneByName: '',
@@ -7026,14 +7095,15 @@ function openTdEdit(id, from) {
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可编辑'); return; }
   tdEditFrom = from || '';
   tdBuffer = JSON.parse(JSON.stringify(t));
+  tdBuffer.equipments = tdEqs(tdBuffer);   // 老单设备记录归一成数组
   renderTdForm();
   switchModule('todo-edit');
 }
 
 function tdOpenEqPicker() { eqPickTarget = 'todo'; showSheet('pickEquipment'); }
-function tdClearEquipment() {
+function tdRemoveEquipment(id) {
   if (!tdBuffer) return;
-  tdBuffer.equipmentId = ''; tdBuffer.equipmentTag = ''; tdBuffer.equipmentName = '';
+  tdBuffer.equipments = (tdBuffer.equipments || []).filter(x => x.id !== id);
   renderTdForm();
 }
 function pickTdStatus(s) { if (tdBuffer) { tdBuffer.status = s; renderTdForm(); } }
@@ -7046,17 +7116,19 @@ function renderTdForm() {
   if (heroEl) heroEl.innerHTML =
     '<div onclick="cancelTdEdit()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 取消</div>' +
     '<div style="font-size:20px;color:var(--ink);font-weight:500;">' + (isNew ? '记一件事儿' : '编辑待办') + '</div>';
-  const cls = eqClassOf(b.equipmentId);
-  const deviceTrigger = b.equipmentId
-    ? '<button class="eq-picker-trigger" onclick="tdOpenEqPicker()"><div class="eq-picker-selected"><span class="tag">' + escapeHtml(b.equipmentTag) + abcBadgeHtml(cls) + '</span><span class="name">' + escapeHtml(b.equipmentName) + '</span></div><span class="eq-picker-arrow">›</span></button>' +
-      '<button class="wo-act-btn" style="margin-top:8px;" onclick="tdClearEquipment()">× 改为不关联设备</button>'
-    : '<button class="eq-picker-trigger empty" onclick="tdOpenEqPicker()">选择设备（不是设备上的事可不选）…<span class="eq-picker-arrow">›</span></button>';
+  const eqs = b.equipments || [];
+  const deviceTrigger = eqs.length
+    ? '<div class="td-eq-chips">' + eqs.map(e =>
+        '<span class="td-eq-chip" title="' + escapeAttr(e.name || '') + '">' + escapeHtml(e.tag || '') + abcBadgeHtml(eqClassOf(e.id)) +
+        '<span class="x" onclick="tdRemoveEquipment(\'' + e.id + '\')">×</span></span>').join('') + '</div>' +
+      '<button class="wo-act-btn" style="margin-top:8px;" onclick="tdOpenEqPicker()">＋ 添加设备</button>'
+    : '<button class="eq-picker-trigger empty" onclick="tdOpenEqPicker()">选择设备（可多台；不是设备上的事可不选）…<span class="eq-picker-arrow">›</span></button>';
   const stOpts = Object.keys(TD_STATUS_MAP).map(k =>
     '<span class="tag-chip' + (b.status === k ? ' selected' : '') + '" onclick="pickTdStatus(\'' + k + '\')">' + TD_STATUS_MAP[k].label + '</span>').join('');
   document.getElementById('td-form-body').innerHTML =
     '<div class="edit-group-label">① 要办的事</div>' +
     '<div class="edit-field"><div class="edit-field-label required">事项名称</div><input class="edit-input" id="f-td-title" value="' + escapeAttr(b.title || '') + '" placeholder="如：更换 303A 机械密封" oninput="tdBuffer.title = this.value"></div>' +
-    '<div class="edit-field"><div class="edit-field-label">关联设备（可选）</div>' + deviceTrigger + '</div>' +
+    '<div class="edit-field"><div class="edit-field-label">关联设备（可选 · 可多台）</div>' + deviceTrigger + '</div>' +
     '<div class="edit-field"><div class="edit-field-label">详细说明</div><textarea class="edit-textarea" id="f-td-detail" placeholder="为什么要办、现在为什么先不办（选填）" oninput="tdBuffer.detail = this.value">' + escapeHtml(b.detail || '') + '</textarea></div>' +
     '<div class="edit-group-label">② 需要准备什么</div>' +
     '<div class="edit-field"><div class="edit-field-label">配件 / 材料 / 工具</div><textarea class="edit-textarea" id="f-td-prep" placeholder="如：机封 ×1（等到货）、专用扳手（选填）" oninput="tdBuffer.prep = this.value">' + escapeHtml(b.prep || '') + '</textarea></div>' +
@@ -7071,6 +7143,12 @@ async function submitTodo() {
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可保存'); return; }
   if (!(b.title || '').trim()) { showToast('请填写事项名称'); return; }
   b.title = b.title.trim();
+  // 关联设备：新字段 equipments 数组落库；旧单设备字段镜像首台（无则清空），兼容 07-27 老结构
+  if (!Array.isArray(b.equipments)) b.equipments = tdEqs(b);
+  const e0 = b.equipments[0] || null;
+  b.equipmentId = e0 ? e0.id : '';
+  b.equipmentTag = e0 ? (e0.tag || '') : '';
+  b.equipmentName = e0 ? (e0.name || '') : '';
   if (b.status === 'ready' && !b.readyAt) b.readyAt = Date.now();
   if (b.status === 'done' && !b.doneAt) {
     const u = getCurrentUser();
@@ -10484,7 +10562,11 @@ window.cancelTdEdit = cancelTdEdit;
 window.submitTodo = submitTodo;
 window.pickTdStatus = pickTdStatus;
 window.tdOpenEqPicker = tdOpenEqPicker;
-window.tdClearEquipment = tdClearEquipment;
+window.tdRemoveEquipment = tdRemoveEquipment;
+window.tdEqPickerDone = tdEqPickerDone;
+window.mlOpenEqPicker = mlOpenEqPicker;
+window.tdEqs = tdEqs;               // 调试用（多设备兼容读取）
+window.tdAbbrevStrs = tdAbbrevStrs; // 调试用（位号/名称省略显示）
 window.tdSetStatus = tdSetStatus;
 window.confirmTdDone = confirmTdDone;
 window.tdDelete = tdDelete;

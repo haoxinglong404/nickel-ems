@@ -5,6 +5,13 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **「当个事儿办」支持关联多台设备 + 卡片显示设备名**（2026-07-30，用户提出：同类型多台设备的活每台建一条太多；用户已验收后 push）：
+   - **数据**：`todos` 新增 `equipments` 数组字段（`[{id,tag,name}]`）。**老记录不迁移**——`tdEqs(t)` 读取时把旧单设备字段 `equipmentId/Tag/Name` 包装成单元素数组；保存时旧字段镜像首台（无关联则清空），新老结构互相兼容。firestore.rules 无变更（todos 白名单已覆盖）。
+   - **设备选择弹层分模式**（`pickEquipment` sheet，按 `eqPickTarget` 路由）：检修表单仍单选即关；待办表单**多选**——点一台选一台、再点取消，已选绿底+✓（`.eq-picker-item.selected`/`.eq-picker-check`），底部按钮实时显「完成（已选 N 台）」（`updateTdPickerDoneBtn`），点「完成」`tdEqPickerDone()` 关闭。打开 sheet 时重置 `_eqPickerFilter`（防上次搜索词残留导致勾选后列表跳变）。
+   - **表单**：已选设备显示为胶囊 `.td-eq-chip`（位号+ABC 徽章+× 单独移除 `tdRemoveEquipment`，title 悬停显名称），下方「＋ 添加设备」继续加；空态提示「可多台」。原 `tdClearEquipment`（改为不关联）已删，靠逐个 × 清空。
+   - **显示**：卡片/详情 hero 多台位号**同前缀省略**（`tdAbbrevStrs`：公共前缀截到最后一个"-"，首个全称后续只显剩余段，如 `203-PE-PP-306A · 306B`；公共前缀不含"-"则各显全称）+ **每台各带 ABC 徽章** + 「共 N 台」chip；**卡片位号下新增设备名行** `.td-eq-names`（单台关联也有——用户反馈光看位号不直观；多台同前缀合并如 `1系列-高压釜给料泵-A泵 · B泵`、同名只显一次如两台 `罗茨风机`）；详情页「关联设备（N 台）」逐行列 位号+名称+徽章。多台事项办结是整条一起办结，不能按台分别销项（将来如需再加）。
+   - **顺手修潜在 bug**：检修表单打开设备弹层原来直接 `showSheet('pickEquipment')`、不重置 `eqPickTarget`——若先用过待办的选择器再从检修表单选设备会路由到 todo 分支（tdBuffer 为 null 直接 return，点了没反应）。现在 `mlOpenEqPicker()` 显式切回 `'ml'`。
+   - **验证**：esprima 真解析通过、1.07MB 正常、preview 控制台 0 报错、新函数全挂 window（`tdEqs`/`tdAbbrevStrs` 也暴露了调试用）；多选/取消/计数/完成、胶囊移除、老记录卡片详情编辑兼容、检修表单单选，全部预览实测；用户在线上用 106A/B 给料泵、两台罗茨风机建了多台记录并验收 OK。
 1. **二级库领用/入库后详情页结存不实时刷新 bugfix**（2026-07-29，用户反馈：登记一笔领用后结存不变，要返回列表再进来才更新）：根因=`submitSecondStockTxn` 保存成功后只 `switchModule('parts-detail')` 切回详情页、**没有重新渲染**；而 `subscribeSecondStock`/`subscribeSecondStockHistory` 的 onSnapshot 回调只在「详情页处于 active」时才重画详情——保存瞬间 active 的是 `parts-txn` 表单页，云端推送到了也不画，切回去看到的还是进页面时的旧 DOM（对照：`submitSecondStockEdit` 一直有重渲染两行所以编辑没这问题，唯独领用/入库漏了）。修法=保存成功切回详情后补 `renderSecondStockDetail(fresh || {...it, quantity: newQty})`（先从 `secondStockCache` 取最新——Firestore 本地 latency compensation 在 await 返回前就已更新缓存，兜底用手算结存的对象防缓存未及时到）。纯代码 2 行，无云端/字段/rules 变更。验证：esprima 语法解析通过、1.07MB 正常、localhost preview 加载 0 报错、onclick 函数在 window 上齐全（真实领用写库未测——不污染生产台账，逻辑照抄编辑保存那条已验证路径）。
 1. **「当个事儿办」缓办事项模块（检修页第三视图）+ 已办/不办了应用内弹层 + 账号实名**（2026-07-27，用户提出并逐轮验收；v0.17 已 push）：
    - **需求**：记录"平时不能干/暂时不干、准备后面再干"的活，设备上的和非设备的都有——可关联设备也可不关联；状态 待办 → 已做好准备（需提前备配件/材料/工具的活）→ 已办。
