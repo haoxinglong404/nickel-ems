@@ -5,6 +5,15 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **数据看板提升为顶级模块「重点设备看板」（导航第一项）**（2026-08-03，用户提出"这个看板还可以，但是给放在根目录下最好，在第一个显示"并截图圈了侧栏最上方；已 push e8aaf77）：
+   - **模块化**：新建 `<section class="module" data-module="board">`（index.html 约 2996 行），把原来嵌在检修页里的 `<div id="ml-board-view">` **整块搬进去**（内容/渲染函数 `renderMlBoard` 一行未改，只换了宿主），加自己的 `.section-header`：小标签 `Key Equipment · 重点设备看板` + 大标题 `Dashboard` + 副标题「高压釜给料泵 · 高压釜搅拌器 重点零件」（原副标题原样保留）。
+   - **导航**：`#bottom-nav` **第一位**插入 `data-nav="board"` 项，柱状图 SVG 图标 + 标签「重点设备看板」。窄屏底部导航是横滑 flex（`.nav-item{flex:0 0 calc(100%/5.5)}`≈68px），6 个中文字 9px mono 约 57px 会顶到边，故加一条 `.nav-item[data-nav="board"]{flex:0 0 86px}`；宽屏侧栏规则 `.bottom-nav .nav-item{flex:0 0 auto}` 在 @media 内、同特异性但**位置更靠后所以照常胜出**，侧栏不受影响（实测 flexBasis=auto、行高 37.7px 单行正常）。
+   - **检修页回退为两视图**：`ml-title-row` 删掉「📊 看板」按钮（用户拍板移除，避免两个入口进同一页），`applyMlView()` 里 board 三态逻辑全部拆掉（删 `const board`/`bv`/`btn`、标题只在 Repairs⇄To-dos 之间切、不再 `renderMlBoard()`）；`mlView` 现只剩 `'list'`/`'todo'` 两态。
+   - **渲染与实时刷新**：`switchModule()` 加 `if (name==='board') renderMlBoard()`；`subscribeMaintenance` 的 onSnapshot 回调加一条——board 模块 active 时重渲看板（原来靠 `renderMaintenanceList`→`applyMlView` 间接触发，模块拆出来后必须单独接一根线，否则检修记录变动时看板不会实时更新）。
+   - **返回路径**：`mlbBackToBoard()` 由 `mlView='board'; switchModule('maintenance')` 改为直接 `switchModule('board')`；单台档案的返回条文案改「← 返回重点设备看板」。`switchModule` 的导航高亮映射加一条 `if (name==='maintenance-eqlog' && mlEqlogFrom==='board') navKey='board'`——从看板点进单台档案时底部/侧边高亮**停在看板不跳到检修**（`mlEqlogFrom` 是 `let` 声明在 6105 行、晚于 switchModule 定义，但所有调用都发生在脚本求值完成后，无 TDZ 风险）。常规入口 `openMlEqLog` 仍重置 `mlEqlogFrom=''` → 高亮回检修。
+   - **未改**：登录后默认落地页仍是「设备」（用户拍板不动，工人日常先看设备/点检）；看板内容、系列筛选、权限（全员只读）、`MLB_PART_DEFS`/`mlSpareOwner` 等全部未动；无云端/字段/rules 变更。
+   - **验证**（localhost:8000 `?preview=1` admin 真实云端数据，1280 宽 + 375 宽各测一遍）：pip esprima `parseModule` 真解析通过、1.13MB 正常、控制台 **0 报错**；导航 7 项顺序 `board/equipment/inspect/maintenance/parts/lube/profile`；点看板→模块激活+内容与用户截图一致；看板→单台档案（高亮仍 board）→返回→回看板闭环通；检修页只剩 📋记录/🗒️当个事儿办、标题 Repairs/To-dos 正确、「＋登记检修」FAB 在看板页不出现；窄屏标签 56.7px 落在 86px 项内不溢出、导航横滑 scrollWidth 495>375 正常、看板内容不横向溢出。
+   - **同批顺带上线**（上次会话遗留未提交，本次一并 push）：当个事儿办列表按关联设备等级排序 `tdClassRank`——A→B→C→有设备无等级→未关联设备，多台取其中最高等级，同权重内仍按加入时间新的在前。
 1. **「当个事儿办」支持关联多台设备 + 卡片显示设备名**（2026-07-30，用户提出：同类型多台设备的活每台建一条太多；用户已验收后 push）：
    - **数据**：`todos` 新增 `equipments` 数组字段（`[{id,tag,name}]`）。**老记录不迁移**——`tdEqs(t)` 读取时把旧单设备字段 `equipmentId/Tag/Name` 包装成单元素数组；保存时旧字段镜像首台（无关联则清空），新老结构互相兼容。firestore.rules 无变更（todos 白名单已覆盖）。
    - **设备选择弹层分模式**（`pickEquipment` sheet，按 `eqPickTarget` 路由）：检修表单仍单选即关；待办表单**多选**——点一台选一台、再点取消，已选绿底+✓（`.eq-picker-item.selected`/`.eq-picker-check`），底部按钮实时显「完成（已选 N 台）」（`updateTdPickerDoneBtn`），点「完成」`tdEqPickerDone()` 关闭。打开 sheet 时重置 `_eqPickerFilter`（防上次搜索词残留导致勾选后列表跳变）。
