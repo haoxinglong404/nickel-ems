@@ -6740,18 +6740,24 @@ function applyMlStockPlanToBatch(batch, plan, ml, reasons) {
   plan.moves.forEach(m => {
     batch.set(doc(db, 'secondstock', m.it.id), Object.assign({}, m.it, { quantity: m.newQty }));
   });
-  // 各备件保留最早那笔出库的时间（按天分组不跳日）
-  const firstOutAt = {};
+  // 各备件保留最早那笔出库的时刻（只沿用时分秒，日期跟检修日期走）
+  const firstOutAt = {}, oldRecordedAt = {};
   plan.oldEntries.forEach(h => {
     if (h.type !== 'out') return;
     if (!firstOutAt[h.itemId] || h.createdAt < firstOutAt[h.itemId]) firstOutAt[h.itemId] = h.createdAt;
+    if (h.recordedAt && !oldRecordedAt[h.itemId]) oldRecordedAt[h.itemId] = h.recordedAt;
   });
   plan.oldEntries.forEach(h => batch.delete(doc(db, 'secondstockhistory', h.id)));
   Object.keys(plan.target).forEach((itemId, i) => {
     const qty = plan.target[itemId];
     if (!(qty > 0)) return;
+    // 备件出库记在"检修日期"那天（2026-08-06：补录的检修记录，账本不该记成登记那天）
+    const keep = firstOutAt[itemId];
+    let at = keep || (now + i);
+    const dTs = ssDateStrToTs(ml.repairDate, keep != null ? keep : now);
+    if (dTs != null && dTs <= now) at = dTs;
     const hid = 'ssh_' + (now + i) + '_' + Math.random().toString(36).slice(2, 7);
-    batch.set(doc(db, 'secondstockhistory', hid), {
+    const rec = {
       id: hid,
       itemId: itemId,
       type: 'out',
@@ -6760,8 +6766,11 @@ function applyMlStockPlanToBatch(batch, plan, ml, reasons) {
       mlId: ml.id,
       operatorId: (user && user.empno) || '',
       operatorName: (user && user.name) || '',
-      createdAt: firstOutAt[itemId] || (now + i),
-    });
+      createdAt: at,
+    };
+    // 检修日期不是今天 = 补登，留一份真实录入时间（审计用，账本上显「补登」标签）
+    if (ssYmd(at) !== ssYmd(now)) rec.recordedAt = oldRecordedAt[itemId] || keep || now;
+    batch.set(doc(db, 'secondstockhistory', hid), rec);
   });
 }
 function mlEqLabel(ml) { return ((ml.equipmentTag || '') + ' ' + (ml.equipmentName || '')).trim(); }
