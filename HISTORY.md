@@ -5,6 +5,16 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **二级库出入库支持补登日期 + 改已登记记录的时间（仅郝行龙）**（2026-08-06，用户提出："这个能不能给我开个权限，能够更改领用时间，这个是4号用的，我今天6号才登记"，并截图圈了 203-1 高闪阀进口短节垫片那笔 08-06 14:34 的领用记录）：
+   - **权限口径**：用户明确"我想只有我能改，就是6725102247这个账户可以更改"——**不是给全体 admin**。新增常量 `SS_TIME_EDITOR_EMPNO='6725102247'` + `canEditSSTime(u)`（按工号硬判，非角色判）。另一位 admin 陆壮（6725111947）看不到日期栏和「改时间」按钮。
+   - **改动一 · 登记时就能选日期**：`ssTxnBuffer` 加 `date` 字段（默认 `ssTodayStr()`）；领用/入库表单在「数量」和「用途」之间插一个 `type="date"` 栏（`max=今天`，提示"默认今天；事后补登就往前选那天"），**只对 canEditSSTime 的人渲染**。`submitSecondStockTxn` 里：选的日期 ≠ 今天 → `createdAt` = 该日期 + 当前时刻（`ssDateStrToTs`），同时写 `recordedAt = Date.now()` 留真实录入时间；日期就是今天则完全走老路径（不写 recordedAt）。校验：格式不对 / 未来日期 → toast 拦截。
+   - **改动二 · 已登记的回头改**：详情页出入库记录卡加「改时间」按钮 → `showSheet('ssEditTime', 历史id)` 应用内弹层（date 输入 + "当前记的是 X"），`confirmSSEditTime()` 保存。**只挪日期不动时刻**（`ssDateStrToTs(str, h.createdAt)` 沿用原来的 HH:MM:SS），**不动数量、不动结存、不动操作人**；日期没变则直接关闭不写云端；首次改时 `recordedAt` 记为原 `createdAt`（即"本来记的那天"），再改不覆盖。
+   - **禁改的**：带 `mlId` 的检修账本投影笔不给「改时间」按钮，函数里也再拦一道 toast「请到对应检修记录里改检修日期」（跟现有撤销/删除的口径一致——那种笔唯一入口是检修记录本身）。
+   - **补登标记**：有 `recordedAt` 的记录，卡片显 `补登` 小标签 + 一行小字「MM-DD 补登」。用户没就这条明确表态（问的时候答的是权限口径），按推荐默认做了保留，日后对账能分清哪笔是当天记的、哪笔是事后补的；不想要删两处即可（`tags += '补登'` 和 `backNote`）。
+   - **顺手补的样式**：`.hist-tag` / `.hist-action-btn` 这两个 class 原本**在 CSS 里根本没定义**（所以截图里"撤销/删除"是浏览器默认小方按钮），本次补齐——胶囊按钮 `padding:7px 14px`/`font-size:12px`/`border-radius:999px`，撤销绿框、删除红框、改时间绿框，另加 `.hist-tag.counter`（琥珀）/`.hist-tag.backdated`（绿雾）/`.parts-hist-backnote`。
+   - **字段/rules**：`secondstockhistory` 新增可选字段 `recordedAt`（数字时间戳，只有补登/改过时间的记录才有）。**无 rules 变更**（该集合已在白名单，规则不校验字段）。无数据迁移，老记录没有 recordedAt 就当正常记录显示。
+   - **验证**（localhost:8000 `?preview=1` 真实云端数据登录 6725102247）：pip esprima `parseModule` 真解析通过、972KB 正常、控制台 **0 报错**；`window.confirmSSEditTime` 已暴露；领用表单日期栏 value=2026-08-06/max=2026-08-06；改时间弹层文案与预填正确（"当前记的是 2026-07-02"）；日期未改点保存 → 直接关闭不写云端；**权限 gate 实测**：session 换成 6725111947 → 日期栏消失、按钮只剩撤销/删除，换回 6725102247 → 三个按钮齐全。**唯一没在本地跑的是"真改一个日期并写云端"**（不想动生产数据），留给用户线上试。
+   - **踩坑记录**：测权限时先按 CLAUDE.md 写的 `SESSION_KEY='nickel_ems_session'` 去改 localStorage，结果 gate"没生效"——实际常量是 **`ems_session_v06`**（index.html:3380）。CLAUDE.md 的关键常量段写错了，本次已订正。
 1. **数据看板提升为顶级模块「重点设备看板」（导航第一项）**（2026-08-03，用户提出"这个看板还可以，但是给放在根目录下最好，在第一个显示"并截图圈了侧栏最上方；已 push e8aaf77）：
    - **模块化**：新建 `<section class="module" data-module="board">`（index.html 约 2996 行），把原来嵌在检修页里的 `<div id="ml-board-view">` **整块搬进去**（内容/渲染函数 `renderMlBoard` 一行未改，只换了宿主），加自己的 `.section-header`：小标签 `Key Equipment · 重点设备看板` + 大标题 `Dashboard` + 副标题「高压釜给料泵 · 高压釜搅拌器 重点零件」（原副标题原样保留）。
    - **导航**：`#bottom-nav` **第一位**插入 `data-nav="board"` 项，柱状图 SVG 图标 + 标签「重点设备看板」。窄屏底部导航是横滑 flex（`.nav-item{flex:0 0 calc(100%/5.5)}`≈68px），6 个中文字 9px mono 约 57px 会顶到边，故加一条 `.nav-item[data-nav="board"]{flex:0 0 86px}`；宽屏侧栏规则 `.bottom-nav .nav-item{flex:0 0 auto}` 在 @media 内、同特异性但**位置更靠后所以照常胜出**，侧栏不受影响（实测 flexBasis=auto、行高 37.7px 单行正常）。

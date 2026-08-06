@@ -1686,6 +1686,42 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .parts-hist-btn.delete { color: #B85C5C; border-color: #E8B5B5; }
   .parts-hist-btn.delete:active { background: #FCEBEB; }
 
+  /* 详情页出入库记录卡的标签 / 操作按钮（原先无样式，2026-08-06 补齐 + 加「改时间」） */
+  .hist-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    background: var(--line);
+    color: var(--subtle);
+  }
+  .hist-tag.counter { background: #FAEEDA; color: #854F0B; }
+  .hist-tag.backdated { background: var(--g-mist); color: var(--g-forest); }
+  .hist-action-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+  }
+  .hist-action-btn:active { background: var(--surface); }
+  .hist-action-btn.time { color: var(--g-forest); border-color: var(--g-primary); }
+  .hist-action-btn.time:active { background: var(--g-mist); }
+  .hist-action-btn.revert { color: var(--g-forest); border-color: var(--g-primary); }
+  .hist-action-btn.revert:active { background: var(--g-mist); }
+  .hist-action-btn.delete { color: #B85C5C; border-color: #E8B5B5; }
+  .hist-action-btn.delete:active { background: #FCEBEB; }
+  .parts-hist-backnote {
+    font-size: 11px;
+    color: var(--subtle);
+    margin-top: 2px;
+  }
+
   .parts-hist-item.reverted {
     opacity: 0.55;
     background: var(--line-soft);
@@ -4337,6 +4373,9 @@ function canVerifyWO(u) { return isProduction(u) || isManager(u) || isAdmin(u); 
 function canAssignWO(u) { return hasRole(u, 'maintenance-leader','maintenance-director','manager','admin'); }
 function canBatchImportTools(u) { return hasRole(u, 'maintenance-leader','maintenance-director','admin'); }
 function canHardDelete(u) { return isAdmin(u); }
+// 二级库出入库「改时间/补登日期」权限：只给郝行龙本人（2026-08-06 用户指定，不给其他 admin）
+const SS_TIME_EDITOR_EMPNO = '6725102247';
+function canEditSSTime(u) { return !!u && String(u.empno) === SS_TIME_EDITOR_EMPNO; }
 const STATUS_MAP = {
   running:  { label:'运行中', color:'var(--s-running)' },
   stopped:  { label:'停机',   color:'var(--s-stopped)' },
@@ -5201,6 +5240,21 @@ function showSheet(type, arg) {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">这件事儿不办了？</div>
       <div class="sheet-sub">${escapeHtml((t && t.title) || '')} · 以后可在「不办了」里找回恢复</div>
       <button class="sheet-btn danger" onclick="confirmTdDelete()">确认不办了</button>
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+  } else if (type==='ssEditTime') {
+    // 二级库出入库记录改日期（仅郝行龙）2026-08-06
+    const h = (typeof secondStockHistCache !== 'undefined' ? secondStockHistCache : []).find(x => x.id === arg);
+    if (!h) { hideSheet(); return; }
+    const it = (typeof secondStockCache !== 'undefined' ? secondStockCache : []).find(x => x.id === h.itemId);
+    const typeLabel = h.type === 'in' ? '入库' : '领用';
+    ssTimeEditId = h.id;
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">改${typeLabel}日期</div>
+      <div class="sheet-sub">${escapeHtml((it && it.name) || '')} · ${typeLabel} ${h.quantity}${escapeHtml((it && it.unit) || '')} · 只改日期，数量和结存不动</div>
+      <div class="sheet-form-group"><div class="sheet-form-label">实际${typeLabel}日期</div>
+        <input class="sheet-input" id="ss-time-date" type="date" max="${ssTodayStr()}" value="${ssYmd(h.createdAt)}">
+      </div>
+      <div class="sheet-sub" style="margin-top:-6px;">当前记的是 ${ssYmd(h.createdAt)}${h.recordedAt ? `（${ssYmd(h.recordedAt)} 补登的）` : ''}</div>
+      <button class="sheet-btn primary" onclick="confirmSSEditTime()">保存日期</button>
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='mlPartsSummary') {
     const recs = filterMaintenanceLogs();
@@ -9490,11 +9544,16 @@ function renderSecondStockDetail(it) {
         // 检修联动记录（带 mlId）不许撤销/删除，唯一入口是改检修记录（2026-07-08 用户定）
         const canRevert = isAdmin(user) && !isReverted && !isCounter && !h.mlId;
         const canDelete = isAdmin(user) && !h.mlId;
+        const canTime = canEditSSTime(user) && !h.mlId;   // 改时间：只郝行龙 + 非检修投影笔
         let tags = '';
         if (h.mlId) tags += `<span class="parts-hist-ml-tag" onclick="event.stopPropagation();openMlFromSS('${h.mlId}')">🔧 检修</span>`;
         if (isReverted) tags += '<span class="hist-tag reverted">已撤销</span>';
         if (isCounter) tags += '<span class="hist-tag counter">撤销记录</span>';
+        if (h.recordedAt) tags += '<span class="hist-tag backdated">补登</span>';
+        const backNote = h.recordedAt
+          ? `<div class="parts-hist-backnote">${ssYmd(h.recordedAt).slice(5)} 补登</div>` : '';
         let actions = '';
+        if (canTime) actions += `<button class="hist-action-btn time" onclick="showSheet('ssEditTime','${h.id}')">改时间</button>`;
         if (canRevert) actions += `<button class="hist-action-btn revert" onclick="revertSecondStockHistory('${h.id}')">撤销</button>`;
         if (canDelete) actions += `<button class="hist-action-btn delete" onclick="hardDeleteSecondStockHistory('${h.id}')">删除</button>`;
         return `
@@ -9505,6 +9564,7 @@ function renderSecondStockDetail(it) {
               ${tags}
             </div>
             <div class="parts-hist-meta">${dateStr} · ${escapeHtml(h.operatorName || h.operatorId || '—')}${h.reason ? ' · ' + escapeHtml(h.reason) : ''}</div>
+            ${backNote}
             ${actions ? `<div class="parts-hist-actions">${actions}</div>` : ''}
           </div>`;
       }).join('');
@@ -9535,11 +9595,26 @@ function renderSecondStockDetail(it) {
 }
 
 /* ----- 入库 / 出库 ----- */
+// yyyy-MM-dd（本地时区），date input 用
+function ssYmd(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function ssTodayStr() { return ssYmd(Date.now()); }
+// 把 yyyy-MM-dd 和"时刻"拼成时间戳（时刻默认取现在，改老记录时沿用它原来的时刻）
+function ssDateStrToTs(str, keepTimeOf) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((str || '').trim());
+  if (!m) return null;
+  const base = keepTimeOf != null ? new Date(keepTimeOf) : new Date();
+  const d = new Date(+m[1], +m[2] - 1, +m[3], base.getHours(), base.getMinutes(), base.getSeconds(), 0);
+  return d.getTime();
+}
+
 function openSecondStockTxn(type) {
   const it = secondStockCache.find(x => x.id === currentSSId);
   if (!it) return;
   if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
-  ssTxnBuffer = { itemId: it.id, type, quantity: 1, reason: '' };
+  ssTxnBuffer = { itemId: it.id, type, quantity: 1, reason: '', date: ssTodayStr() };
   const title = document.getElementById('parts-txn-title');
   if (title) title.textContent = type === 'in' ? '入库' : '领用';
   renderSecondStockTxnForm(it);
@@ -9560,6 +9635,12 @@ function renderSecondStockTxnForm(it) {
       <input class="edit-input" id="f-ss-qty" type="number" min="1" ${maxQty ? 'max="' + maxQty + '"' : ''} value="${b.quantity}" oninput="onSSTxnQtyChange(this.value)">
       ${isOut ? `<div class="edit-hint">当前结存 ${currentQty}</div>` : ''}
     </div>
+    ${canEditSSTime(getCurrentUser()) ? `
+    <div class="edit-field">
+      <label class="edit-label">${isOut ? '领用' : '入库'}日期</label>
+      <input class="edit-input" id="f-ss-date" type="date" max="${ssTodayStr()}" value="${escapeAttr(b.date || ssTodayStr())}" oninput="ssTxnBuffer.date = this.value">
+      <div class="edit-hint">默认今天；事后补登就往前选那天（不能选未来）</div>
+    </div>` : ''}
     <div class="edit-field">
       <label class="edit-label">${isOut ? '用途（领去用在哪）<span style="color:#C13B3B;">*</span>' : '说明（可选）'}</label>
       <input class="edit-input" id="f-ss-reason" type="text" placeholder="${isOut ? '如：更换低温预热器人孔垫片' : '可选'}" value="${escapeAttr(b.reason)}" oninput="ssTxnBuffer.reason = this.value">
@@ -9592,6 +9673,14 @@ async function submitSecondStockTxn() {
   const newQty = b.type === 'out' ? currentQty - b.quantity : currentQty + b.quantity;
   const user = getCurrentUser();
   const now = Date.now();
+  // 补登：createdAt 记事情实际发生那天，recordedAt 留真正的录入时间（审计用）
+  let createdAt = now;
+  if (canEditSSTime(user) && b.date && b.date !== ssTodayStr()) {
+    const ts = ssDateStrToTs(b.date);
+    if (ts == null) { showToast('日期格式不对'); return; }
+    if (ts > now) { showToast('不能选未来的日期'); return; }
+    createdAt = ts;
+  }
   const rec = {
     id: 'ssh_' + now + '_' + Math.random().toString(36).slice(2, 7),
     itemId: it.id,
@@ -9600,8 +9689,9 @@ async function submitSecondStockTxn() {
     reason: b.reason || '',
     operatorId: (user && user.empno) || '',
     operatorName: (user && user.name) || '',
-    createdAt: now,
+    createdAt,
   };
+  if (createdAt !== now) rec.recordedAt = now;
   try {
     await cloudSaveSecondStockHistory(rec);
     await cloudSaveSecondStock({ ...it, quantity: newQty });
@@ -9710,6 +9800,33 @@ async function deleteSecondStockItem(id) {
     switchModule('parts');
   } catch (e) {
     showToast('删除失败：' + (e && e.message || e));
+  }
+}
+
+/* ----- 改出入库日期（仅郝行龙 · 2026-08-06）----- */
+let ssTimeEditId = '';
+
+async function confirmSSEditTime() {
+  const user = getCurrentUser();
+  if (!canEditSSTime(user)) { showToast('没有改时间的权限'); return; }
+  const h = (secondStockHistCache || []).find(x => x.id === ssTimeEditId);
+  if (!h) { hideSheet(); return; }
+  if (h.mlId) { showToast('这笔由检修记录自动生成，请到对应检修记录里改检修日期'); return; }
+  const input = document.getElementById('ss-time-date');
+  const str = input ? input.value : '';
+  const ts = ssDateStrToTs(str, h.createdAt);   // 沿用原来的时刻，只挪日期
+  if (ts == null) { showToast('请选择日期'); return; }
+  if (ts > Date.now()) { showToast('不能选未来的日期'); return; }
+  if (ssYmd(ts) === ssYmd(h.createdAt)) { hideSheet(); return; }
+  const rec = { ...h, createdAt: ts, recordedAt: h.recordedAt || h.createdAt };
+  try {
+    await cloudSaveSecondStockHistory(rec);
+    hideSheet();
+    showToast('日期已改为 ' + ssYmd(ts));
+    const it = secondStockCache.find(x => x.id === h.itemId);
+    if (it) renderSecondStockDetail(it);
+  } catch (e) {
+    showToast('保存失败：' + (e && e.message || e));
   }
 }
 
@@ -10571,6 +10688,8 @@ window.deleteMaintenance = deleteMaintenance;
 window.restoreMaintenance = restoreMaintenance;
 window.filterEqPickerList = filterEqPickerList;
 window.renderDeviceRecords = renderDeviceRecords;
+// 二级库出入库改日期 · 2026-08-06
+window.confirmSSEditTime = confirmSSEditTime;
 // 当个事儿办 · 2026-07-27
 window.setTdFilter = setTdFilter;
 window.openTdDetail = openTdDetail;

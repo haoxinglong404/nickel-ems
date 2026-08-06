@@ -199,7 +199,8 @@
 - **副管理员**：李宁翔（2026-07-27 由「翔总」改实名）· 工号 `6724013003` · 登录弹专属欢迎卡（`VIP_WELCOMES` 文案仍称"翔总"）
 - **VIP 配置**：搜 `VIP_WELCOMES` 常量，添加新 VIP 在这里加
 - **Firebase 配置**：搜 `firebaseConfig` 常量
-- **SESSION_KEY**：`nickel_ems_session`（localStorage 里的会话键）
+- **SESSION_KEY**：`ems_session_v06`（localStorage 里的会话键 · 2026-08-06 订正，此前本文误记为 `nickel_ems_session`）
+- **二级库改时间白名单**：`SS_TIME_EDITOR_EMPNO = '6725102247'`（郝行龙本人，非全体 admin）· helper `canEditSSTime`
 - **企业微信群通知（当前失效 · 用户 2026-07-22 决定先留着）**：`notifyWeChat()`（index.html 约 3707 行）原 5 个调用点全在工单模块，随工单删除后**无任何调用方**——现在不会发任何群通知；"我的"页面手机号设置入口（`wechatMobile` / `confirmSetMobile`）仍在但填了无效果。Cloudflare Worker `https://ems-notify.haoxinglong404.workers.dev` · token `ems-2026-nickel-secret-x9k2` 仍部署着。若恢复 = 把 notifyWeChat 挂到检修/点检事件；若放弃 = 删函数 + 设置入口 + Worker。
 
 ---
@@ -241,6 +242,7 @@
 | `inspect_tpl_v2_20260704` | 巡检模板升级 v2 数值点检结构 |
 
 **最近做的改动**（压缩版·按时间倒序·**每条的完整细节见 `HISTORY.md`**）：
+1. **二级库出入库可补登日期 / 改已登记记录的时间**（08-06）：**仅工号 6725102247（郝行龙本人，不给其他 admin）**——`SS_TIME_EDITOR_EMPNO` + `canEditSSTime` 按工号硬判；领用/入库表单多一个日期栏（默认今天、不能选未来），详情页每笔记录多一个「改时间」按钮 → `showSheet('ssEditTime')` 弹层，**只挪日期保留原时刻，不动数量/结存/操作人**；带 `mlId` 的检修投影笔禁改（去检修记录改）。新增可选字段 `recordedAt`（真实录入时间），有它的记录显「补登」标签 + 「MM-DD 补登」小字。顺手补齐 `.hist-tag`/`.hist-action-btn` 的 CSS（原本没定义，撤销/删除是浏览器默认丑按钮）。无 rules/迁移变更。
 1. **数据看板独立为顶级模块「重点设备看板」**（08-03）：新 `data-module="board"`，原 `#ml-board-view` 整块搬入（`renderMlBoard` 一行未改），导航**第一位**加「重点设备看板」（窄屏该项 `flex:0 0 86px`）；检修页删掉「📊看板」按钮回退为两视图、`applyMlView` 拆掉 board 三态；`switchModule` 加 board 渲染分支 + `subscribeMaintenance` 回调单独接实时刷新线；`mlbBackToBoard` 直跳 board 模块，从看板进单台档案时导航高亮停在看板；默认落地页仍是「设备」。同批顺带 push 上次遗留：当个事儿办列表按设备 A/B/C 等级排序（`tdClassRank`）。
 1. **「当个事儿办」支持关联多台设备 + 卡片显设备名**（07-30）：`todos` 新增 `equipments[]`（老记录 `tdEqs()` 兼容读、保存镜像首台到旧字段，零迁移零 rules 变更）；设备选择弹层待办侧多选（点选/取消+完成计数）、检修侧仍单选（顺手修 `eqPickTarget` 不重置的路由 bug，入口改 `mlOpenEqPicker`）；表单设备胶囊 × 移除；卡片/详情多台位号同前缀省略（`tdAbbrevStrs`）+ 各带 ABC 徽章 + 「共 N 台」，卡片新增设备名行（多台同前缀合并/同名显一次）。多台事项整条办结不能按台销项。
 2. **二级库领用/入库后详情页结存不实时刷新 bugfix**（07-29）：`submitSecondStockTxn` 保存后只切回详情页没重渲染，且订阅回调只在详情页 active 时才重画（保存瞬间 active 是表单页）→ 切回后补调 `renderSecondStockDetail`（取 cache 最新值，兜底手算结存）。纯代码 2 行。
