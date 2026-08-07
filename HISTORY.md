@@ -5,6 +5,15 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **多车间权限重构（v0.20）**（2026-08-07 晚，紧接 v0.19；用户逐轮拍板后 push 00f4e95，云端账号同步完成）：
+   - **需求演进（用户三轮修正）**：初版=郝/李全车间管理员+陆壮hpal+迟广增/魏书铭zh管理 → 李改经理 → 最终：**李宁翔=经理**，且**经理升级为跨车间二把手**——李宁翔/鹏总两位经理在**所有车间**都有 检修登记/编辑/作废、二级库、设备台账修改、当个事儿办、账号管理（**动不了管理员的账号**、授不了 admin 角色）、点检/润滑权限；管理员只剩郝行龙一人，叫法从「总管理员」改回**「管理员」**。设备工程师与设备技术员**权限完全相同**（都含本车间账号管理+台账编辑），只是职级名不同。
+   - **数据模型**：`users` 加可选 `plant` 字段（'hpal'/'zh'/'all'，缺省=hpal 零迁移）。新 helper：`userPlant`/`inHomePlant`/`isEquipStaff`/`canManage`（业务总闸=(设备三岗&&本车间)||经理）/`canEditEquipment`(=canManage)/`canManageUsers`/`canTouchUser`（目标账号可否被动：admin 账号只有 admin 能动）/`canPickPlant`（建号选车间=admin+经理）/`canSubmitField`（点检润滑=本车间||经理）/`canHardDelete`（admin && 工号=6725102247，`HARD_DELETE_EMPNO`——李宁翔时代同为 admin 也删不了的设计沿用为常量硬判）。`roleLabel(u)` 显示带车间前缀（PLANTS[].tag 酸浸/中和），all 不带。
+   - **闸口 sweep**：~30 处 isAdmin 业务判断换 canManage（检修 登记/编辑/作废/恢复/已删除tab、二级库 全按钮+撤销、当个事儿办全部、批量导入）；二级库硬删 `hardDeleteSecondStockHistory` 与润滑历史硬删收紧 canHardDelete；updateFab 两个浮动按钮、设备详情「编辑」按钮换 canManage/canEditEquipment；`submitInspectV2/submitInspect/submitLubeExec/confirmBulkLube` 四个提交入口加 canSubmitField（拦"参观其他车间时提交"）。
+   - **账号管理 UI**：`rolePickerHtml`（动态生成，替代两份 8 角色硬编码 HTML；非 admin 看不到"管理员"选项）+ `plantPickerHtml`/`pickUserPlant`（所属车间选择器，admin/经理可选 酸浸/中和/全部，工程师/技术员锁本车间）；addUser/editUser/confirmAdd/confirmEdit/confirmDelete 全套 canManageUsers+canTouchUser 双闸；用户列表：admin/经理见全部（点 admin 账号弹"管理员的账号只有本人能动"），工程师/技术员只见本车间非 admin 账号；MENU_BY_ROLE 给 manager/equip-engineer/equip-tech 加「账号管理」入口。
+   - **体验**：顶栏提示随身份变——出自家车间「👀 参观中·只读 点此切回」；登录成功自动落到自己车间（`attemptLogin` 里 plant≠currentPlant 则写 PLANT_KEY 后 reload，all 留在当前）；账号快照(`ems_user_v01`)加 plant 字段（乐观秒进时权限判断就正确）。
+   - **云端账号同步（push 后立即执行，writeBatch 一次 9 个，回读核验）**：李宁翔 manager/all、鹏总 plant:all、陆壮 equip-tech、迟广增 equip-engineer/zh、魏书国 equip-tech/zh（**用户确认魏书国=魏书铭，名字之前记错**）、刘正威/杨文/杨锟/安国强 4 个废弃'tech'→maintenance-worker。郝/李的 plant:'all' 在 push 前已提前写（老代码不认识该字段无影响）。其余 19 账号不动（缺省=hpal）。用户拍板：鹏总/解总/何总外号**不实名**。
+   - **验证**：esprima PASS（857KB）；preview 三个身份实测——郝(admin·all)两车间全权、角色显示无前缀「管理员」；临时工程师账号（zh）：中和全权+账号列表只见本车间、切酸浸变参观只读（fab/按钮全消失、账号管理被拦、数据可看）；临时经理账号（all）：两车间全权、见 29 账号、点郝的账号被拦、角色选项无"管理员"、车间选择器齐全。两个临时账号已删，控制台 0 报错。
+   - **上线注意**：陆壮/迟广增/魏书国三人角色是新 key，**旧缓存页面登录会报错**（老代码 `ROLES[role].label` 取不到），已嘱用户群里通知刷新后再用。
 1. **多车间支持：中和车间接入（v0.19）**（2026-08-07，用户提出"隔壁中和车间几台重要大搅拌也想用线上点检，单纯加设备两个车间分不开"；方案经三轮讨论定型：单网站+单数据库+plant 字段区分，用户验收后 push 3b88e62）：
    - **方案取舍**：先提"独立 Firebase 项目分身"（数据彻底隔离）→ 用户要"领导只要一个网站" → 改"两库+应用内切换" → 用户问"一个数据库行不行、1000 台扛得住吗" → 最终**单库方案**：Firestore 容量毫无压力（现全库实测 2831 条：eq422/lp891/lh616/ih204/im277/users27/ml38/todos14/ss224/ssh73/tpl32/meta13，聚合查询数的）；读取额度因 `enableIndexedDbPersistence` 只按"变更量"计费，冷启动≈2700 读、免费 5 万/天≈18 次冷启动；20 人同天冷启动会破线 → 保险索=①历史集合将来可裁"近3个月订阅"②铺开前开按量付费（超额部分每月几块钱）。单库额外收益：点检模板两车间共用，改一次同时生效。
    - **数据模型**：全部业务集合加可选 `plant` 字段（`'hpal'` 高压酸浸 / `'zh'` 中和），**老数据没有该字段 = hpal，云端零迁移**。`docPlant(d)`/`inPlant(d)`/`stampPlant(obj)`（已有 plant 保留、没有则记 currentPlant）三个 helper。`currentPlant` 从 `localStorage['ems_plant_v01']` 读（PLANT_KEY，默认 hpal），`switchPlant(p)` 写 key 后整页 reload。`PLANTS` 常量含 name/short。
