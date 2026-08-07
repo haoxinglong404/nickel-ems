@@ -3391,8 +3391,8 @@ const PLANT_KEY = 'ems_plant_v01';
 // 上次登录账号的显示快照（工号/姓名/角色，非业务数据）：刷新/切车间时秒进应用，云端到位后再核对
 const USER_CACHE_KEY = 'ems_user_v01';
 const PLANTS = {
-  hpal: { name: '高压酸浸车间', short: '高压酸浸' },
-  zh:   { name: '中和车间',     short: '中和' },
+  hpal: { name: '高压酸浸车间', short: '高压酸浸', tag: '酸浸' },
+  zh:   { name: '中和车间',     short: '中和',     tag: '中和' },
 };
 const currentPlant = (() => {
   try { const p = localStorage.getItem(PLANT_KEY); return PLANTS[p] ? p : 'hpal'; }
@@ -4372,6 +4372,8 @@ async function seedIfEmpty() {
 /* ========== 常量 ========== */
 const ROLES = {
   admin:                  { label:'管理员',    short:'管' },
+  'equip-engineer':       { label:'设备工程师', short:'工' },
+  'equip-tech':           { label:'设备技术员', short:'技' },
   manager:                { label:'经理',      short:'经' },
   'maintenance-director': { label:'检修主任',  short:'修主' },
   'maintenance-leader':   { label:'检修班长',  short:'修长' },
@@ -4405,7 +4407,40 @@ function canTakeWO(u) { return isMaintenance(u) || isAdmin(u); }
 function canVerifyWO(u) { return isProduction(u) || isManager(u) || isAdmin(u); }
 function canAssignWO(u) { return hasRole(u, 'maintenance-leader','maintenance-director','manager','admin'); }
 function canBatchImportTools(u) { return hasRole(u, 'maintenance-leader','maintenance-director','admin'); }
-function canHardDelete(u) { return isAdmin(u); }
+/* ---- 多车间权限 (2026-08-07 重构)：账号带 plant 归属(hpal/zh/all,缺省=hpal)，
+   写权限只在自家车间生效；总管理员(郝/李,all) > 设备工程师 > 设备技术员 > 其他角色只读。 ---- */
+function userPlant(u) { return (u && u.plant) || 'hpal'; }
+function inHomePlant(u) { return !!u && (userPlant(u) === 'all' || userPlant(u) === currentPlant); }
+function isEquipStaff(u) { return hasRole(u, 'admin', 'equip-engineer', 'equip-tech'); }
+// 业务管理：检修记录 / 二级库 / 当个事儿办
+// 工程师/技术员限自家车间；经理跨全部车间（2026-08-07 用户定：经理=跨车间二把手，仅少硬删和管管理员账号）
+function canManage(u) { return (isEquipStaff(u) && inHomePlant(u)) || isManager(u); }
+// 设备台账编辑：工程师=技术员（仅职级名不同）；经理跨车间
+function canEditEquipment(u) { return canManage(u); }
+// 账号管理：管理员/经理全局（经理动不了管理员的账号，闸在编辑/删除入口）；工程师/技术员限本车间
+function canManageUsers(u) { return isAdmin(u) || isManager(u) || (hasRole(u, 'equip-engineer', 'equip-tech') && inHomePlant(u)); }
+// 目标账号是否可被当前用户管理（编辑/删除）：管理员的账号只有管理员本人体系能动
+function canTouchUser(editor, target) {
+  if (!editor || !target) return false;
+  if (isAdmin(editor)) return true;
+  if (target.role === 'admin') return false;                       // 经理/工程师都动不了管理员账号
+  if (isManager(editor)) return true;                              // 经理管全部车间
+  return hasRole(editor, 'equip-engineer', 'equip-tech') && userPlant(target) === userPlant(editor);
+}
+// 建号/改号时能否自选车间：管理员和经理可以，工程师/技术员锁本车间
+function canPickPlant(u) { return isAdmin(u) || isManager(u); }
+// 点检/润滑提交：全员限自家车间；经理跨车间
+function canSubmitField(u) { return !!u && (inHomePlant(u) || isManager(u)); }
+// 硬删历史：仅郝行龙本人（李宁翔同为总管理员但不可硬删，2026-08-07 用户指定）
+const HARD_DELETE_EMPNO = '6725102247';
+function canHardDelete(u) { return isAdmin(u) && String(u.empno) === HARD_DELETE_EMPNO; }
+// 角色显示：非 all 账号带车间前缀，如「酸浸·生产员工」「中和·设备工程师」
+function roleLabel(u) {
+  if (!u || !ROLES[u.role]) return '—';
+  const p = userPlant(u);
+  const prefix = p === 'all' ? '' : ((PLANTS[p] && PLANTS[p].tag) || '') + '·';
+  return prefix + ROLES[u.role].label;
+}
 // 二级库出入库「改时间/补登日期」权限：只给郝行龙本人（2026-08-06 用户指定，不给其他 admin）
 const SS_TIME_EDITOR_EMPNO = '6725102247';
 function canEditSSTime(u) { return !!u && String(u.empno) === SS_TIME_EDITOR_EMPNO; }
@@ -4425,6 +4460,14 @@ const COMMON_MENU = [
   {icon:'info',name:'关于本系统',action:'about'},
 ];
 const MENU_BY_ROLE = {
+  'equip-engineer': [
+    {icon:'users',name:'本车间账号管理',action:'goto:users'},
+    ...COMMON_MENU,
+  ],
+  'equip-tech': [
+    {icon:'users',name:'本车间账号管理',action:'goto:users'},
+    ...COMMON_MENU,
+  ],
   admin: [
     {icon:'users',name:'用户与权限管理',action:'goto:users'},
     {icon:'shield',name:'审批链配置',action:'todo'},
@@ -4434,6 +4477,7 @@ const MENU_BY_ROLE = {
     {icon:'info',name:'关于本系统',action:'about'},
   ],
   manager: [
+    {icon:'users',name:'账号管理',action:'goto:users'},
     {icon:'database',name:'数据导出',action:'todo'},
     ...COMMON_MENU,
   ],
@@ -4516,11 +4560,19 @@ async function attemptLogin() {
   if (user.password && pw !== user.password) { err.textContent='密码错误'; err.classList.add('active'); return; }
   err.classList.remove('active');
   localStorage.setItem(SESSION_KEY, empno);
+  // 登录后自动落到自己车间（all 账号留在当前车间）2026-08-07
+  const home = userPlant(user);
+  if (home !== 'all' && home !== currentPlant && PLANTS[home]) {
+    try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role, plant: user.plant || 'hpal' })); } catch (e) {}
+    try { localStorage.setItem(PLANT_KEY, home); } catch (e) {}
+    location.reload();
+    return;
+  }
   enterApp(user);
 }
 
 function enterApp(user) {
-  try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role })); } catch (e) {}
+  try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role, plant: user.plant || 'hpal' })); } catch (e) {}
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('active');
   const initial = user.role === 'admin' ? '总' : (user.name||'').slice(0,1);
@@ -4531,15 +4583,18 @@ function enterApp(user) {
   document.getElementById('topbar-date').textContent = formatDate();
   const plantBadge = document.getElementById('topbar-plant');
   if (plantBadge) plantBadge.textContent = PLANTS[currentPlant].short;
+  // 不在自家车间 = 参观模式（所有写入口已被权限函数拦），提示语说明白（2026-08-07）
+  const plantHint = document.querySelector('.topbar-plant-hint');
+  if (plantHint) plantHint.textContent = inHomePlant(user) ? '👈 点此切换车间' : '👀 参观中·只读 点此切回';
   const avatar = document.getElementById('profile-avatar');
   avatar.textContent = initial;
   avatar.className = 'profile-avatar' + (user.role==='admin'?' admin':'');
   document.getElementById('profile-name').textContent = user.name;
   document.getElementById('profile-empno').textContent = 'No. ' + user.empno;
   const rt = document.getElementById('profile-role-tag');
-  rt.textContent = ROLES[user.role].label;
+  rt.textContent = roleLabel(user);
   rt.className = 'profile-role-tag' + (user.role==='admin'?' admin':'');
-  document.getElementById('profile-sub').textContent = ROLES[user.role].label;
+  document.getElementById('profile-sub').textContent = roleLabel(user);
   renderMenu(user);
   renderEquipmentList();
   updateFab();
@@ -4561,7 +4616,10 @@ function renderMenu(user) {
 }
 function handleMenuAction(action) {
   if (action==='switchPlant') { showSheet('plantSwitch'); return; }
-  if (action==='goto:users') { switchModule('users'); renderUserListAdmin(); }
+  if (action==='goto:users') {
+    if (!canManageUsers(getCurrentUser())) { showToast('无权限（账号管理需在本车间）'); return; }
+    switchModule('users'); renderUserListAdmin();
+  }
   else if (action==='setPassword') showSheet('setPassword');
   else if (action==='setMobile') showSheet('setMobile');
   else if (action==='about') showSheet('about');
@@ -4674,9 +4732,9 @@ function switchModule(name) {
     // 仅管理员显示"新增 / 批量导入"按钮
     const u = getCurrentUser();
     const btn = document.getElementById('ss-add-btn');
-    if (btn) btn.style.display = isAdmin(u) ? '' : 'none';
+    if (btn) btn.style.display = canManage(u) ? '' : 'none';
     const bbtn = document.getElementById('ss-batch-btn');
-    if (bbtn) bbtn.style.display = isAdmin(u) ? '' : 'none';
+    if (bbtn) bbtn.style.display = canManage(u) ? '' : 'none';
   }
   if (name === 'inspect' && typeof renderInspectOverview === 'function') {
     renderInspectOverview();
@@ -4920,10 +4978,9 @@ function openDetail(id) {
   // 重置到基础 tab
   switchDetailTab('basic');
 
-  // 权限：只有管理员能看到编辑按钮
+  // 权限：本车间设备管理人员能看到编辑按钮（2026-08-07 权限重构）
   const currentUser = findUser(localStorage.getItem(SESSION_KEY));
-  const canEdit = currentUser && (currentUser.role==='admin');
-  document.getElementById('btn-edit-eq').style.display = canEdit?'':'none';
+  document.getElementById('btn-edit-eq').style.display = canEditEquipment(currentUser)?'':'none';
 
   switchModule('equipment-detail');
 }
@@ -5160,71 +5217,87 @@ function updateFab() {
   const activeModule = document.querySelector('.module.active');
   const moduleName = activeModule ? activeModule.dataset.module : '';
 
-  // 设备列表：只有管理员看到 + 新增
+  // 设备列表：本车间设备管理人员看到 + 新增（2026-08-07 权限重构）
   const inEquipment = moduleName === 'equipment';
-  const isAdmin = user && user.role === 'admin';
-  fab.classList.toggle('hidden', !(inEquipment && isAdmin));
+  fab.classList.toggle('hidden', !(inEquipment && canEditEquipment(user)));
 
-  // 检修列表：仅管理员看到 + 登记（2026-07-08 收紧：登记检修会联动扣二级库库存）
+  // 检修列表：本车间设备管理人员看到 + 登记（登记检修会联动扣二级库库存）
   // 2026-07-27：当个事儿办视图下也隐藏（该视图有自己的「＋ 记一件」按钮）
   const inWorkOrder = moduleName === 'maintenance' && (typeof mlView === 'undefined' || mlView !== 'todo');
-  if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && isAdmin));
+  if (woFab) woFab.classList.toggle('hidden', !(inWorkOrder && canManage(user)));
 }
 
 /* ========== 用户管理（继承 v0.3） ========== */
 function renderUserListAdmin() {
-  const users = loadUsers();
+  const viewer = getCurrentUser();
+  let users = loadUsers();
+  // 管理员/经理见全部（经理点开管理员账号会被拦）；工程师/技术员只见本车间非管理员账号
+  if (!isAdmin(viewer) && !isManager(viewer)) users = users.filter(u => userPlant(u) === userPlant(viewer) && u.role !== 'admin');
   document.getElementById('user-count').textContent = users.length + ' accounts';
   document.getElementById('user-list-admin').innerHTML = users.map(u=>{
     const initial = u.role==='admin'?'总':u.name.slice(0,1);
     return `<div class="user-row-admin" onclick="showSheet('editUser','${u.empno}')">
       <div class="u-initial ${u.role==='admin'?'admin':''}">${initial}</div>
       <div class="u-meta"><div class="u-name">${u.name}</div><div class="u-empno">工号 ${u.empno} · ${u.password?'已设密码':'免密登录'}</div></div>
-      <span class="u-role ${u.role}">${u.role}</span>
+      <span class="u-role ${u.role}">${roleLabel(u)}</span>
     </div>`;
   }).join('');
 }
 
 /* ========== 抽屉 ========== */
 let selectedRole = 'reader';
+/* 账号管理的角色/车间选择器（2026-08-07 权限重构，动态生成替代两份硬编码 HTML） */
+let selectedUserPlant = 'hpal';
+const PICKABLE_ROLES = ['production-worker','production-leader','production-director',
+  'maintenance-worker','maintenance-leader','maintenance-director',
+  'equip-tech','equip-engineer','manager','admin'];
+function rolePickerHtml(sel, allowAdmin) {
+  return PICKABLE_ROLES.filter(r => allowAdmin || r !== 'admin').map(r =>
+    `<div class="role-opt ${sel===r?'selected':''}" data-role="${r}" onclick="pickRole('${r}')">${ROLES[r].label}</div>`).join('');
+}
+function plantPickerHtml(sel) {
+  const opts = [['hpal', PLANTS.hpal.name], ['zh', PLANTS.zh.name], ['all', '全部车间']];
+  return opts.map(([k, l]) =>
+    `<div class="role-opt ${sel===k?'selected':''}" data-plant="${k}" onclick="pickUserPlant('${k}')">${l}</div>`).join('');
+}
+function pickUserPlant(p) {
+  selectedUserPlant = p;
+  document.querySelectorAll('#plant-picker .role-opt').forEach(el=>el.classList.toggle('selected', el.dataset.plant===p));
+}
 function showSheet(type, arg) {
   const content = document.getElementById('sheet-content');
   if (type==='account') {
     const session = localStorage.getItem(SESSION_KEY);
     const user = findUser(session);
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user?user.name:'账号'}</div><div class="sheet-sub">工号 ${user?user.empno:'—'} · ${user?ROLES[user.role].label:'—'}</div><button class="sheet-btn danger" onclick="logout()">退出登录</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user?user.name:'账号'}</div><div class="sheet-sub">工号 ${user?user.empno:'—'} · ${user?roleLabel(user):'—'}</div><button class="sheet-btn danger" onclick="logout()">退出登录</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='addUser') {
+    const creator = getCurrentUser();
+    if (!canManageUsers(creator)) { showToast('无权限'); return; }
     selectedRole = 'production-worker';
+    selectedUserPlant = canPickPlant(creator) ? currentPlant : userPlant(creator);
+    const plantGroup = canPickPlant(creator)
+      ? `<div class="sheet-form-group"><div class="sheet-form-label">所属车间</div><div class="role-picker" id="plant-picker">${plantPickerHtml(selectedUserPlant)}</div></div>`
+      : `<div class="sheet-form-group"><div class="sheet-form-label">所属车间</div><div style="font-size:14px;padding:4px 2px;">${PLANTS[selectedUserPlant] ? PLANTS[selectedUserPlant].name : ''}（本车间）</div></div>`;
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">添加新账号</div><div class="sheet-sub">为团队成员创建登录账号</div>
       <div class="sheet-form-group"><div class="sheet-form-label">姓名</div><input class="sheet-input" id="add-name" placeholder="例如：陈工" maxlength="20"></div>
       <div class="sheet-form-group"><div class="sheet-form-label">工号</div><input class="sheet-input" id="add-empno" type="tel" inputmode="numeric" placeholder="数字工号" maxlength="15"></div>
-      <div class="sheet-form-group"><div class="sheet-form-label">初始角色</div><div class="role-picker" id="role-picker">
-        <div class="role-opt selected" data-role="production-worker" onclick="pickRole('production-worker')">生产员工</div>
-        <div class="role-opt" data-role="production-leader" onclick="pickRole('production-leader')">生产班长</div>
-        <div class="role-opt" data-role="production-director" onclick="pickRole('production-director')">生产主任</div>
-        <div class="role-opt" data-role="maintenance-worker" onclick="pickRole('maintenance-worker')">检修员工</div>
-        <div class="role-opt" data-role="maintenance-leader" onclick="pickRole('maintenance-leader')">检修班长</div>
-        <div class="role-opt" data-role="maintenance-director" onclick="pickRole('maintenance-director')">检修主任</div>
-        <div class="role-opt" data-role="manager" onclick="pickRole('manager')">经理</div>
-        <div class="role-opt" data-role="admin" onclick="pickRole('admin')">管理员</div>
-      </div></div>
+      ${plantGroup}
+      <div class="sheet-form-group"><div class="sheet-form-label">初始角色</div><div class="role-picker" id="role-picker">${rolePickerHtml('production-worker', isAdmin(creator))}</div></div>
       <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="add-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20"></div>
       <button class="sheet-btn primary" onclick="confirmAddUser()">创建账号</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='editUser') {
     const user = findUser(arg); if (!user) return;
+    const editor = getCurrentUser();
+    if (!canManageUsers(editor)) { showToast('无权限'); return; }
+    if (!canTouchUser(editor, user)) { showToast(user.role === 'admin' ? '管理员的账号只有本人能动' : '只能管理本车间账号'); return; }
     selectedRole = user.role;
+    selectedUserPlant = userPlant(user);
     const isSelf = user.empno === localStorage.getItem(SESSION_KEY);
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user.name}</div><div class="sheet-sub">工号 ${user.empno}</div>
-      ${user.role!=='admin'?`<div class="sheet-form-group"><div class="sheet-form-label">修改角色</div><div class="role-picker" id="role-picker">
-        <div class="role-opt ${user.role==='production-worker'?'selected':''}" data-role="production-worker" onclick="pickRole('production-worker')">生产员工</div>
-        <div class="role-opt ${user.role==='production-leader'?'selected':''}" data-role="production-leader" onclick="pickRole('production-leader')">生产班长</div>
-        <div class="role-opt ${user.role==='production-director'?'selected':''}" data-role="production-director" onclick="pickRole('production-director')">生产主任</div>
-        <div class="role-opt ${user.role==='maintenance-worker'?'selected':''}" data-role="maintenance-worker" onclick="pickRole('maintenance-worker')">检修员工</div>
-        <div class="role-opt ${user.role==='maintenance-leader'?'selected':''}" data-role="maintenance-leader" onclick="pickRole('maintenance-leader')">检修班长</div>
-        <div class="role-opt ${user.role==='maintenance-director'?'selected':''}" data-role="maintenance-director" onclick="pickRole('maintenance-director')">检修主任</div>
-        <div class="role-opt ${user.role==='manager'?'selected':''}" data-role="manager" onclick="pickRole('manager')">经理</div>
-        <div class="role-opt ${user.role==='admin'?'selected':''}" data-role="admin" onclick="pickRole('admin')">管理员</div>
-      </div></div>
+    const plantGroup = canPickPlant(editor)
+      ? `<div class="sheet-form-group"><div class="sheet-form-label">所属车间</div><div class="role-picker" id="plant-picker">${plantPickerHtml(selectedUserPlant)}</div></div>`
+      : '';
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user.name}</div><div class="sheet-sub">工号 ${user.empno} · ${roleLabel(user)}</div>
+      ${user.role!=='admin'?`${plantGroup}<div class="sheet-form-group"><div class="sheet-form-label">修改角色</div><div class="role-picker" id="role-picker">${rolePickerHtml(user.role, isAdmin(editor))}</div></div>
       <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="edit-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20" value="${user.wechatMobile || ''}"></div>
       <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>
       ${!isSelf?`<button class="sheet-btn danger" onclick="confirmDeleteUser('${user.empno}')">删除账号</button>`:''}`:
@@ -5358,8 +5431,13 @@ async function confirmAddUser() {
   if (!empno || !/^\d{4,15}$/.test(empno)) { showToast('工号应为 4-15 位数字'); return; }
   if (findUser(empno)) { showToast('该工号已存在'); return; }
   if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
+  const creator = getCurrentUser();
+  if (!canManageUsers(creator)) { showToast('无权限'); return; }
+  if (!isAdmin(creator) && selectedRole === 'admin') { showToast('只有管理员能创建管理员'); return; }
+  let plant = canPickPlant(creator) ? selectedUserPlant : userPlant(creator);
+  if (!['hpal','zh','all'].includes(plant)) plant = 'hpal';
   try {
-    await cloudSaveUser({ empno, name, role:selectedRole, password:null, wechatMobile: wechatMobile || '', createdAt:Date.now() });
+    await cloudSaveUser({ empno, name, role:selectedRole, plant, password:null, wechatMobile: wechatMobile || '', createdAt:Date.now() });
     hideSheet();
     showToast(`已创建：${name}（${empno}）`);
   } catch (err) {
@@ -5387,10 +5465,15 @@ async function confirmEditUser(empno) {
   const mobileEl = document.getElementById('edit-wechat-mobile');
   const wechatMobile = mobileEl ? (mobileEl.value || '').trim() : (user.wechatMobile || '');
   if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
+  if (!canManageUsers(currentUser)) { showToast('无权限'); return; }
+  if (!canTouchUser(currentUser, user)) { showToast('无权管理该账号'); return; }
+  if (!isAdmin(currentUser) && selectedRole === 'admin') { showToast('只有管理员能授予管理员'); return; }
   try {
     // admin 角色不允许通过编辑改动 role，但仍可改 wechatMobile
     const newRole = (user.role === 'admin') ? 'admin' : selectedRole;
-    await cloudSaveUser({ ...user, role: newRole, wechatMobile });
+    // 车间归属：管理员/经理可改，工程师/技术员保持原值
+    const newPlant = canPickPlant(currentUser) ? (['hpal','zh','all'].includes(selectedUserPlant) ? selectedUserPlant : userPlant(user)) : (user.plant || 'hpal');
+    await cloudSaveUser({ ...user, role: newRole, plant: newPlant, wechatMobile });
     hideSheet();
     showToast('账号已更新');
   } catch (err) {
@@ -5401,6 +5484,8 @@ async function confirmDeleteUser(empno) {
   const user = findUser(empno);
   if (!user) { hideSheet(); return; }
   const currentUser = getCurrentUser();
+  if (!canManageUsers(currentUser)) { showToast('无权限'); return; }
+  if (!canTouchUser(currentUser, user)) { showToast('无权管理该账号'); return; }
   if (currentUser && user.empno === currentUser.empno) {
     showToast('不能删除自己');
     return;
@@ -5994,7 +6079,7 @@ function renderMlFilterBar() {
     { key: 'planned',    label: '计划检修',   n: live.filter(m => m.category === 'planned').length },
     { key: 'preventive', label: '预防性维护', n: live.filter(m => m.category === 'preventive').length },
   ];
-  if (isAdmin(user)) tabs.push({ key: 'deleted', label: '已删除', n: mlCache.filter(m => m.deleted).length });
+  if (canManage(user)) tabs.push({ key: 'deleted', label: '已删除', n: mlCache.filter(m => m.deleted).length });
   const bar = document.getElementById('ml-filter-bar');
   if (!bar) return;
   bar.innerHTML = tabs.map(tb =>
@@ -6532,7 +6617,7 @@ function openMlFromSS(mlId) {
 function canEditMl(ml, user) {
   // 2026-07-08 收紧：登记/编辑/删除检修记录仅管理员（记录联动二级库库存）
   if (!user) return false;
-  return isAdmin(user);
+  return canManage(user);
 }
 
 function renderMaintenanceDetail(ml) {
@@ -6564,7 +6649,7 @@ function renderMaintenanceDetail(ml) {
   const actionsEl = document.getElementById('ml-actions');
   let btns = '';
   if (ml.deleted) {
-    if (isAdmin(user)) btns = '<button class="wo-act-btn" onclick="restoreMaintenance()">恢复</button>';
+    if (canManage(user)) btns = '<button class="wo-act-btn" onclick="restoreMaintenance()">恢复</button>';
   } else if (canEditMl(ml, user)) {
     btns = '<button class="wo-act-btn" onclick="openMlEdit(\'' + ml.id + '\')">编辑</button><button class="wo-act-btn danger" onclick="deleteMaintenance()">删除</button>';
   }
@@ -6576,7 +6661,7 @@ function renderMaintenanceDetail(ml) {
 function openMlCreate() {
   const user = getCurrentUser();
   if (!user) { showToast('请先登录'); return; }
-  if (!isAdmin(user)) { showToast('仅管理员可登记检修记录'); return; }
+  if (!canManage(user)) { showToast('无权限（仅本车间设备管理人员可登记检修）'); return; }
   const d = new Date();
   const ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   mlBuffer = {
@@ -6847,7 +6932,7 @@ function mlEqLabel(ml) { return ((ml.equipmentTag || '') + ' ' + (ml.equipmentNa
 async function submitMaintenance() {
   const b = mlBuffer;
   if (!b) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可登记检修记录'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无权限（仅本车间设备管理人员可登记检修）'); return; }
   if (!b.equipmentId) { showToast('请选择设备'); return; }
   if (!b.category) { showToast('请选择检修类别'); return; }
   if (!b.repairDate) { showToast('请填写检修日期'); return; }
@@ -6897,7 +6982,7 @@ async function deleteMaintenance() {
 async function restoreMaintenance() {
   const ml = mlCache.find(m => m.id === currentMlId);
   if (!ml) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限'); return; }
   // 恢复记录 → 重新扣回二级库（结存不足会拦住）
   const plan = buildMlStockPlan(ml.id, ml.spareParts);
   if (!plan.ok) { alert('无法恢复：\n\n' + plan.msg + '\n\n可先给对应备件入库后再恢复。'); return; }
@@ -7096,7 +7181,7 @@ function renderTodoPage() {
   const view = document.getElementById('ml-todo-view');
   if (!view) return;
   const user = getCurrentUser();
-  const admin = isAdmin(user);
+  const admin = canManage(user);
   const live = todoCache.filter(t => !t.deleted);
   if (tdFilter === 'all') tdFilter = 'pending';   // 兼容旧状态：「全部」tab 已移除
   const tabs = [
@@ -7121,7 +7206,7 @@ function renderTodoPage() {
 
 function renderTdCard(t) {
   const st = TD_STATUS_MAP[t.status] || TD_STATUS_MAP.pending;
-  const admin = isAdmin(getCurrentUser());
+  const admin = canManage(getCurrentUser());
   const eqs = tdEqs(t);
   let eqHtml, eqNameHtml = '';
   if (!eqs.length) {
@@ -7191,7 +7276,7 @@ function renderTodoDetail(t) {
     '<div style="font-size:20px;color:var(--ink);font-weight:500;margin-bottom:10px;line-height:1.45;">' + escapeHtml(t.title || '') + '</div>' +
     '<span class="td-status-badge ' + st.cls + '">' + st.label + '</span>';
   const user = getCurrentUser();
-  const admin = isAdmin(user);
+  const admin = canManage(user);
   let actions = '';
   if (admin) {
     if (t.deleted) {
@@ -7222,7 +7307,7 @@ function renderTodoDetail(t) {
 function openTdCreate() {
   const user = getCurrentUser();
   if (!user) { showToast('请先登录'); return; }
-  if (!isAdmin(user)) { showToast('仅管理员可添加待办'); return; }
+  if (!canManage(user)) { showToast('无权限（仅本车间设备管理人员）'); return; }
   tdEditFrom = '';
   tdBuffer = {
     id: 'td_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
@@ -7243,7 +7328,7 @@ function openTdCreate() {
 function openTdEdit(id, from) {
   const t = todoCache.find(x => x.id === id);
   if (!t) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可编辑'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无权限（仅本车间设备管理人员）'); return; }
   tdEditFrom = from || '';
   tdBuffer = JSON.parse(JSON.stringify(t));
   tdBuffer.equipments = tdEqs(tdBuffer);   // 老单设备记录归一成数组
@@ -7291,7 +7376,7 @@ function renderTdForm() {
 async function submitTodo() {
   const b = tdBuffer;
   if (!b) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可保存'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无权限（仅本车间设备管理人员）'); return; }
   if (!(b.title || '').trim()) { showToast('请填写事项名称'); return; }
   b.title = b.title.trim();
   // 关联设备：新字段 equipments 数组落库；旧单设备字段镜像首台（无则清空），兼容 07-27 老结构
@@ -7340,7 +7425,7 @@ async function tdSetStatus(id, status) {
   const t = todoCache.find(x => x.id === id);
   if (!t) return;
   const user = getCurrentUser();
-  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  if (!canManage(user)) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   if (status === 'done') { tdSheetId = id; showSheet('tdDone', id); return; }
   const upd = Object.assign({}, t, { status: status });
   if (status === 'ready' && !upd.readyAt) upd.readyAt = Date.now();
@@ -7358,7 +7443,7 @@ async function confirmTdDone() {
   const t = todoCache.find(x => x.id === tdSheetId);
   if (!t) { hideSheet(); return; }
   const user = getCurrentUser();
-  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  if (!canManage(user)) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const noteEl = document.getElementById('td-done-note');
   const upd = Object.assign({}, t, {
     status: 'done',
@@ -7380,7 +7465,7 @@ async function confirmTdDone() {
 function tdDelete(id) {
   const t = todoCache.find(x => x.id === id);
   if (!t) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   tdSheetId = id;
   showSheet('tdDelete', id);
 }
@@ -7389,7 +7474,7 @@ async function confirmTdDelete() {
   const t = todoCache.find(x => x.id === tdSheetId);
   if (!t) { hideSheet(); return; }
   const user = getCurrentUser();
-  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  if (!canManage(user)) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const upd = Object.assign({}, t, { deleted: true, deletedAt: Date.now(), deletedBy: user.empno, deletedByName: user.name });
   hideSheet();
   try {
@@ -7404,7 +7489,7 @@ async function confirmTdDelete() {
 async function tdRestore(id) {
   const t = todoCache.find(x => x.id === id);
   if (!t) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可恢复'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无权限（仅本车间设备管理人员）'); return; }
   const upd = Object.assign({}, t, { deleted: false });
   try {
     await cloudSaveTodo(upd);
@@ -7783,6 +7868,7 @@ function openBulkLube(tag) {
 }
 
 async function confirmBulkLube() {
+  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能登记'); return; }
   const b = bulkLubeBuffer;
   if (!b) { hideSheet(); return; }
   const user = getCurrentUser();
@@ -8030,6 +8116,7 @@ function updateLubePumpHint() {
 }
 
 async function submitLubeExec() {
+  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能登记'); return; }
   const b = lubeExecBuffer;
   if (!b.actualOil || !b.actualOil.trim()) {
     showToast('请填写实际油号'); return;
@@ -8801,6 +8888,7 @@ function toggleInsStopped() {
 }
 
 async function submitInspectV2() {
+  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能提交'); return; }
   const buf = inspectExecBuffer;
   const eq = loadEquipments().find(e => e.id === buf.equipmentId);
   if (!eq) { showToast('设备未找到'); return; }
@@ -8899,6 +8987,7 @@ function toggleInspectStopped(idx) {
 }
 
 async function submitInspect() {
+  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能提交'); return; }
   if (!inspectExecBuffer) return;
   if (inspectExecBuffer.v2) return submitInspectV2();
   const items = inspectExecBuffer.items;
@@ -9621,8 +9710,8 @@ function renderSecondStockDetail(it) {
         const isReverted = h.reverted;
         const isCounter = h.isCounter;
         // 检修联动记录（带 mlId）不许撤销/删除，唯一入口是改检修记录（2026-07-08 用户定）
-        const canRevert = isAdmin(user) && !isReverted && !isCounter && !h.mlId;
-        const canDelete = isAdmin(user) && !h.mlId;
+        const canRevert = canManage(user) && !isReverted && !isCounter && !h.mlId;
+        const canDelete = canHardDelete(user) && !h.mlId;
         const canTime = canEditSSTime(user) && !h.mlId;   // 改时间：只郝行龙 + 非检修投影笔
         let tags = '';
         if (h.mlId) tags += `<span class="parts-hist-ml-tag" onclick="event.stopPropagation();openMlFromSS('${h.mlId}')">🔧 检修</span>`;
@@ -9653,7 +9742,7 @@ function renderSecondStockDetail(it) {
 
   const actionsEl = document.getElementById('parts-detail-actions');
   if (actionsEl) {
-    if (isAdmin(user)) {
+    if (canManage(user)) {
       const qty = it.quantity || 0;
       const canOut = qty > 0;
       const canDelete = qty === 0;  // 仅结存为 0 才能删条目
@@ -9692,7 +9781,7 @@ function ssDateStrToTs(str, keepTimeOf) {
 function openSecondStockTxn(type) {
   const it = secondStockCache.find(x => x.id === currentSSId);
   if (!it) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   ssTxnBuffer = { itemId: it.id, type, quantity: 1, reason: '', date: ssTodayStr() };
   const title = document.getElementById('parts-txn-title');
   if (title) title.textContent = type === 'in' ? '入库' : '领用';
@@ -9742,7 +9831,7 @@ function onSSTxnQtyChange(v) {
 async function submitSecondStockTxn() {
   const b = ssTxnBuffer;
   if (!b) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const it = secondStockCache.find(x => x.id === b.itemId);
   if (!it) return;
   const currentQty = it.quantity || 0;
@@ -9794,7 +9883,7 @@ function cancelSecondStockTxn() {
 
 /* ----- 新增 / 编辑（仅管理员）----- */
 function openSecondStockEdit(id) {
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const isNew = !id;
   const it = isNew ? null : ssDataSource().find(x => x.id === id);
   ssEditBuffer = isNew
@@ -9838,7 +9927,7 @@ function renderSecondStockEditForm(isNew) {
 async function submitSecondStockEdit() {
   const b = ssEditBuffer;
   if (!b) return;
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   if (!b.name || !b.name.trim()) { showToast('请填写备件名称'); return; }
   const isNew = !b.id;
   if (isNew) {
@@ -9865,7 +9954,7 @@ function cancelSecondStockEdit() {
 }
 
 async function deleteSecondStockItem(id) {
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const it = secondStockCache.find(x => x.id === id);
   if (!it) return;
   if ((it.quantity || 0) > 0) { showToast('结存为 0 时才能删除（请先领用清空）'); return; }
@@ -9911,7 +10000,7 @@ async function confirmSSEditTime() {
 
 /* ----- 撤销 / 硬删历史（仅管理员）----- */
 async function revertSecondStockHistory(historyId) {
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canManage(getCurrentUser())) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const h = (secondStockHistCache || []).find(x => x.id === historyId);
   if (!h || h.reverted || h.isCounter) return;
   if (h.mlId) { showToast('这笔由检修记录自动生成，请到对应检修记录里修改备件（库存会自动同步）'); return; }
@@ -9942,7 +10031,7 @@ async function revertSecondStockHistory(historyId) {
 }
 
 async function hardDeleteSecondStockHistory(historyId) {
-  if (!isAdmin(getCurrentUser())) { showToast('仅管理员可操作'); return; }
+  if (!canHardDelete(getCurrentUser())) { showToast('硬删除仅总管理员本人可操作'); return; }
   const h = (secondStockHistCache || []).find(x => x.id === historyId);
   if (!h) return;
   if (h.mlId) { showToast('这笔由检修记录自动生成，请到对应检修记录里修改备件（库存会自动同步）'); return; }
@@ -10254,7 +10343,7 @@ function renderSecondStockBatchSheet() {
 
 async function submitSecondStockBatch() {
   const user = getCurrentUser();
-  if (!isAdmin(user)) { showToast('仅管理员可操作'); return; }
+  if (!canManage(user)) { showToast('无操作权限（仅本车间设备管理人员）'); return; }
   const okRows = ssBatchRows.filter(r => r.status === 'ok');
   if (okRows.length === 0) { showToast('没有可导入的行'); return; }
   if (!confirm(`确认导入 ${okRows.length} 条到二级库？`)) return;
@@ -10841,6 +10930,7 @@ window.submitSecondStockBatch = submitSecondStockBatch;
 window.showWelcome = showWelcome;
 window.closeWelcome = closeWelcome;
 window.switchPlant = switchPlant;
+window.pickUserPlant = pickUserPlant;
 
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
