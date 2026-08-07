@@ -58,6 +58,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .topbar-brand { display:flex; align-items:center; gap:8px; }
 .topbar-dot { width:8px; height:8px; border-radius:50%; background:var(--g-primary); }
 .topbar-name { font-family:var(--font-serif); font-size:20px; font-weight:500; letter-spacing:-.01em; }
+.topbar-plant { font-size:11px; font-family:var(--font-mono); color:var(--g-deep); background:var(--g-mist); border:1px solid var(--g-primary); border-radius:999px; padding:2px 9px; white-space:nowrap; cursor:pointer; }
 .topbar-right { display:flex; align-items:center; gap:12px; }
 .topbar-date { font-family:var(--font-mono); font-size:11px; color:var(--subtle); letter-spacing:.05em; }
 .topbar-user { display:flex; align-items:center; gap:6px; padding:6px 10px 6px 6px; border-radius:20px; cursor:pointer; }
@@ -2848,7 +2849,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 <div id="app">
   <div class="app-main">
   <header class="topbar" id="topbar-main">
-    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div></div>
+    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div></div>
     <div class="topbar-right">
       <div class="topbar-date" id="topbar-date">—</div>
       <div class="topbar-user" onclick="showSheet('account')">
@@ -3379,6 +3380,31 @@ const SEED_LUBE_POINTS = [{"nextLubeAt":1792454400000,"name":"晨曦-原矿浓�
 /* ========== 数据层 ========== */
 const SESSION_KEY = 'ems_session_v06';
 
+/* ========== 多车间 (2026-08-07) ==========
+   同一数据库用 plant 字段区分车间：老数据没有 plant 字段 = 'hpal'（高压酸浸），零迁移。
+   订阅回调进缓存时按 currentPlant 过滤一刀，下游页面自动只见本车间；
+   新数据经 stampPlant 盖章。切换车间 = 写 localStorage 后整页刷新。 */
+const PLANT_KEY = 'ems_plant_v01';
+// 上次登录账号的显示快照（工号/姓名/角色，非业务数据）：刷新/切车间时秒进应用，云端到位后再核对
+const USER_CACHE_KEY = 'ems_user_v01';
+const PLANTS = {
+  hpal: { name: '高压酸浸车间', short: '高压酸浸' },
+  zh:   { name: '中和车间',     short: '中和' },
+};
+const currentPlant = (() => {
+  try { const p = localStorage.getItem(PLANT_KEY); return PLANTS[p] ? p : 'hpal'; }
+  catch (e) { return 'hpal'; }
+})();
+function docPlant(d) { return (d && d.plant) || 'hpal'; }
+function inPlant(d) { return docPlant(d) === currentPlant; }
+// 已有 plant 保留（编辑不换归属），没有则记当前车间
+function stampPlant(obj) { if (obj && !obj.plant) obj.plant = currentPlant; return obj; }
+function switchPlant(p) {
+  if (!PLANTS[p] || p === currentPlant) { hideSheet(); return; }
+  try { localStorage.setItem(PLANT_KEY, p); } catch (e) {}
+  location.reload();
+}
+
 /* ========== 巡检模板 (2026-07-04 v2 数值点检) ==========
    v2 模板：v:2 + groups[{g:部件, pts:[{p:测点, ms:[指标]}]}]，指标 t:'num'(填数值,自动判超限)/'chk'(正常/异常)
    源头：纸质《设备日常点检记录表》(机修) 逐张转录 + 6 类自设计(2026-07-04 用户已审)
@@ -3610,6 +3636,7 @@ const INSPECT_TYPE_TO_TPL = {
 function getInspectTplKeyForEq(eq) {
   if (!eq) return null;
   if (eq.inspectTplKey) return eq.inspectTplKey;
+  if (eq.noInspect) return null;   // 显式不点检标记（2026-08-07 中和车间分批上点检用）
   const nm = eq.name || '';
   const t = eq.type || '';
   // —— 不做点检 ——
@@ -3698,10 +3725,10 @@ async function cloudDeleteUser(empno) {
 async function cloudSaveEquipment(eq) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'equipments', eq.id), {
+    await setDoc(doc(db, 'equipments', eq.id), stampPlant({
       ...eq,
       updatedAt: Date.now(),
-    });
+    }));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存设备失败', err);
@@ -3769,10 +3796,13 @@ function applyPreviewOverlay(equipments) {
   return out;
 }
 if (PREVIEW_MODE) {
+  // 2026-08-07 从顶部通栏改为左下角小胶囊（原横幅压住顶栏影响视线），点击可收起
   const b = document.createElement('div');
   b.id = 'previewBanner';
-  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ffc107;color:#000;padding:8px 16px;text-align:center;font-weight:600;font-family:var(--font-sans);font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.2);letter-spacing:.01em;';
+  b.style.cssText = 'position:fixed;bottom:14px;left:14px;max-width:min(72vw,460px);z-index:99999;background:rgba(255,193,7,.94);color:#000;padding:6px 14px;border-radius:999px;font-weight:600;font-family:var(--font-sans);font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);letter-spacing:.01em;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+  b.title = '预览模式 · 点击收起';
   b.textContent = '🔬 预览模式（数据覆盖加载中…）';
+  b.onclick = () => b.remove();
   document.body.appendChild(b);
   console.log('[Preview] 已启用，将用本地 SEED_EQUIPMENTS 覆盖云端字段显示');
 }
@@ -3781,7 +3811,7 @@ if (PREVIEW_MODE) {
 function subscribeEquipments() {
   if (eqUnsub) eqUnsub();
   eqUnsub = onSnapshot(collection(db, 'equipments'), (snap) => {
-    eqCache = applyPreviewOverlay(snap.docs.map(d => d.data()));
+    eqCache = applyPreviewOverlay(snap.docs.map(d => d.data()).filter(inPlant));
     // 自动刷新设备列表
     const eqModule = document.querySelector('.module[data-module="equipment"]');
     if (eqModule && eqModule.classList.contains('active')) {
@@ -3876,7 +3906,7 @@ function getMobileByEmpno(empno) {
 async function cloudSaveMaintenance(ml) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'maintenancelogs', ml.id), { ...ml, updatedAt: Date.now() });
+    await setDoc(doc(db, 'maintenancelogs', ml.id), stampPlant({ ...ml, updatedAt: Date.now() }));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存检修记录失败', err);
@@ -3900,7 +3930,7 @@ async function cloudDeleteMaintenance(id) {
 function subscribeMaintenance() {
   if (mlUnsub) mlUnsub();
   mlUnsub = onSnapshot(collection(db, 'maintenancelogs'), (snap) => {
-    mlCache = snap.docs.map(d => d.data());
+    mlCache = snap.docs.map(d => d.data()).filter(inPlant);
     mlCache.sort((a, b) => mlSortKey(b) - mlSortKey(a));
     const mod = document.querySelector('.module[data-module="maintenance"]');
     if (mod && mod.classList.contains('active')) renderMaintenanceList();
@@ -4433,6 +4463,7 @@ const ICON_SVG = {
   bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  factory:'<path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h6v16"/>',
 };
 
 /* ========== 登录 ========== */
@@ -4486,6 +4517,7 @@ async function attemptLogin() {
 }
 
 function enterApp(user) {
+  try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role })); } catch (e) {}
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('active');
   const initial = user.role === 'admin' ? '总' : (user.name||'').slice(0,1);
@@ -4494,6 +4526,8 @@ function enterApp(user) {
   circle.className = 'topbar-user-circle' + (user.role==='admin'?' admin':'');
   document.getElementById('topbar-name').textContent = user.name;
   document.getElementById('topbar-date').textContent = formatDate();
+  const plantBadge = document.getElementById('topbar-plant');
+  if (plantBadge) plantBadge.textContent = PLANTS[currentPlant].short;
   const avatar = document.getElementById('profile-avatar');
   avatar.textContent = initial;
   avatar.className = 'profile-avatar' + (user.role==='admin'?' admin':'');
@@ -4510,13 +4544,20 @@ function enterApp(user) {
   showWelcome(user);
 }
 function renderMenu(user) {
-  document.getElementById('menu-list').innerHTML = (MENU_BY_ROLE[user.role]||[]).map(item=>`
+  // 「切换车间」所有角色可见（2026-08-07 多车间）
+  const plantItem = `
+    <div class="menu-item" onclick="handleMenuAction('switchPlant')">
+      <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG.factory||''}</svg>
+      <span class="menu-item-name">切换车间</span><span style="font-size:13px;color:var(--muted);margin-right:6px;">${PLANTS[currentPlant].short}</span><span class="menu-item-arrow">›</span>
+    </div>`;
+  document.getElementById('menu-list').innerHTML = plantItem + (MENU_BY_ROLE[user.role]||[]).map(item=>`
     <div class="menu-item" onclick="handleMenuAction('${item.action}')">
       <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG[item.icon]||''}</svg>
       <span class="menu-item-name">${item.name}</span><span class="menu-item-arrow">›</span>
     </div>`).join('');
 }
 function handleMenuAction(action) {
+  if (action==='switchPlant') { showSheet('plantSwitch'); return; }
   if (action==='goto:users') { switchModule('users'); renderUserListAdmin(); }
   else if (action==='setPassword') showSheet('setPassword');
   else if (action==='setMobile') showSheet('setMobile');
@@ -5275,6 +5316,16 @@ function showSheet(type, arg) {
   } else if (type==='secondStockBatch') {
     ssBatchRows = []; ssBatchFileName = '';
     content.innerHTML = `<div class="sheet-handle"></div>` + renderSecondStockBatchSheet();
+  } else if (type==='plantSwitch') {
+    // 切换车间（2026-08-07 多车间）：选完写 localStorage 并整页刷新
+    const opts = Object.keys(PLANTS).map(k => {
+      const cur = k === currentPlant;
+      return `<button class="sheet-btn${cur?' primary':''}" onclick="switchPlant('${k}')">${PLANTS[k].name}${cur?' · 当前':''}</button>`;
+    }).join('');
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">切换车间</div>
+      <div class="sheet-sub">当前在「${PLANTS[currentPlant].name}」· 切换后页面会自动刷新，两个车间的数据互相独立</div>
+      ${opts}
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='about') {
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
       <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
@@ -5408,6 +5459,7 @@ async function confirmSetMobile(clear) {
 function logout() {
   _welcomeShownThisSession = false;
   localStorage.removeItem(SESSION_KEY);
+  try { localStorage.removeItem(USER_CACHE_KEY); } catch (e) {}
   location.reload();
 }
 
@@ -5458,10 +5510,10 @@ function daysUntilLube(lp) {
 async function cloudSaveLubePoint(lp) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'lubepoints', lp.id), {
+    await setDoc(doc(db, 'lubepoints', lp.id), stampPlant({
       ...lp,
       updatedAt: Date.now(),
-    });
+    }));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存润滑点失败', err);
@@ -5473,10 +5525,10 @@ async function cloudSaveLubePoint(lp) {
 async function cloudSaveLubeHistory(record) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'lubehistory', record.id), {
+    await setDoc(doc(db, 'lubehistory', record.id), stampPlant({
       ...record,
       updatedAt: Date.now(),
-    });
+    }));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存润滑记录失败', err);
@@ -5488,7 +5540,7 @@ async function cloudSaveLubeHistory(record) {
 function subscribeLubePoints() {
   if (lubePointsUnsub) lubePointsUnsub();
   lubePointsUnsub = onSnapshot(collection(db, 'lubepoints'), (snap) => {
-    lubePointsCache = snap.docs.map(d => d.data());
+    lubePointsCache = snap.docs.map(d => d.data()).filter(inPlant);
     // 自动刷新润滑 Tab
     const lubeMod = document.querySelector('.module[data-module="lube"]');
     if (lubeMod && lubeMod.classList.contains('active')) {
@@ -5510,7 +5562,7 @@ function subscribeLubePoints() {
 function subscribeLubeHistory() {
   if (lubeHistoryUnsub) lubeHistoryUnsub();
   lubeHistoryUnsub = onSnapshot(collection(db, 'lubehistory'), (snap) => {
-    lubeHistoryCache = snap.docs.map(d => d.data());
+    lubeHistoryCache = snap.docs.map(d => d.data()).filter(inPlant);
     lubeHistoryCache.sort((a, b) => (b.lubeAt || 0) - (a.lubeAt || 0));
 
     // 刷新润滑点详情页（如果在看某个点的历史）
@@ -5573,7 +5625,7 @@ function subscribeInspectTemplates() {
 function subscribeInspectHistory() {
   if (inspectHistUnsub) inspectHistUnsub();
   inspectHistUnsub = onSnapshot(collection(db, 'inspecthistory'), (snap) => {
-    inspectHistCache = snap.docs.map(d => d.data());
+    inspectHistCache = snap.docs.map(d => d.data()).filter(inPlant);
     inspectHistCache.sort((a, b) => (b.inspectAt || 0) - (a.inspectAt || 0));
     const mod = document.querySelector('.module[data-module="inspect"]');
     if (mod && mod.classList.contains('active')) renderInspectOverview();
@@ -5583,10 +5635,10 @@ function subscribeInspectHistory() {
 async function cloudSaveInspectHistory(record) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'inspecthistory', record.id), {
+    await setDoc(doc(db, 'inspecthistory', record.id), stampPlant({
       ...record,
       updatedAt: Date.now(),
-    });
+    }));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存巡检记录失败', err);
@@ -5616,7 +5668,7 @@ function subscribeInspectMonthly() {
   const prev = inspectPrevMonthKey(Date.now());
   const qy = query(collection(db, 'inspectmonthly'), where('month', 'in', [prev, cur]));
   inspectMonthlyUnsub = onSnapshot(qy, (snap) => {
-    inspectMonthlyCache = snap.docs.map(d => d.data());
+    inspectMonthlyCache = snap.docs.map(d => d.data()).filter(inPlant);
     const mod = document.querySelector('.module[data-module="inspect"]');
     if (mod && mod.classList.contains('active')) renderInspectOverview();
   }, (err) => console.error('[Firebase] 订阅月度点检失败', err));
@@ -5701,7 +5753,7 @@ async function cloudSaveInspectDay(eq, tplKey, dayEntry) {
   base.updatedAt = Date.now();
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'inspectmonthly', docId), base);
+    await setDoc(doc(db, 'inspectmonthly', docId), stampPlant(base));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存月度点检失败', err);
@@ -6770,7 +6822,7 @@ function applyMlStockPlanToBatch(batch, plan, ml, reasons) {
     };
     // 检修日期不是今天 = 补登，留一份真实录入时间（审计用，账本上显「补登」标签）
     if (ssYmd(at) !== ssYmd(now)) rec.recordedAt = oldRecordedAt[itemId] || keep || now;
-    batch.set(doc(db, 'secondstockhistory', hid), rec);
+    batch.set(doc(db, 'secondstockhistory', hid), stampPlant(rec));
   });
 }
 function mlEqLabel(ml) { return ((ml.equipmentTag || '') + ' ' + (ml.equipmentName || '')).trim(); }
@@ -6791,7 +6843,7 @@ async function submitMaintenance() {
   try {
     const batch = writeBatch(db);
     applyMlStockPlanToBatch(batch, plan, b, { out: '检修：' + mlEqLabel(b) });
-    batch.set(doc(db, 'maintenancelogs', b.id), Object.assign({}, b));
+    batch.set(doc(db, 'maintenancelogs', b.id), stampPlant(Object.assign({}, b)));
     await batch.commit();
     showToast(plan.moves.length ? '已保存，二级库库存已同步' : '已保存检修记录');
     currentMlId = b.id;
@@ -6818,7 +6870,7 @@ async function deleteMaintenance() {
   try {
     const batch = writeBatch(db);
     applyMlStockPlanToBatch(batch, plan, ml, { out: '检修：' + mlEqLabel(ml) });
-    batch.set(doc(db, 'maintenancelogs', ml.id), updated);
+    batch.set(doc(db, 'maintenancelogs', ml.id), stampPlant(updated));
     await batch.commit();
     showToast(plan.moves.length ? '已删除，二级库库存已回补、出库记录已移除' : '已删除');
     backToMlList();
@@ -6837,7 +6889,7 @@ async function restoreMaintenance() {
   try {
     const batch = writeBatch(db);
     applyMlStockPlanToBatch(batch, plan, ml, { out: '检修：' + mlEqLabel(ml) });
-    batch.set(doc(db, 'maintenancelogs', ml.id), updated);
+    batch.set(doc(db, 'maintenancelogs', ml.id), stampPlant(updated));
     await batch.commit();
     showToast(plan.moves.length ? '已恢复，二级库库存已扣减' : '已恢复');
     renderMaintenanceDetail(updated);
@@ -6964,7 +7016,7 @@ function tdAbbrevStrs(strs) {
 async function cloudSaveTodo(t) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'todos', t.id), Object.assign({}, t, { updatedAt: Date.now() }));
+    await setDoc(doc(db, 'todos', t.id), stampPlant(Object.assign({}, t, { updatedAt: Date.now() })));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存待办失败', err);
@@ -6976,7 +7028,7 @@ async function cloudSaveTodo(t) {
 function subscribeTodos() {
   if (todoUnsub) todoUnsub();
   todoUnsub = onSnapshot(collection(db, 'todos'), (snap) => {
-    todoCache = snap.docs.map(d => d.data());
+    todoCache = snap.docs.map(d => d.data()).filter(inPlant);
     todoCache.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     updateTdHeaderCount();
     if (tdViewActive()) renderTodoPage();
@@ -7727,12 +7779,12 @@ async function confirmBulkLube() {
     const batch = writeBatch(db);
     points.forEach((lp, i) => {
       const histId = 'lh_' + now + '_' + i + '_' + Math.random().toString(36).slice(2, 5);
-      batch.set(doc(db, 'lubehistory', histId), {
+      batch.set(doc(db, 'lubehistory', histId), stampPlant({
         id: histId, lubePointId: lp.id, tag: lp.tag, name: lp.name || '', point: lp.point || '',
         operationType: lp.operationType, standardOil: lp.standardOil, standardAmount: lp.standardAmount,
         actualOil: lp.standardOil, actualAmount: lp.standardAmount, note: '一键登记',
         operatorId: user.empno, operatorName: user.name, lubeAt: now, createdAt: now, updatedAt: now,
-      });
+      }));
       const periodDays = lp.periodDays || 330;
       batch.set(doc(db, 'lubepoints', lp.id), {
         ...lp, lastLubeAt: now, nextLubeAt: now + periodDays * 24 * 60 * 60 * 1000, status: '已润滑', updatedAt: now,
@@ -9231,7 +9283,7 @@ function ssStockStatus(it) {
 async function cloudSaveSecondStock(it) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'secondstock', it.id), it);
+    await setDoc(doc(db, 'secondstock', it.id), stampPlant(it));
     setCloudStatus('synced', '已同步');
   } catch (e) {
     console.error('[二级库] 保存失败', e);
@@ -9251,7 +9303,7 @@ async function cloudDeleteSecondStock(id) {
 
 async function cloudSaveSecondStockHistory(record) {
   try {
-    await setDoc(doc(db, 'secondstockhistory', record.id), record);
+    await setDoc(doc(db, 'secondstockhistory', record.id), stampPlant(record));
   } catch (e) {
     console.error('[二级库] 历史保存失败', e);
     throw e;
@@ -9270,7 +9322,7 @@ async function cloudDeleteSecondStockHistory(id) {
 function subscribeSecondStock() {
   if (secondStockUnsub) return;
   secondStockUnsub = onSnapshot(collection(db, 'secondstock'), snap => {
-    secondStockCache = snap.docs.map(d => d.data());
+    secondStockCache = snap.docs.map(d => d.data()).filter(inPlant);
     const mod = document.querySelector('.module[data-module="parts"]');
     if (mod && mod.classList.contains('active')) renderSecondStockList();
     const det = document.querySelector('.module[data-module="parts-detail"]');
@@ -9284,7 +9336,7 @@ function subscribeSecondStock() {
 function subscribeSecondStockHistory() {
   if (secondStockHistUnsub) return;
   secondStockHistUnsub = onSnapshot(collection(db, 'secondstockhistory'), snap => {
-    secondStockHistCache = snap.docs.map(d => d.data());
+    secondStockHistCache = snap.docs.map(d => d.data()).filter(inPlant);
     const det = document.querySelector('.module[data-module="parts-detail"]');
     if (det && det.classList.contains('active') && currentSSId) {
       const it = secondStockCache.find(x => x.id === currentSSId);
@@ -9348,7 +9400,8 @@ function clearSecondStockSearch() {
 
 function ssDataSource() {
   // 预览模式下若云端无数据（规则未发布/集合为空），回退显示本地 SEED 让用户先看效果
-  if (PREVIEW_MODE && (!secondStockCache || secondStockCache.length === 0)) {
+  // 仅限高压酸浸车间（SEED 是 hpal 的数据，中和侧空就是空）2026-08-07
+  if (PREVIEW_MODE && currentPlant === 'hpal' && (!secondStockCache || secondStockCache.length === 0)) {
     return (typeof SEED_SECONDSTOCK !== 'undefined') ? SEED_SECONDSTOCK : [];
   }
   return secondStockCache || [];
@@ -10198,13 +10251,13 @@ async function submitSecondStockBatch() {
       const batch = writeBatch(db);
       chunk.forEach((r, idx) => {
         const id = 'ss_' + now + '_' + (i + idx) + '_' + Math.random().toString(36).slice(2, 5);
-        batch.set(doc(db, 'secondstock', id), {
+        batch.set(doc(db, 'secondstock', id), stampPlant({
           id, name: r.name, materialCode: r.materialCode, sourceNo: r.sourceNo,
           unit: r.unit, fieldLocation: r.fieldLocation, location: r.location,
           requestQty: r.requestQty, inQty: r.inQty, quantity: r.quantity,
           usagePart: r.usagePart, applicant: r.applicant,
           createdAt: now - (okRows.length - i - idx) * 1000,
-        });
+        }));
         ok++;
       });
       await batch.commit();
@@ -10770,6 +10823,7 @@ window.onSSBatchFileChange = onSSBatchFileChange;
 window.submitSecondStockBatch = submitSecondStockBatch;
 window.showWelcome = showWelcome;
 window.closeWelcome = closeWelcome;
+window.switchPlant = switchPlant;
 
 /* ========== 底部导航点击 ========== */
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -10779,9 +10833,40 @@ document.querySelectorAll('.nav-item').forEach(item=>{
 /* ========== 启动 ========== */
 async function init() {
   setCloudStatus('connecting', '连接云端中...');
+
+  // 2026-08-07 秒进：有会话 + 有上次账号快照 → 不等云端握手直接进应用（消除登录页闪现，
+  // 切换车间刷新时尤其明显）；云端到位后下面会用真实账号再核对一遍
+  let optimisticEntered = false;
+  try {
+    const _sess = localStorage.getItem(SESSION_KEY);
+    const _cached = localStorage.getItem(USER_CACHE_KEY);
+    if (_sess && _cached) {
+      const u = JSON.parse(_cached);
+      if (u && u.empno === _sess && u.role && ROLES[u.role]) {
+        enterApp(u);
+        optimisticEntered = true;
+      }
+    }
+  } catch (e) { console.warn('[Init] 账号快照解析失败，走正常登录流程', e); }
+
   try {
     // 等待匿名认证完成（Firestore 规则要求 request.auth != null）
     await authReady;
+
+    // 2026-08-07 先开实时订阅再跑种子/迁移检查：订阅开了本机 IndexedDB 缓存立刻出数据，
+    // 消除切换车间/刷新后约 2 秒的"数据空白"（原来要等下面十来个云端往返跑完才订阅）。
+    // 种子/迁移函数全部幂等且只查云端真实集合，与订阅先后无关。
+    subscribeUsers();
+    subscribeEquipments();
+    subscribeMaintenance();
+    subscribeTodos();
+    subscribeLubePoints();
+    subscribeLubeHistory();
+    subscribeInspectTemplates();
+    subscribeInspectHistory();
+    subscribeInspectMonthly();
+    subscribeSecondStock();
+    subscribeSecondStockHistory();
 
     // 首次启动：如果云端为空则上传种子数据
     await seedIfEmpty();
@@ -10809,27 +10894,28 @@ async function init() {
     // 2026-06-21：二级库种子（57 条垫片现场库存）
     await seedSecondStockIfEmpty();
 
-    // 开启实时订阅（用户、设备、工单、润滑、巡检、二级库）
-    subscribeUsers();
-    subscribeEquipments();
-    subscribeMaintenance();
-    subscribeTodos();
-    subscribeLubePoints();
-    subscribeLubeHistory();
-    subscribeInspectTemplates();
-    subscribeInspectHistory();
-    subscribeInspectMonthly();
-    subscribeSecondStock();
-    subscribeSecondStockHistory();
-
-    // 等首批数据到位再继续（最多等 3 秒）
+    // 等首批数据到位再继续（订阅已在种子检查前开启）
     await new Promise(r => setTimeout(r, 800));
 
     // 恢复之前的登录态
+    // 2026-08-07：不再只依赖订阅缓存（800ms 内没到位就会误掉登录页），缓存没命中就直接按
+    // 工号去云端取账号（与 attemptLogin 同路，离线时走 IndexedDB 缓存）
     const session = localStorage.getItem(SESSION_KEY);
     if (session) {
-      const user = findUser(session);
-      if (user) { enterApp(user); return; }
+      let user = findUser(session);
+      if (!user) {
+        try {
+          const snap = await getDoc(doc(db, 'users', session));
+          if (snap.exists()) user = snap.data();
+        } catch (e) { console.warn('[Init] 云端取账号失败', e); }
+      }
+      if (user) {
+        // 已乐观进入的话这里等于用真实资料重刷一遍界面（欢迎卡有防重不会弹两次）
+        enterApp(user);
+        return;
+      }
+      // 账号已被删除：清掉会话回登录页
+      if (optimisticEntered) { logout(); return; }
     }
   } catch (err) {
     console.error('[Init] 启动失败', err);
