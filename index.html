@@ -59,6 +59,9 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .topbar-dot { width:8px; height:8px; border-radius:50%; background:var(--g-primary); }
 .topbar-name { font-family:var(--font-serif); font-size:20px; font-weight:500; letter-spacing:-.01em; }
 .topbar-plant { font-size:11px; font-family:var(--font-mono); color:var(--g-deep); background:var(--g-mist); border:1px solid var(--g-primary); border-radius:999px; padding:2px 9px; white-space:nowrap; cursor:pointer; }
+.topbar-plant-hint { font-size:10px; color:var(--muted); white-space:nowrap; cursor:pointer; letter-spacing:.02em; }
+/* 窄屏放不下「日期 + 切换提示」两样，让位给提示（手机上时间随处可见，日期最不要紧） */
+@media (max-width: 560px) { .topbar-date { display:none; } }
 .topbar-right { display:flex; align-items:center; gap:12px; }
 .topbar-date { font-family:var(--font-mono); font-size:11px; color:var(--subtle); letter-spacing:.05em; }
 .topbar-user { display:flex; align-items:center; gap:6px; padding:6px 10px 6px 6px; border-radius:20px; cursor:pointer; }
@@ -2849,7 +2852,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 <div id="app">
   <div class="app-main">
   <header class="topbar" id="topbar-main">
-    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div></div>
+    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div><div class="topbar-plant-hint" onclick="showSheet('plantSwitch')">👈 点此切换车间</div></div>
     <div class="topbar-right">
       <div class="topbar-date" id="topbar-date">—</div>
       <div class="topbar-user" onclick="showSheet('account')">
@@ -6014,7 +6017,12 @@ function renderMlFilterBar() {
   }
   // 重点设备条（高压釜给料泵 / 高压釜搅拌器，点开进重点设备档案）
   const kbar = document.getElementById('ml-keyeq-bar');
-  if (kbar) {
+  if (kbar && currentPlant !== 'hpal') {
+    // 重点设备组（高压釜给料泵/搅拌器）是高压酸浸专属，其他车间不显示（2026-08-07）
+    kbar.innerHTML = '';
+    kbar.style.display = 'none';
+  } else if (kbar) {
+    kbar.style.display = '';
     kbar.innerHTML = ML_KEY_EQ_GROUPS.map(g => {
       const units = mlKeyEqUnits(g.key);
       const tags = new Set(units.map(u => u.tag));
@@ -6389,6 +6397,15 @@ function mlbCheckvalveCardHtml(allStats) {
 function renderMlBoard() {
   const bv = document.getElementById('ml-board-view');
   if (!bv) return;
+  // 看板的系列/重点零件是高压酸浸（高压釜）专属口径，其他车间先显示占位（2026-08-07）
+  if (currentPlant !== 'hpal') {
+    const sub = document.querySelector('.module[data-module="board"] .section-sub');
+    if (sub) sub.textContent = '待添加重点设备';
+    bv.innerHTML = '<div class="mlb-card" style="color:var(--subtle);font-size:13px;padding:28px 20px;text-align:center;">' +
+      '🏗️ 待添加重点设备<br><br>' +
+      '<span style="font-size:12px;">' + escapeHtml(PLANTS[currentPlant].name) + '的检修记录攒起来后，再挑选重点设备和重点零件配置看板</span></div>';
+    return;
+  }
   const all = mlbUnitStats();
   const cur = all.filter(s => s.series === mlBoardSeries);
   const pills = [{ k: '1', l: '1系列' }, { k: '2', l: '2系列' }, { k: '3', l: '3系列' }].map(t =>
