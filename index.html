@@ -6283,6 +6283,18 @@ function mlSpareOwner(name, gParts) {
   for (const q of gParts) { if ((q.kw || []).some(k => name.includes(k))) return q.key; }
   return '';
 }
+/* 备件显示名：二级库备件（有 ssId）一律跟随二级库当前名称，
+   否则二级库改名后老检修记录还显示旧名、看板/汇总还按新旧两个名字分开统计（2026-08-08）。
+   手填备件（无 ssId）或二级库条目已删除时，仍用登记时的名字。 */
+function mlSpName(p) {
+  if (!p) return '';
+  if (p.ssId) {
+    const src = (typeof secondStockCache !== 'undefined' ? secondStockCache : []) || [];
+    const it = src.find(x => x.id === p.ssId);
+    if (it && it.name) return it.name;
+  }
+  return p.name || '';
+}
 function _mlDaysBetween(later, earlier) {
   const a = new Date(later), b = new Date(earlier);
   if (isNaN(a) || isNaN(b)) return null;
@@ -6343,10 +6355,10 @@ function renderMlPartTimeline(recs, p) {
       : '<span class="ml-tl-life current">在用 · 已 ' + _mlLifeLabel(life) + '</span>';
     // 品牌/规格：优先显示归属本零件的备件（mlSpareOwner 按关键词+组内优先级判定）；
     // 没有时仅当该次只修了这一个重点零件才显示全部备件（一次修多个零件不猜）
-    const hit = (m.spareParts || []).filter(x => mlSpareOwner(x.name, gParts) === p.key);
+    const hit = (m.spareParts || []).filter(x => mlSpareOwner(mlSpName(x), gParts) === p.key);
     const soloPart = gParts.filter(x => mlRecMatchesPart(m, x)).length === 1;
     const brandSrc = hit.length ? hit : (soloPart ? (m.spareParts || []) : []);
-    const brands = brandSrc.map(x => '<span class="ml-part-chip">' + escapeHtml(x.name || '') + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
+    const brands = brandSrc.map(x => '<span class="ml-part-chip">' + escapeHtml(mlSpName(x)) + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
     const note = m.faultCause || m.measures || '';
     return '<div class="ml-tl-item' + (!next ? ' current' : '') + '"><div class="ml-tl-dot"></div>' +
       '<div class="ml-tl-date">' + escapeHtml(m.repairDate || '—') + lifeHtml + '</div>' +
@@ -6378,10 +6390,10 @@ function renderMlPartLifeChart(list, p) {
   const gp2 = (mlEqlogGroup() || {}).parts || [];
   const brandOf = m => {
     const sp = m.spareParts || [];
-    const hit = sp.find(x => mlSpareOwner(x.name, gp2) === p.key);
-    if (hit && hit.name) return hit.name;
+    const hit = sp.find(x => mlSpareOwner(mlSpName(x), gp2) === p.key);
+    if (hit && mlSpName(hit)) return mlSpName(hit);
     // 该次检修只涉及这一个重点零件时才兜底取第一个备件；修了多个零件不猜
-    if (gp2.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && sp[0].name) return sp[0].name;
+    if (gp2.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && mlSpName(sp[0])) return mlSpName(sp[0]);
     return '未登记备件';
   };
   const rows = asc.map((m, i) => {
@@ -6550,10 +6562,10 @@ function mlbCheckvalveBrandStats(allStats) {
     const list = (s.parts.checkvalve || {}).records || [];   // 已按日期倒序（最新在前）
     list.forEach((m, i) => {
       const sp = m.spareParts || [];
-      const hit = sp.find(x => mlSpareOwner(x.name, gParts) === 'checkvalve');
+      const hit = sp.find(x => mlSpareOwner(mlSpName(x), gParts) === 'checkvalve');
       // 名称没匹配上时：仅当该次只修了单向阀这一个重点零件才把备件归它，否则不猜
-      const solo = !hit && gParts.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && sp[0].name;
-      const name = (hit && hit.name) ? hit.name.trim() : (solo ? sp[0].name.trim() : '未登记厂家/规格');
+      const solo = !hit && gParts.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && mlSpName(sp[0]);
+      const name = (hit && mlSpName(hit)) ? mlSpName(hit).trim() : (solo ? mlSpName(sp[0]).trim() : '未登记厂家/规格');
       const next = i > 0 ? list[i - 1] : null;   // 时间上更晚的一次更换
       const days = next ? _mlDaysBetween(next.repairDate, m.repairDate) : _mlDaysBetween(_today(), m.repairDate);
       const cur = map.get(name) || { name, lives: [], inuse: [] };
@@ -6646,7 +6658,7 @@ function filterMaintenanceLogs() {
 function aggregateMlSpareParts(records) {
   const map = new Map();
   records.forEach(m => (m.spareParts || []).forEach(p => {
-    const name = (p.name || '').trim();
+    const name = mlSpName(p).trim();
     if (!name) return;
     const key = name + '|' + (p.unit || '');
     const cur = map.get(key) || { name, unit: p.unit || '', qty: 0, times: 0 };
@@ -6665,7 +6677,7 @@ async function exportMlPartsXlsx() {
   const det = [['检修日期', '位号', '设备', '等级', '类别', '检修人', '备件名称', '数量', '单位']];
   recs.forEach(m => (m.spareParts || []).forEach(p => {
     det.push([m.repairDate || '', m.equipmentTag || '', m.equipmentName || '', eqClassOf(m.equipmentId) || '',
-      (ML_CATEGORY_MAP[m.category] || {}).label || '', m.repairerName || '', p.name || '', Number(p.qty) || 0, p.unit || '']);
+      (ML_CATEGORY_MAP[m.category] || {}).label || '', m.repairerName || '', mlSpName(p), Number(p.qty) || 0, p.unit || '']);
   }));
   await _exportSheets([['备件消耗汇总', sum], ['消耗明细', det]], '检修备件消耗_' + _today() + '.xlsx');
 }
@@ -6739,7 +6751,7 @@ function renderMaintenanceDetail(ml) {
   const parts = (ml.faultParts || []).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('') || '<span class="ml-muted">未填写</span>';
   const sp = ml.spareParts || [];
   const spHtml = sp.length
-    ? sp.map(p => '<div class="ml-sp-row"><span>' + escapeHtml(p.name || '') + '</span><span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + (p.ssId ? ' · 二级库' : '') + '</span></div>').join('')
+    ? sp.map(p => '<div class="ml-sp-row"><span>' + escapeHtml(mlSpName(p)) + '</span><span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + (p.ssId ? ' · 二级库' : '') + '</span></div>').join('')
     : '<div class="ml-muted">未填写</div>';
   const body = document.getElementById('ml-detail-body');
   body.innerHTML =
@@ -6797,6 +6809,8 @@ function openMlEdit(id) {
   if (!canEditMl(ml, getCurrentUser())) { showToast('无权编辑'); return; }
   mlBuffer = JSON.parse(JSON.stringify(ml));
   if (!mlBuffer.spareParts) mlBuffer.spareParts = [];
+  // 二级库备件名以二级库当前名称为准（编辑保存后旧快照即被刷新）
+  mlBuffer.spareParts.forEach(p => { p.name = mlSpName(p); });
   if (!mlBuffer.faultParts) mlBuffer.faultParts = [];
   document.getElementById('ml-edit-title').textContent = '编辑检修记录';
   eqPickTarget = 'ml';
@@ -6808,7 +6822,7 @@ function renderMlSpEditList() {
   const sp = (mlBuffer && mlBuffer.spareParts) || [];
   if (sp.length === 0) return '<div class="ml-muted" style="font-size:13px;padding:4px 0;">未添加</div>';
   return sp.map((p, i) =>
-    '<div class="ml-sp-edit-row"><span>' + escapeHtml(p.name || '') + ' <span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + '</span>' + (p.ssId ? ' · 二级库' : '') + '</span><span class="rm" onclick="removeMlPart(' + i + ')">×</span></div>'
+    '<div class="ml-sp-edit-row"><span>' + escapeHtml(mlSpName(p)) + ' <span class="ml-sp-qty">×' + (p.qty || 1) + escapeHtml(p.unit || '') + '</span>' + (p.ssId ? ' · 二级库' : '') + '</span><span class="rm" onclick="removeMlPart(' + i + ')">×</span></div>'
   ).join('');
 }
 function refreshMlSpList() {

@@ -5,6 +5,12 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **检修记录备件名跟随二级库改名（去掉快照僵名）**（2026-08-08，用户反馈"检修记录里这个备件名字我后面改过一次，但检修记录还是旧名字，重点备件统计也分开统计了"——单向阀组件 260131 → 单向阀组件 （达索）260131）：
+   - **根因**：登记检修时 `addStockPart` 把二级库条目的 `name` **整体快照**写进 `maintenancelogs.spareParts[]`（`{name,qty,unit,ssId,materialCode}`），二级库后续改名不回写老记录 → 详情页显旧名；而**所有统计都按名字聚合**（`aggregateMlSpareParts` 用 name+unit 做 key、`mlbCheckvalveBrandStats` 用备件名当"厂家/规格"、`mlSpareOwner` 按名字关键词判归属）→ 同一种备件被拆成新旧两行。
+   - **改法**：新增 `mlSpName(p)`（定义在 `mlSpareOwner` 下方）——**有 `ssId` 就实时查 `secondStockCache` 取当前名称**，查不到（条目已删）或手填备件（无 ssId）回退快照 `p.name`。7 处调用点全换：检修详情备件行、编辑页备件清单、`aggregateMlSpareParts`（汇总卡+导出汇总页）、导出明细页、零件更换时间线品牌 chip、`renderMlPartLifeChart.brandOf`、`mlbCheckvalveBrandStats`，以及 3 处 `mlSpareOwner(x.name,…)` → `mlSpareOwner(mlSpName(x),…)`。
+   - **自愈**：`openMlEdit` 深拷贝后加一行 `mlBuffer.spareParts.forEach(p => p.name = mlSpName(p))`——任何一条老记录只要编辑保存一次，云端快照就刷成现名（数量没变则账本投影零变动）。**不做数据迁移**：显示/统计已全部走现名，存量快照留着当"二级库条目被删"时的兜底。
+   - **未覆盖**：手填备件（无 ssId）改名仍需进记录编辑；`secondstockhistory` 账本笔本来就是按 itemId 查现名，不受影响。
+   - **验证**：esprima parseModule PASS、文件 1.16MB、控制台 0 报错；preview 切 hpal 拉云端真实数据（41 条检修记录）实测——306B 7-08 那条详情显示「单向阀组件 （达索）260131 ×6套 · 二级库」（改前是旧名）；备件消耗汇总合并为一行 `24套 / 4次`（改前新旧名两行）；看板「单向阀 厂家/规格 寿命对比」只剩一行「平均寿命 10 天 · 1 次换下 · 在用 3 个」。
 1. **中和车间点检全面上线：14 个 zh_ 模板 + 210 台开点检（v0.21）**（2026-08-08，用户提供中和车间《点检表20260617.xlsx》（17 个 sheet）并拍板"不用确认，直接全部按他们的点检表来"；云端已写入待用户线上验证后 push）：
    - **来源解析**：17 个 sheet 逐张转录——离心泵 / 无油螺杆·微油螺杆·离心式空压机 / 浓密机搅拌（=中心传动驱动减速机）/ 稀释装置搅拌 / 熟化槽搅拌 / 205污水坑泵 / 污水坑搅拌 / 205循环浸出.预中和及除铁铝搅拌 / 循环浆给料槽搅拌 / 混合槽搅拌 / 石灰石浆贮槽搅拌 / 小砾石浆液贮槽搅拌 / 高压酸浸冷却塔 / 设备冷却塔 / 螺杆泵。结构合并：循环浆给料槽=混合槽（水封版）、石灰石浆=小砾石浆（敞口版）、两张冷却塔内容相同 → 各合并为一个模板。
    - **14 个新 v2 模板**（key 前缀 `zh_`，写入 SEED_INSPECTION_TEMPLATES + 云端 inspecttemplates（rev:2/v:2），模板总数 **32→46**；INSPECT_TPL_REV 恒 2——只加新 key 不改老模板内容，无需迁移 marker，preview 会话直接 setDoc）：`zh_thickener_ed` 浓密机·电驱（主电机/减速机两端×5 + 减速机油/齿轮/紧固件 + 提升油泵·提升装置(泄漏+振动3+油位+导轨螺栓) + 联轴器 + 扭矩传感器；振动限值 **8.0mm/s** 低转速版，31 项）、`zh_centrifugal_pump` 离心泵(24 项)、`zh_screw_pump` 螺杆泵(34)、`zh_pit_pump` 污水坑泵(带搅拌轴,24)、`zh_pit_agitator` 污水坑搅拌(31)、`zh_agitator_leach` 搅拌器·浸出中和除铁铝(**带润滑油泵+机封水封**,36)、`zh_agitator_seal` 水封版(32)、`zh_agitator_open` 敞口版(31)、`zh_agitator_dilution` 稀释装置(31)、`zh_agitator_aging` 熟化槽(26)、`zh_compressor_oilfree`(24)/`zh_compressor_oil`(29)/`zh_compressor_centrifugal`(31,一/二/三级压缩温度纯记录无限值)、`zh_cooling_fan` 凉水塔风机(振动 6.5/温度 80,15)。
