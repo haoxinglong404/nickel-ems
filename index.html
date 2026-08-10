@@ -5655,7 +5655,7 @@ async function confirmAddUser() {
   if (!canManageUsers(creator)) { showToast('无权限'); return; }
   if (!isAdmin(creator) && selectedRole === 'admin') { showToast('只有管理员能创建管理员'); return; }
   let plant = canPickPlant(creator) ? selectedUserPlant : userPlant(creator);
-  if (!['hpal','zh','all'].includes(plant)) plant = 'hpal';
+  if (!PLANTS[plant] && plant !== 'all') plant = 'hpal';
   try {
     await cloudSaveUser({ empno, name, role:selectedRole, plant, password:null, wechatMobile: wechatMobile || '', createdAt:Date.now() });
     hideSheet();
@@ -5692,7 +5692,7 @@ async function confirmEditUser(empno) {
     // admin 角色不允许通过编辑改动 role，但仍可改 wechatMobile
     const newRole = (user.role === 'admin') ? 'admin' : selectedRole;
     // 车间归属：管理员/经理可改，工程师/技术员保持原值
-    const newPlant = canPickPlant(currentUser) ? (['hpal','zh','all'].includes(selectedUserPlant) ? selectedUserPlant : userPlant(user)) : (user.plant || 'hpal');
+    const newPlant = canPickPlant(currentUser) ? ((PLANTS[selectedUserPlant] || selectedUserPlant === 'all') ? selectedUserPlant : userPlant(user)) : (user.plant || 'hpal');
     await cloudSaveUser({ ...user, role: newRole, plant: newPlant, wechatMobile });
     hideSheet();
     showToast('账号已更新');
