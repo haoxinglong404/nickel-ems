@@ -3393,6 +3393,7 @@ const USER_CACHE_KEY = 'ems_user_v01';
 const PLANTS = {
   hpal: { name: '高压酸浸车间', short: '高压酸浸', tag: '酸浸' },
   zh:   { name: '中和车间',     short: '中和',     tag: '中和' },
+  cp:   { name: '产品车间',     short: '产品',     tag: '产品' },
 };
 const currentPlant = (() => {
   try { const p = localStorage.getItem(PLANT_KEY); return PLANTS[p] ? p : 'hpal'; }
@@ -5364,7 +5365,7 @@ function rolePickerHtml(sel, allowAdmin) {
     `<div class="role-opt ${sel===r?'selected':''}" data-role="${r}" onclick="pickRole('${r}')">${ROLES[r].label}</div>`).join('');
 }
 function plantPickerHtml(sel) {
-  const opts = [['hpal', PLANTS.hpal.name], ['zh', PLANTS.zh.name], ['all', '全部车间']];
+  const opts = [...Object.keys(PLANTS).map(k => [k, PLANTS[k].name]), ['all', '全部车间']];
   return opts.map(([k, l]) =>
     `<div class="role-opt ${sel===k?'selected':''}" data-plant="${k}" onclick="pickUserPlant('${k}')">${l}</div>`).join('');
 }
