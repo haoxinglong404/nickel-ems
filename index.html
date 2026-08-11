@@ -3406,6 +3406,79 @@ function switchPlant(p) {
   location.reload();
 }
 
+/* ========== 按车间订阅（2026-08-11 读取量优化第二刀）==========
+   equipments(1054) 每次开 App 都要付、lubepoints(1818) 每次进润滑模块都要付，是剩下两个
+   最大的固定开销。改成服务端 where('plant','==',currentPlant) 过滤后：
+     equipments  1054 → 酸浸 422 / 中和 305 / 产品 327
+     lubepoints  1818 → 酸浸 891 / 中和 486 / 产品 441
+   拦路的是：**Firestore 查不了"某字段不存在"**，而酸浸老数据按当年约定没写 plant 字段
+   （docPlant() 靠 `|| 'hpal'` 兜底）。所以必须先跑一次性迁移把这个隐含缺省写成显式字段。
+   ⚠️ 这与 CLAUDE.md 原来"老数据勿补写 plant"的约定相反，是用户 2026-08-11 明确拍板的。
+   语义完全等价：补写的值就是 docPlant() 现在返回的值，任何一条记录的归属都不会变。 */
+const PLANT_BACKFILL_MARKER = 'plant_backfill_v24_20260811';
+const PLANT_FILTER_COLS = ['equipments', 'lubepoints'];
+let plantFilterReady = false;   // true = 云端每条都有 plant，可以用服务端过滤
+
+// 订阅用：补写完成就走服务端过滤，否则退回整集合（显示结果一样，只是多花读取）
+function plantQuery(colName) {
+  const col = collection(db, colName);
+  return plantFilterReady ? query(col, where('plant', '==', currentPlant)) : col;
+}
+
+async function backfillPlantIfNeeded() {
+  const markerRef = doc(db, 'meta', PLANT_BACKFILL_MARKER);
+  try {
+    const mkr = await getDoc(markerRef);
+    if (mkr.exists()) { plantFilterReady = true; return; }
+  } catch (e) {
+    console.error('[Plant] 检查补写标记失败，本次退回整集合订阅', e);
+    return;
+  }
+  // 本地/预览不写生产云端（沿用 2026-07-05 模板误升级事故后的守卫）；
+  // 但上面的标记检查照常 —— 生产已补写过的话，预览也能享受服务端过滤。
+  if (PREVIEW_MODE || /^(localhost|127\.0\.0\.1|)$/.test(location.hostname)) {
+    console.log('[Plant] 本地/预览模式跳过补写，本次用整集合订阅');
+    return;
+  }
+  setCloudStatus('syncing', '标注车间归属（一次性）...');
+  try {
+    const stats = {};
+    for (const colName of PLANT_FILTER_COLS) {
+      const snap = await getDocs(collection(db, colName));
+      const missing = snap.docs.filter(d => !(d.data() || {}).plant);
+      for (let i = 0; i < missing.length; i += 400) {
+        const batch = writeBatch(db);
+        missing.slice(i, i + 400).forEach(d => {
+          // 只补 plant，不动 updatedAt —— 这是技术性补写，不该让 422 台设备看起来被人改过
+          batch.set(doc(db, colName, d.id), { plant: 'hpal' }, { merge: true });
+        });
+        await batch.commit();
+      }
+      // 回读核验用的分车间计数（补写后的最终归属）
+      const counts = {};
+      snap.docs.forEach(d => {
+        const p = ((d.data() || {}).plant) || 'hpal';
+        counts[p] = (counts[p] || 0) + 1;
+      });
+      stats[colName] = { total: snap.size, filled: missing.length, byPlant: counts };
+      console.log(`[Plant] ${colName}: 共 ${snap.size} 条，补写 ${missing.length} 条 →`, counts);
+    }
+    await setDoc(markerRef, {
+      id: PLANT_BACKFILL_MARKER,
+      appliedAt: Date.now(),
+      description: '给 equipments / lubepoints 里缺 plant 字段的老数据补 plant:"hpal"，'
+                 + '使订阅能用服务端 where(plant==) 过滤（读取量优化）。语义等价于 docPlant() 的缺省兜底。',
+      stats,
+    });
+    plantFilterReady = true;
+    console.log('[Plant] 补写完成，之后按车间订阅');
+  } catch (e) {
+    // 失败不阻塞启动：plantFilterReady 保持 false → 退回整集合订阅，显示结果不受影响，
+    // 且标记未写入，下次启动会重跑（只处理仍缺字段的，幂等）
+    console.error('[Plant] 补写失败，本次退回整集合订阅（下次启动重试）', e);
+  }
+}
+
 /* ========== 巡检模板 (2026-07-04 v2 数值点检) ==========
    v2 模板：v:2 + groups[{g:部件, pts:[{p:测点, ms:[指标]}]}]，指标 t:'num'(填数值,自动判超限)/'chk'(正常/异常)
    源头：纸质《设备日常点检记录表》(机修) 逐张转录 + 6 类自设计(2026-07-04 用户已审)
@@ -4030,7 +4103,9 @@ if (PREVIEW_MODE) {
 // 订阅设备集合
 function subscribeEquipments() {
   if (eqUnsub) eqUnsub();
-  eqUnsub = onSnapshot(collection(db, 'equipments'), (snap) => {
+  // 2026-08-11：补写完 plant 后走服务端按车间过滤（1054 → 422/305/327）。
+  // 下面的 .filter(inPlant) 保留不动 —— 补写未完成时退回整集合订阅，靠它兜底。
+  eqUnsub = onSnapshot(plantQuery('equipments'), (snap) => {
     eqCache = applyPreviewOverlay(snap.docs.map(d => d.data()).filter(inPlant));
     // 自动刷新设备列表
     const eqModule = document.querySelector('.module[data-module="equipment"]');
@@ -5912,7 +5987,8 @@ async function cloudSaveLubeHistory(record) {
 
 function subscribeLubePoints() {
   if (lubePointsUnsub) lubePointsUnsub();
-  lubePointsUnsub = onSnapshot(collection(db, 'lubepoints'), (snap) => {
+  // 2026-08-11：同 equipments，按车间服务端过滤（1818 → 891/486/441）
+  lubePointsUnsub = onSnapshot(plantQuery('lubepoints'), (snap) => {
     lubePointsCache = snap.docs.map(d => d.data()).filter(inPlant);
     // 自动刷新润滑 Tab
     const lubeMod = document.querySelector('.module[data-module="lube"]');
@@ -11345,8 +11421,13 @@ async function init() {
     // 2026-08-07 先开实时订阅再跑种子/迁移检查：订阅开了本机 IndexedDB 缓存立刻出数据，
     // 消除切换车间/刷新后约 2 秒的"数据空白"（原来要等下面十来个云端往返跑完才订阅）。
     // 种子/迁移函数全部幂等且只查云端真实集合，与订阅先后无关。
+    // 按车间订阅的前置条件：确认云端每条 equipments/lubepoints 都有 plant 字段
+    // （稳态下只是 1 次 marker getDoc；首次部署后的第一个客户端会跑补写）。
+    // 必须在订阅之前 await —— 否则 hpal 用户会先用 where(plant=='hpal') 查到空列表。
+    await backfillPlantIfNeeded();
+
     // 2026-08-11 读取量优化：只常驻这两个（登录要 users、默认落地页「设备」要 equipments，
-    // 合计 ≈1070 读）。其余 9 个集合改为进对应模块时才订阅，见 MODULE_SUBS / ensureSubs。
+    // 按车间过滤后合计 ≈435/318/340 读）。其余 9 个集合进对应模块时才订阅，见 MODULE_SUBS。
     ensureSubs('users', 'equipments');
 
     // 首次启动：如果云端为空则上传种子数据
