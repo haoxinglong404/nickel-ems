@@ -3306,9 +3306,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
    ============================================================ */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
-  writeBatch, onSnapshot, serverTimestamp, enableIndexedDbPersistence,
-  query, where
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  writeBatch, onSnapshot, serverTimestamp,
+  query, where, limit
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import {
   getAuth, signInAnonymously, onAuthStateChanged
@@ -3325,7 +3326,12 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+// 2026-08-11 读取量优化：本地持久化缓存改用新版 API（原 enableIndexedDbPersistence 已弃用，
+// 且多开标签页时会直接失败降级为纯在线）。persistentMultipleTabManager 支持多标签页共享缓存。
+// 作用：断网可用 + 30 分钟内重复刷新几乎不产生云端读取（超过 30 分钟重连仍按新查询计费）。
+const db = initializeFirestore(firebaseApp, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
 const auth = getAuth(firebaseApp);
 
 // 匿名认证：所有 Firestore 读写需通过 Firebase Auth。init() 会先 await authReady
@@ -3340,15 +3346,6 @@ const authReady = signInAnonymously(auth)
     if (typeof setCloudStatus === 'function') setCloudStatus('error', '认证失败：' + err.message);
     throw err;
   });
-
-// 启用离线持久化（断网也能用，恢复网络自动同步）
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    console.warn('[Firebase] 离线持久化失败：多个标签页已打开');
-  } else if (err.code === 'unimplemented') {
-    console.warn('[Firebase] 浏览器不支持离线持久化');
-  }
-});
 
 /* ========== 云端状态指示 ========== */
 let cloudStatus = 'connecting';  // connecting / online / syncing / offline / error
@@ -4552,16 +4549,16 @@ async function addAreaLubePointsV8IfNeeded() {
 async function seedIfEmpty() {
   setCloudStatus('syncing', '检查云端数据...');
 
-  // 检查用户集合
-  const usersSnap = await getDocs(collection(db, 'users'));
+  // 检查用户集合（2026-08-11：limit(1) —— 只需知道空不空，原来整集合拉下来纯属白读）
+  const usersSnap = await getDocs(query(collection(db, 'users'), limit(1)));
   if (usersSnap.empty) {
     console.log('[Seed] 云端 users 为空，上传管理员账号');
     const adminUser = { empno:'6725102247', name:'郝行龙', role:'admin', password:'15086370152hxl', createdAt: Date.now() };
     await setDoc(doc(db, 'users', adminUser.empno), adminUser);
   }
 
-  // 检查设备集合
-  const eqSnap = await getDocs(collection(db, 'equipments'));
+  // 检查设备集合（2026-08-11：limit(1)，原来每次启动白读 1054 次）
+  const eqSnap = await getDocs(query(collection(db, 'equipments'), limit(1)));
   if (eqSnap.empty) {
     console.log('[Seed] 云端 equipments 为空，上传 ' + SEED_EQUIPMENTS.length + ' 台设备');
     setCloudStatus('syncing', '首次上传设备数据...');
@@ -4866,9 +4863,77 @@ function formatFullTime(ts) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
+/* ========== 按需订阅调度（2026-08-11 Firebase 读取量优化）==========
+   原来 init() 一次性开 11 个整集合 onSnapshot ≈6400 次读，加上 4 处种子判空的整集合
+   getDocs ≈3200 次，一次冷启动约 9600 读 —— 免费额度(5 万/天)全天只够开 5 次，
+   实测 24 小时读到 21 万直接爆额度。
+   改为：常驻只订 users + equipments(≈1070，登录与默认落地页「设备」必需)，
+   其余 9 个集合进到对应模块时才订阅，且全程只订一次（subStarted 去重）。
+   典型一次使用(登录→做点检→关掉)从 ≈6400 降到 ≈1700。
+   代价：第一次点进润滑/二级库等模块会多转半秒 —— 各 subscribeX 的回调里本来就有
+   "当前模块 active 就重渲染"的逻辑，数据到位会自动补画，无需额外处理。 */
+const SUB_FNS = {
+  users:              subscribeUsers,
+  equipments:         subscribeEquipments,
+  maintenancelogs:    subscribeMaintenance,
+  todos:              subscribeTodos,
+  lubepoints:         subscribeLubePoints,
+  lubehistory:        subscribeLubeHistory,
+  inspecttemplates:   subscribeInspectTemplates,
+  inspecthistory:     subscribeInspectHistory,
+  inspectmonthly:     subscribeInspectMonthly,
+  secondstock:        subscribeSecondStock,
+  secondstockhistory: subscribeSecondStockHistory,
+};
+const subStarted = new Set();
+function ensureSubs(...names) {
+  names.forEach(n => {
+    if (subStarted.has(n)) return;
+    const fn = SUB_FNS[n];
+    if (typeof fn !== 'function') { console.warn('[Sub] 未知集合 ' + n); return; }
+    subStarted.add(n);
+    try { fn(); } catch (e) { subStarted.delete(n); console.error('[Sub] 订阅启动失败 ' + n, e); }
+  });
+}
+
+// 检修侧必须连二级库台账(备件现名 mlSpName)和账本(重写投影 buildMlStockPlan/mlStockLedger)
+// 一起订 —— 账本缺了会把旧出库笔算漏、保存检修记录时库存扣错，两者不可拆。
+const SUBS_ML     = ['maintenancelogs', 'todos', 'secondstock', 'secondstockhistory'];
+const SUBS_INSPECT= ['inspecttemplates', 'inspectmonthly', 'inspecthistory'];
+const SUBS_LUBE   = ['lubepoints', 'lubehistory'];
+const SUBS_PARTS  = ['secondstock', 'secondstockhistory'];
+const MODULE_SUBS = {
+  board:                ['maintenancelogs'],
+  maintenance:          SUBS_ML,
+  'maintenance-create': SUBS_ML,
+  'maintenance-detail': SUBS_ML,
+  'maintenance-keyeq':  SUBS_ML,
+  'maintenance-eqlog':  SUBS_ML,
+  'todo-detail':        ['todos'],
+  'todo-edit':          ['todos'],
+  inspect:              SUBS_INSPECT,
+  'inspect-detail':     SUBS_INSPECT,
+  'inspect-trend':      SUBS_INSPECT,
+  lube:                 SUBS_LUBE,
+  'lube-detail':        SUBS_LUBE,
+  'lube-execute':       SUBS_LUBE,
+  'lube-history':       SUBS_LUBE,
+  parts:                SUBS_PARTS,
+  'parts-detail':       SUBS_PARTS,
+  'parts-edit':         SUBS_PARTS,
+  'parts-history':      SUBS_PARTS,
+  'parts-txn':          SUBS_PARTS,
+  // equipment / equipment-edit / profile / users 只用常驻的 equipments + users；
+  // equipment-detail 的「相关记录」tab 点开时才另订 maintenancelogs（见下方 switchDetailTab 包装）。
+  // 注：详情页那个「润滑点」tab 的增强代码（enhanceDeviceDetailTabs IIFE）早已是死代码
+  //     —— 被后面的 window.openDetail = openDetail 覆盖掉，tab 根本没被创建，故不需要订润滑集合。
+};
+
 /* ========== 模块切换 ========== */
 const moduleScrollMap = new Map();
 function switchModule(name) {
+  // 进模块先把该模块要用的集合订上（只订一次；数据到位后各订阅回调会自动重渲染）
+  ensureSubs(...(MODULE_SUBS[name] || []));
   // 保存当前 module 的滚动位置（详情页返回列表时恢复）
   const _content = document.querySelector('.content');
   const _prevActive = document.querySelector('.module.active');
@@ -5867,11 +5932,75 @@ function subscribeLubePoints() {
   });
 }
 
+/* ---- 润滑历史窗口订阅（2026-08-11 Firebase 读取量优化）----
+   lubehistory 是只增不减的流水账（现 1820 笔，越用越贵），整集合订阅是启动读取量第一大头。
+   改为默认只订最近 90 天；需要更早数据的三个地方按需补：
+     · 润滑点详情 → loadPointLubeHistory() 按 lubePointId 定向查（周期 330 天的点 90 天内
+       可能一笔没有，必须补；定向查只花几次读，比全量便宜得多）
+     · 历史页选「全部」/ 导出五定表 / 导出润滑明细 → ensureFullLubeHistory() 换成整集合订阅
+   lubeHistoryCache 由「窗口订阅结果」+「定向补载结果」按 id 去重合并而成，所有既有读取点不变。 */
+const LUBE_HIST_WINDOW_DAYS = 90;
+let lubeHistFull = false;            // 已升级为全量订阅
+let lubeHistWindowDocs = [];         // 窗口订阅拿到的记录
+const lubeHistExtra = new Map();     // 定向补载的记录（id → doc）
+let lubeHistFullPending = null;      // ensureFullLubeHistory 的在途 promise
+let lubeHistFullResolve = null;
+
+function rebuildLubeHistoryCache() {
+  const byId = new Map();
+  lubeHistWindowDocs.forEach(h => { if (h && h.id) byId.set(h.id, h); });
+  lubeHistExtra.forEach((h, id) => { if (!byId.has(id)) byId.set(id, h); });
+  lubeHistoryCache = Array.from(byId.values()).sort((a, b) => (b.lubeAt || 0) - (a.lubeAt || 0));
+}
+
+// 换成整集合订阅并等首批数据到位（导出五定表/明细、历史页选「全部」时调用）
+function ensureFullLubeHistory() {
+  if (lubeHistFull) return Promise.resolve();
+  if (lubeHistFullPending) return lubeHistFullPending;
+  lubeHistFullPending = new Promise(res => { lubeHistFullResolve = res; });
+  lubeHistFull = true;
+  subStarted.add('lubehistory');   // 防止随后的 ensureSubs 再订一次把全量降回窗口
+  subscribeLubeHistory();
+  return lubeHistFullPending;
+}
+
+// 把某个润滑点的全部历史定向拉下来（含 90 天窗口外的），合并进缓存
+async function loadPointLubeHistory(lpId) {
+  if (lubeHistFull || !lpId) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'lubehistory'), where('lubePointId', '==', lpId)));
+    let added = false;
+    snap.docs.forEach(d => {
+      const h = d.data();
+      const hid = h.id || d.id;
+      if (!inPlant(h) || lubeHistExtra.has(hid)) return;
+      lubeHistExtra.set(hid, { ...h, id: hid });
+      added = true;
+    });
+    if (!added) return;
+    rebuildLubeHistoryCache();
+    const mod = document.querySelector('.module[data-module="lube-detail"]');
+    if (mod && mod.classList.contains('active') && currentLubePointId === lpId) {
+      const lp = lubePointsCache.find(p => p.id === lpId);
+      if (lp) renderLubeDetail(lp);
+    }
+  } catch (e) {
+    console.warn('[润滑] 定向拉取点位历史失败（该点只显示近 90 天记录）', e);
+  }
+}
+
 function subscribeLubeHistory() {
   if (lubeHistoryUnsub) lubeHistoryUnsub();
-  lubeHistoryUnsub = onSnapshot(collection(db, 'lubehistory'), (snap) => {
-    lubeHistoryCache = snap.docs.map(d => d.data()).filter(inPlant);
-    lubeHistoryCache.sort((a, b) => (b.lubeAt || 0) - (a.lubeAt || 0));
+  const col = collection(db, 'lubehistory');
+  const qy = lubeHistFull
+    ? col
+    : query(col, where('lubeAt', '>=', Date.now() - LUBE_HIST_WINDOW_DAYS * 24 * 3600 * 1000));
+  lubeHistoryUnsub = onSnapshot(qy, (snap) => {
+    lubeHistWindowDocs = snap.docs.map(d => d.data()).filter(inPlant);
+    rebuildLubeHistoryCache();
+    if (lubeHistFull && lubeHistFullResolve) {
+      lubeHistFullResolve(); lubeHistFullResolve = null; lubeHistFullPending = null;
+    }
 
     // 刷新润滑点详情页（如果在看某个点的历史）
     if (currentLubePointId) {
@@ -5892,7 +6021,8 @@ function subscribeLubeHistory() {
 // 首次启动：如果 lubepoints 为空，上传 511 个种子数据
 async function seedLubeIfEmpty() {
   setCloudStatus('syncing', '检查润滑数据...');
-  const snap = await getDocs(collection(db, 'lubepoints'));
+  // 2026-08-11：limit(1)，原来每次启动白读 1818 次
+  const snap = await getDocs(query(collection(db, 'lubepoints'), limit(1)));
   if (snap.empty) {
     console.log('[Seed] 云端 lubepoints 为空，上传 ' + SEED_LUBE_POINTS.length + ' 个润滑点');
     setCloudStatus('syncing', '首次上传润滑点...');
@@ -7263,8 +7393,11 @@ function renderDeviceRecords(eqId) {
 const _origSwitchDetailTab = switchDetailTab;
 switchDetailTab = function(tab) {
   _origSwitchDetailTab(tab);
-  if (tab === 'records' && currentEqId) {
-    renderDeviceRecords(currentEqId);
+  if (tab === 'records') {
+    // 2026-08-11 按需订阅：设备详情平时只用常驻的 equipments，点开「相关记录」才订检修记录
+    // （subscribeMaintenance 回调里已有"停在 records tab 上就重画"的分支，数据到位自动补画）
+    ensureSubs('maintenancelogs');
+    if (currentEqId) renderDeviceRecords(currentEqId);
   }
 };
 
@@ -8165,6 +8298,8 @@ function openLubeDetail(id, from) {
   if (backText) backText.textContent = lubeDetailFrom === 'history' ? '返回润滑历史' : '返回润滑列表';
   renderLubeDetail(lp);
   switchModule('lube-detail');
+  // 该点 90 天窗口外的老记录定向补载（周期长的点窗口内可能一笔都没有）· 2026-08-11
+  loadPointLubeHistory(id);
 }
 
 function renderLubeDetail(lp) {
@@ -8424,7 +8559,15 @@ function backFromLubeHistory() {
 }
 
 function setLubeHistKind(k) { lubeHistKind = k; renderLubeHistoryPage(); }
-function setLubeHistRange(r) { lubeHistRange = r; renderLubeHistoryPage(); }
+async function setLubeHistRange(r) {
+  lubeHistRange = r;
+  // 「全部」超出 90 天订阅窗口 → 先把全量历史拉下来（只在第一次点时花这笔读取）· 2026-08-11
+  if (r === 'all' && !lubeHistFull) {
+    showToast('正在加载全部历史…');
+    await ensureFullLubeHistory();
+  }
+  renderLubeHistoryPage();
+}
 
 function lubeHistRangeStart() {
   if (lubeHistRange === 'all') return 0;
@@ -9689,7 +9832,8 @@ function subscribeSecondStockHistory() {
 
 async function seedSecondStockIfEmpty() {
   try {
-    const snap = await getDocs(collection(db, 'secondstock'));
+    // 2026-08-11：limit(1)，原来每次启动把整个二级库台账白读一遍
+    const snap = await getDocs(query(collection(db, 'secondstock'), limit(1)));
     if (!snap.empty) return;
     if (!SEED_SECONDSTOCK || SEED_SECONDSTOCK.length === 0) return;
     console.log('[Seed] 云端 secondstock 为空，上传 ' + SEED_SECONDSTOCK.length + ' 条');
@@ -10789,6 +10933,8 @@ async function exportEquipmentsXlsx() {
 }
 
 async function exportLubeXlsx() {
+  // 明细表要导出全部执行记录，先把 90 天窗口外的补齐 · 2026-08-11
+  if (!lubeHistFull) { showToast('正在加载全部润滑历史…'); await ensureFullLubeHistory(); }
   const points = (lubePointsCache || []).slice();
   const history = (lubeHistoryCache || []).slice();
   if (!points.length && !history.length) { showToast('暂无润滑数据'); return; }
@@ -10954,6 +11100,8 @@ function buildLubeWudingSheets() {
 
 async function exportLubeWudingXlsx() {
   if (!(lubePointsCache || []).length) { showToast('暂无润滑点数据'); return; }
+  // 五定表按点位列出历次润滑（第1次/第2次…），必须用全量历史，不能只有近 90 天 · 2026-08-11
+  if (!lubeHistFull) { showToast('正在加载全部润滑历史…'); await ensureFullLubeHistory(); }
   const btns = document.querySelectorAll('.export-btn');
   btns.forEach(b => b.disabled = true);
   setCloudStatus('syncing', '生成 Excel...');
@@ -11197,17 +11345,9 @@ async function init() {
     // 2026-08-07 先开实时订阅再跑种子/迁移检查：订阅开了本机 IndexedDB 缓存立刻出数据，
     // 消除切换车间/刷新后约 2 秒的"数据空白"（原来要等下面十来个云端往返跑完才订阅）。
     // 种子/迁移函数全部幂等且只查云端真实集合，与订阅先后无关。
-    subscribeUsers();
-    subscribeEquipments();
-    subscribeMaintenance();
-    subscribeTodos();
-    subscribeLubePoints();
-    subscribeLubeHistory();
-    subscribeInspectTemplates();
-    subscribeInspectHistory();
-    subscribeInspectMonthly();
-    subscribeSecondStock();
-    subscribeSecondStockHistory();
+    // 2026-08-11 读取量优化：只常驻这两个（登录要 users、默认落地页「设备」要 equipments，
+    // 合计 ≈1070 读）。其余 9 个集合改为进对应模块时才订阅，见 MODULE_SUBS / ensureSubs。
+    ensureSubs('users', 'equipments');
 
     // 首次启动：如果云端为空则上传种子数据
     await seedIfEmpty();
