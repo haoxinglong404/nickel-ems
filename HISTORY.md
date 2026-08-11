@@ -5,6 +5,68 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **Firebase 读取量优化 v0.24：一次启动 ≈9600 读 → ≈1100 读**（2026-08-11，纯代码改动·无云端数据/rules/迁移变更）
+
+   **背景**：08-11 免费额度爆掉（24h 读 21 万 vs Spark 上限 5 万/天）。用户要求"系统讲一遍到底怎么回事"，讲清后拍板把四项优化全做了。
+
+   **⚠️ 先纠正两条上一轮记错的事实**：
+   - **免费额度重置时间是「美国太平洋时间零点」，不是 UTC 零点** —— 换算成印尼中苏拉威西（WITA, UTC+8）是**下午 3 点**（冬令时下午 4 点），不是早上 8 点。上午爆额度要熬到下午三点才恢复。（依据：Firebase「Usage and limits」文档 "Free tier amounts are applied daily and reset at midnight Pacific time"。）
+   - **`persistentLocalCache` 不是万能钥匙** —— 官方文档明确：开了本地持久化后，**监听断开超过 30 分钟再重连，按全新查询重新计费**。车间一天开三五次、每次间隔几小时，每次都超过 30 分钟 → 照样全额计费。所以上一轮"第二次起接近 0 读、收益最大先做"的判断是错的，它只在「同一个人短时间内反复刷新」和「离线可用」上有价值，**必须靠减少订阅文档数才是主力**。
+
+   **② 新查出来的大头：4 处种子判空在做整集合扫描**（上一轮只算了订阅的 6400，漏了这块）
+   - `seedIfEmpty()` 里 `getDocs(collection(db,'users'))`（13）+ `getDocs(collection(db,'equipments'))`（**1054**）
+   - `seedLubeIfEmpty()` 里 `getDocs(collection(db,'lubepoints'))`（**1818**）
+   - `seedSecondStockIfEmpty()` 里 `getDocs(collection(db,'secondstock'))`（约 300）
+   - 这 ≈3200 次读**纯属白花**：这些集合早有数据永远不空，而且订阅那边刚全量拉过一遍。
+   - 全改为 `getDocs(query(collection(db,'X'), limit(1)))` —— 1 次读就能判断空不空，种子逻辑行为完全不变。
+   - 另两处 `getDocs(collection(...))`（`fixEquipmentTagsV2IfNeeded` 的 equipments、`seedInspectionTemplatesIfEmpty` 的 inspecttemplates）都在 marker `getDoc` 之后，稳态下提前 return，不消耗，未改。
+
+   **③ 按需订阅（主力，省最多）**
+   - 新增 `SUB_FNS`（集合名 → subscribeX 函数）+ `subStarted` Set 去重 + `ensureSubs(...names)`，挂在 `switchModule` 第一行：`ensureSubs(...(MODULE_SUBS[name]||[]))`。
+   - `init()` 里原来那 11 行 `subscribeX()` 改成一行 `ensureSubs('users','equipments')` —— 常驻只留这两个（登录要 users、默认落地页「设备」要 equipments，合计 ≈1070 读）。
+   - `MODULE_SUBS` 映射（20 个模块；`equipment`/`equipment-edit`/`equipment-detail`/`profile`/`users` 五个只用常驻）：
+     - `board` → maintenancelogs
+     - `maintenance*`（5 个）→ maintenancelogs + todos + secondstock + secondstockhistory
+     - `todo-detail`/`todo-edit` → todos
+     - `inspect*`（3 个）→ inspecttemplates + inspectmonthly + inspecthistory
+     - `lube*`（4 个）→ lubepoints + lubehistory
+     - `parts*`（5 个）→ secondstock + secondstockhistory
+   - **为什么检修侧必须连二级库两个集合一起订**：`mlSpName()` 要 `secondStockCache` 取备件现名；`mlStockLedger()`/`buildMlStockPlan()` 要 `secondStockHistCache` 找该 mlId 的旧出库笔（"重写投影"式联动）。**账本缺了会把旧笔算漏 → 保存检修记录时库存扣错**，两者不可拆。
+   - 设备详情「相关记录」tab：在**真正生效的那个** `switchDetailTab` 包装（index.html 约 7394 行、`_origSwitchDetailTab` 那处）里加 `ensureSubs('maintenancelogs')`。
+   - **踩的坑：改错了地方（差点写成死代码）**。`switchDetailTab` 在文件里被包了两层：
+     1. 5222 行原始 `function switchDetailTab(tab)`
+     2. 7392 行 `switchDetailTab = function(tab){...}` —— **重新赋值了模块作用域绑定**，加了 records tab 联动（这层是活的）
+     3. 8758 行 `enhanceDeviceDetailTabs` IIFE 里 `window.switchDetailTab = function(tab){...}` —— 加了 lube tab 联动，**但只赋给 window**
+     4. 11196 行 `window.switchDetailTab = switchDetailTab;` —— 又把 window 覆盖回第 2 层
+     - 同理 8736 行 `window.openDetail = function(id){...}`（动态注入「润滑点」tab 和 panel）被 11189 行 `window.openDetail = openDetail;` 覆盖。
+     - **结论：整个 `enhanceDeviceDetailTabs` IIFE 是死代码，设备详情页的「润滑点」tab 根本没被创建过**（`renderDeviceLubePoints` 只剩 subscribeLubePoints 回调那一个理论调用点，且要求该 tab 已 active，实际到不了）。第一版改动写进了这个 IIFE，等于没写；已挪到第 2 层。**未去修复这个 tab**（用户没要求；且修好反而会让设备详情多花 3600 读）—— 留作待办。
+
+   **④ lubehistory 只订最近 90 天 + 三条按需补全通道**
+   - `lubehistory` 1820 笔、只增不减，是启动读取量第一大头。订阅改 `query(col, where('lubeAt','>=', now-90天))`。
+   - 缓存改成两段合并：`lubeHistWindowDocs`（窗口订阅）+ `lubeHistExtra`（Map，定向补载）→ `rebuildLubeHistoryCache()` 按 id 去重合并写回 `lubeHistoryCache`。**所有既有读取点（6 处）一行没动**。
+   - 三条补全通道：
+     - `loadPointLubeHistory(lpId)` —— `openLubeDetail` 里调用，`where('lubePointId','==',lpId)` 定向查该点全部历史。**必需**：周期 330 天的点 90 天窗口内可能一笔记录都没有，不补就显示"暂无润滑记录"。定向查只花几次读，比全量便宜得多。
+     - `ensureFullLubeHistory()` —— 换成整集合订阅并 await 首批数据。挂在：历史页选「全部」（`setLubeHistRange` 改 async）、`exportLubeXlsx`、`exportLubeWudingXlsx`。
+     - **五定表导出必须全量**：它按点位列"第1次/第2次…润滑"，只有 90 天会缺历史，这是交设备室的正式表，不能错。
+   - `ensureFullLubeHistory` 里加了 `subStarted.add('lubehistory')`，防止之后 `ensureSubs` 再订一次把全量降回窗口。
+   - **已知边界**：`where('lubeAt','>=')` 会排除掉缺 `lubeAt` 字段的文档。核查过两个写入路径（`openLubeExec` 8283 行、一键登记 8118 行）都必写 `lubeAt`，历次导入也都带；万一有漏网的，选「全部」或开点位详情时会被补回来。
+
+   **⑤ 没做的两项，以及为什么**（用户原话是"三点都做"，这两个是我判断不能做的，已当场说明）
+   - **`secondstockhistory` 不做时间窗口** —— `mlStockLedger()` 按 mlId 汇总该检修记录的全部旧出库笔、`buildMlStockPlan()` 靠 `filter(h=>h.mlId===mlId)` 找旧笔来删，`deleteSecondStockItem()` 也要按 itemId 找全部历史。**只留 90 天会让编辑一条老检修记录时算漏旧笔 → 库存扣错、账本留孤儿笔**，是数据完整性风险，收益（几百笔）远小于风险。
+   - **`maintenancelogs` 不做时间窗口** —— 重点设备看板的**零件寿命统计、超寿命预警、单向阀分厂家寿命对比**全依赖完整历史，砍掉就算错。且该集合本身只有百来条，没什么可省。
+
+   **⑥ 顺带：离线缓存 API 升级**
+   - 原 `enableIndexedDbPersistence(db)` 已被 Firebase 弃用，且**多开标签页时直接抛 `failed-precondition` 降级为纯在线**。
+   - 改为 `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })`，支持多标签页共享缓存。import 里删 `getFirestore`/`enableIndexedDbPersistence`，加 `initializeFirestore`/`persistentLocalCache`/`persistentMultipleTabManager`/`limit`。
+
+   **验证方式（本次容器里 node 可用，做了真运行时测试，不只是配平校验）**
+   - `node --check`（ES module 模式）解析整个 module 脚本 → 通过。
+   - **jsdom + Firebase 桩运行时测试**（脚本在 scratchpad，未入库）：把 import 换成桩对象、用 vm 在 jsdom 上下文里跑完整模块，断言：模块求值无异常；启动只订 `users`+`equipments`（2 个，原 11 个）；4 处种子判空都带 `limit(1)`；`switchModule('lube'/'inspect'/'parts'/'maintenance'/'board')` 各自新增的订阅集合与 `MODULE_SUBS` 完全一致；重复进模块不重复订阅；`lubehistory` 带 90 天 where；`inspectmonthly` 仍带 month in；选「全部」后换成整集合订阅（条件数 0）且切回不重订；关键 window 函数全为 function。**全部通过**。
+   - 静态检查：151 个内联事件处理器全部在 window 上（`escapeAttr`/`stopPropagation` 是模板生成期调用与 `event.` 前缀，非遗漏）；168 个 `getElementById` 的 id 只有 `panel-lube`/`previewBanner` 不在 HTML 里（都是动态创建，且前者属上面说的死代码，均为既有情况）；文件 1.12 MB → **1.13 MB**（+8.1 KB），正常。
+   - **注意：本容器 egress 屏蔽了 `www.gstatic.com`，无法真连 Firebase 做端到端验证**，需用户线上/preview 实测一遍。
+
+   **预期效果**：冷启动 ≈9600 → **≈1100 读**；典型一次使用（登录→做点检→关掉）≈9600 → **≈1700 读**。日读取量应从 21 万压到 1 万以内，免费额度够用，不必绑卡。
+
 1. **中和范围名补拆 20 台 + 产品点检范围收窄到车间 A/B 类表（66 台）+ Firebase 配额告急**（2026-08-11，纯云端数据·无代码/SEED 变更）：
 
    **① 中和 20 台"范围/列举写法"设备名补拆**（用户在点检 A 类列表看到 6 台同名「浸出渣CCD1-CCD6浓密机」而起）
