@@ -8921,8 +8921,11 @@ function renderInspectFilterRow() {
     const classes = {};  eqs.forEach(e => { if (e.abcClass) classes[e.abcClass] = (classes[e.abcClass] || 0) + 1; });
     let chtml = `<button class="eq-filter-btn${inspectClassFilter === '' ? ' active' : ''}" onclick="toggleInspectFilter('class','')">全部等级<span style="margin-left:4px;opacity:.6;font-size:11px;">${eqs.length}</span></button>`;
     ['A', 'B', 'C'].forEach(k => {
+      const n = classes[k] || 0;
+      // 该等级一台都没有就不显示（正被选中时仍保留，否则按钮消失后取消不掉筛选）
+      if (!n && inspectClassFilter !== k) return;
       const active = inspectClassFilter === k ? ' active' : '';
-      chtml += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('class','${k}')">${k} 类<span style="margin-left:4px;opacity:.6;font-size:11px;">${classes[k] || 0}</span></button>`;
+      chtml += `<button class="eq-filter-btn${active}" onclick="toggleInspectFilter('class','${k}')">${k} 类<span style="margin-left:4px;opacity:.6;font-size:11px;">${n}</span></button>`;
     });
     classRow.innerHTML = chtml;
   }
