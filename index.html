@@ -50,6 +50,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .login-error.active { display:block; }
 .btn-primary { width:100%; padding:15px; background:var(--ink); color:var(--paper); border:none; border-radius:12px; font-size:15px; font-weight:500; font-family:var(--font-sans); cursor:pointer; margin-top:28px; transition:background .2s; letter-spacing:.02em; }
 .btn-primary:active { background:var(--g-forest); }
+.btn-primary:disabled { background:var(--muted); cursor:default; }
 .login-footer { margin-top:auto; padding-top:28px; text-align:center; }
 .login-footer-text { font-family:var(--font-mono); font-size:10px; letter-spacing:.2em; color:var(--subtle); text-transform:uppercase; }
 
@@ -2845,7 +2846,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     </div>
     <div class="login-hint" id="hint-first"><strong>首次登录</strong>：该账号尚未设置密码，点击下方按钮可直接进入。进入系统后可在"我的 → 设置密码"中添加密码保护。</div>
     <div class="login-error" id="login-error">工号不存在或密码错误</div>
-    <button class="btn-primary" onclick="attemptLogin()">进入系统</button>
+    <button class="btn-primary" id="btn-login" type="button" onclick="attemptLogin()">进入系统</button>
   </form>
   <div class="login-footer"><div class="login-footer-text">hydrometallurgical · equipment · lifecycle</div></div>
 </div>
@@ -3339,17 +3340,56 @@ const db = initializeFirestore(firebaseApp, {
 const auth = getAuth(firebaseApp);
 
 // 匿名认证：所有 Firestore 读写需通过 Firebase Auth。init() 会先 await authReady
-// 之后再触发任何 cloudSave/onSnapshot/seed* 调用
-const authReady = signInAnonymously(auth)
-  .then(cred => {
-    console.log('[Auth] 匿名登录成功 uid=' + cred.user.uid);
-    return cred.user;
-  })
-  .catch(err => {
-    console.error('[Auth] 匿名登录失败', err);
-    if (typeof setCloudStatus === 'function') setCloudStatus('error', '认证失败：' + err.message);
-    throw err;
-  });
+// 之后再触发任何 cloudSave/onSnapshot/seed* 调用。
+// 2026-08-12 iOS Safari 登录失败排查：Safari 的 ITP 会把 7 天没访问过的站点存储
+// （含 Firebase 登录态所在的 IndexedDB）整个清掉，所以每次冷启动几乎都要重新握手；
+// 而登录按钮在页面一渲染出来就能点。用户手快（尤其用密码本自动填充，2 秒就点完）
+// 就会在认证到位前点「进入系统」——Firestore 拿不到 token 不会报错，而是把请求
+// 无限期挂着，表现就是「点了没反应」；规则拒绝时则报「网络异常」。
+// 所以认证状态必须能查（authUser）、能等（waitAuth）、能重试（ensureAuth）。
+let authUser = null;      // 匿名认证已完成的用户，null = 还没好
+let authPending = null;   // 正在进行中的匿名登录 Promise（防止并发重复发起）
+
+function ensureAuth() {
+  if (authUser) return Promise.resolve(authUser);
+  if (auth.currentUser) { authUser = auth.currentUser; return Promise.resolve(authUser); }
+  if (authPending) return authPending;
+  authPending = signInAnonymously(auth)
+    .then(cred => {
+      authUser = cred.user;
+      authPending = null;
+      console.log('[Auth] 匿名登录成功 uid=' + cred.user.uid);
+      return cred.user;
+    })
+    .catch(err => {
+      authPending = null;   // 置空 → 下次点登录会重新发起，不再是死局
+      console.error('[Auth] 匿名登录失败', err);
+      if (typeof setCloudStatus === 'function') setCloudStatus('error', '认证失败：' + err.message);
+      throw err;
+    });
+  return authPending;
+}
+
+// 给任意 Promise 套超时。Firestore 的 getDoc 自己没有超时，token 拿不到时会一直挂着，
+// 界面上就是个"点不动"的按钮 —— 宁可超时报错，也不要无声无息地卡住。
+function withTimeout(p, ms, code) {
+  let timer = null;
+  return Promise.race([
+    Promise.resolve(p).finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        const e = new Error('timeout'); e.code = code || 'timeout'; reject(e);
+      }, ms);
+    })
+  ]);
+}
+
+const authReady = ensureAuth();
+authReady.catch(() => {});   // init() 挂上 handler 之前先兜一下，避免 unhandledrejection
+
+// 从后台/前进后退缓存恢复时（iOS Safari 切走再切回来很常见）重新确认认证：
+// 首次握手失败过的话这里会重发一次，不必让用户手动刷新页面。
+window.addEventListener('pageshow', (e) => { if (e.persisted) ensureAuth().catch(() => {}); });
 
 /* ========== 云端状态指示 ========== */
 let cloudStatus = 'connecting';  // connecting / online / syncing / offline / error
@@ -4811,61 +4851,113 @@ const ICON_SVG = {
 };
 
 /* ========== 登录 ========== */
-async function onEmpnoInput() {
-  const empno = document.getElementById('input-empno').value.trim();
+let empnoQueryTimer = null;
+
+// 按账号资料切换「密码框 / 首次登录提示」的显隐
+function applyLoginFields(user) {
   const pwField = document.getElementById('pw-field');
   const hint = document.getElementById('hint-first');
-  document.getElementById('login-error').classList.remove('active');
-  if (!empno) { pwField.classList.remove('active'); hint.classList.remove('active'); return; }
+  if (user && user.password) { pwField.classList.add('active'); hint.classList.remove('active'); }
+  else if (user) { pwField.classList.remove('active'); hint.classList.add('active'); }
+  else { pwField.classList.remove('active'); hint.classList.remove('active'); }
+}
 
-  // 云端查询（不依赖订阅缓存，避免首次访问时 cache 为空）
-  try {
-    const snap = await getDoc(doc(db, 'users', empno));
-    if (snap.exists()) {
-      const user = snap.data();
-      if (user.password) { pwField.classList.add('active'); hint.classList.remove('active'); }
-      else { pwField.classList.remove('active'); hint.classList.add('active'); }
-    } else {
-      pwField.classList.remove('active'); hint.classList.remove('active');
+function onEmpnoInput() {
+  const empno = document.getElementById('input-empno').value.trim();
+  document.getElementById('login-error').classList.remove('active');
+  clearTimeout(empnoQueryTimer);
+  if (!empno) { applyLoginFields(null); return; }
+
+  // 先用订阅缓存给个即时反馈（首次访问时缓存为空，等下面云端结果覆盖）
+  applyLoginFields(findUser(empno));
+
+  // 云端确认：防抖 500ms + 认证就绪后才查。
+  // 原来每敲一位就发一次 getDoc（10 位工号 = 最多 10 次读），弱网下排队加剧超时，
+  // 也白烧读取额度；认证没好时更是必然失败，白等一场。
+  if (empno.length < 4) return;
+  empnoQueryTimer = setTimeout(async () => {
+    if (!authUser) return;   // 认证还没到位，交给「进入系统」那条路去等
+    try {
+      const snap = await withTimeout(getDoc(doc(db, 'users', empno)), 8000);
+      // 结果回来时输入框可能已经变了，丢弃过期结果
+      if (document.getElementById('input-empno').value.trim() !== empno) return;
+      applyLoginFields(snap.exists() ? snap.data() : null);
+    } catch (err) {
+      console.warn('[Login] 云端查询失败，保留本地缓存结果', err);
     }
-  } catch (err) {
-    console.warn('[Login] 云端查询失败，使用本地缓存', err);
-    const user = findUser(empno);
-    if (user && user.password) { pwField.classList.add('active'); hint.classList.remove('active'); }
-    else if (user && !user.password) { pwField.classList.remove('active'); hint.classList.add('active'); }
-    else { pwField.classList.remove('active'); hint.classList.remove('active'); }
-  }
+  }, 500);
+}
+
+// 登录失败文案：把「认证没到位 / 网络不通 / 工号真不存在」分清楚，
+// 并把错误码带出来 —— 工人截图发过来时一眼能看出是哪一类。
+function loginErrText(e) {
+  const code = (e && e.code) || '';
+  if (code === 'auth-timeout' || code === 'permission-denied' || code === 'unauthenticated' || code.indexOf('auth/') === 0)
+    return '正在连接服务器，请等几秒后再点一次（' + (code || 'auth') + '）';
+  if (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded')
+    return '网络不稳定，没连上服务器，请稍后重试（' + (code || 'network') + '）';
+  return '登录失败：' + (code || (e && e.message) || '未知错误') + '，请重试或联系管理员';
 }
 
 async function attemptLogin() {
   const empno = document.getElementById('input-empno').value.trim();
   const pw = document.getElementById('input-pw').value;
   const err = document.getElementById('login-error');
-  if (!empno) { err.textContent='请输入工号'; err.classList.add('active'); return; }
+  const btn = document.getElementById('btn-login');
+  const showErr = (msg) => { err.textContent = msg; err.classList.add('active'); };
+  if (!empno) { showErr('请输入工号'); return; }
+  if (btn && btn.disabled) return;   // 防连点
 
-  let user;
-  try {
-    const snap = await getDoc(doc(db, 'users', empno));
-    if (!snap.exists()) { err.textContent='工号不存在，请联系管理员'; err.classList.add('active'); return; }
-    user = snap.data();
-  } catch (e) {
-    // 云端失败时退回本地缓存
-    user = findUser(empno);
-    if (!user) { err.textContent='工号不存在或网络异常'; err.classList.add('active'); return; }
-  }
-
-  if (user.password && pw !== user.password) { err.textContent='密码错误'; err.classList.add('active'); return; }
   err.classList.remove('active');
-  localStorage.setItem(SESSION_KEY, empno);
-  // 登录后自动落到自己车间（all 账号留在当前车间）2026-08-07
-  const home = userPlant(user);
-  if (home !== 'all' && home !== currentPlant && PLANTS[home]) {
-    try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role, plant: user.plant || 'hpal' })); } catch (e) {}
-    try { localStorage.setItem(PLANT_KEY, home); } catch (e) {}
-    location.reload();
-    return;
+  if (btn) { btn.disabled = true; btn.textContent = '连接中…'; }
+  try {
+    // 1) 先等匿名认证到位。Firestore 拿不到 token 会把请求无限期挂着（＝按钮点不动），
+    //    所以这里显式地等 + 超时；认证之前失败过的话 ensureAuth 会重发一次。
+    let authErr = null;
+    try { await withTimeout(ensureAuth(), 15000, 'auth-timeout'); }
+    catch (e) { authErr = e; console.warn('[Login] 认证未就绪，仍尝试查账号', e); }
+
+    // 2) 查账号：单次超时 10 秒，失败重试一次（弱网首包丢了很常见）
+    let user = null, lastErr = authErr;
+    for (let i = 0; i < 2; i++) {
+      try {
+        const snap = await withTimeout(getDoc(doc(db, 'users', empno)), 10000);
+        if (!snap.exists()) { showErr('工号不存在，请联系管理员'); return; }
+        user = snap.data(); lastErr = null; break;
+      } catch (e) {
+        lastErr = e;
+        console.warn('[Login] 云端查账号失败（第 ' + (i + 1) + ' 次）', e);
+        if (i === 0) await new Promise(r => setTimeout(r, 1200));
+      }
+    }
+
+    // 3) 云端始终不通 → 退回订阅缓存（同一会话里进过应用的话能救回来）
+    if (!user) {
+      user = findUser(empno);
+      if (!user) { showErr(loginErrText(lastErr)); return; }
+    }
+
+    // 密码比对：iOS 密码本自动填充偶尔会带首尾空格，去空格后相等也放行
+    if (user.password && pw !== user.password && pw.trim() !== user.password) { showErr('密码错误'); return; }
+    err.classList.remove('active');
+    // Safari 无痕模式 / 存储受限时 localStorage 会抛异常。原来这行没保护，一抛就整个
+    // 登录函数中断，界面上同样表现为「点了没反应」。
+    try { localStorage.setItem(SESSION_KEY, empno); } catch (e) { console.warn('[Login] 会话写入失败（不影响本次进入）', e); }
+    // 登录后自动落到自己车间（all 账号留在当前车间）2026-08-07
+    const home = userPlant(user);
+    if (home !== 'all' && home !== currentPlant && PLANTS[home]) {
+      try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ empno: user.empno, name: user.name, role: user.role, plant: user.plant || 'hpal' })); } catch (e) {}
+      try { localStorage.setItem(PLANT_KEY, home); } catch (e) {}
+      location.reload();
+      return;
+    }
+    enterApp(user);
+  } catch (e) {
+    console.error('[Login] 登录异常', e);
+    showErr(loginErrText(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '进入系统'; }
   }
-  enterApp(user);
 }
 
 function enterApp(user) {

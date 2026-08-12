@@ -5,6 +5,39 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **iOS Safari 登录失败/点不动 修复**（2026-08-12，纯代码 4 处·无云端/rules/迁移变更）：
+
+   **① 用户现象（两张手机截图）**
+   - 11:22 输了工号点「进入系统」→ 红字「**工号不存在或网络异常**」（工号 6725102247 是 admin 本人，肯定存在）。
+   - 11:31 工号+密码都填好（密码本自动填充，14 个圆点＝`15086370152hxl` 长度正确）→ 点「进入系统」**毫无反应**，连错误都不报。
+   - 用户自己的观察：「**用 iOS 自带密码本，手动输入的话会稍微好一些**」—— 这句是破案的关键。
+
+   **② 根因：登录按钮和匿名认证在赛跑，而且是三种表现的同一个病**
+   - 「工号不存在或网络异常」全文件只出现一次（旧 4854 行），触发条件很窄：`getDoc` **抛异常** + `findUser()` 本地缓存**也是空的**。工号真查不到走的是另一句「工号不存在，请联系管理员」——**所以这句跟工号毫无关系**。
+   - 而 `usersCache` 是 `init()` 里 `await authReady` 之后的 `ensureSubs('users')` 才填的 → **匿名认证一没就绪，云端查询和本地兜底同时失效**，必然报这句。
+   - 登录按钮在 `window.attemptLogin = attemptLogin`（模块求值时）就能点了，而 `init()` 在文件最末尾才调用 —— **页面一渲染出来就能点，认证还在路上**。Firestore 规则要求 `request.auth != null` → `permission-denied`。
+   - **「点不动」是同一个病的另一副面孔**：Firestore 拿不到 auth token 时**不报错，而是把请求无限期挂着**（`getDoc` 自身没有超时）→ `attemptLogin` 卡在 `await` 上 → 界面完全没反应。11:22 是认证快速失败（报错），11:31 是认证卡住（没反应）。
+   - **为什么苹果特别容易**：iOS 的 ITP（防跟踪）会把**七天没访问过的站点的 script-writable storage 全清掉**，Firebase 的登录态就存在 IndexedDB 里 → Safari 上几乎每次冷启动都要重新走网络握手；安卓 Chrome 通常还留着 token，认证瞬间完成。车间又是 LTE，握手慢 2~5 秒很常见。
+   - **「手动输入好一些」正是决定性佐证**：手敲 10 位工号 + 14 位密码要 20~30 秒，认证早握完手了；密码本自动填充 2 秒点完，正好撞在窗口里。
+
+   **③ 顺带抓到的第二个真 bug**
+   - 旧 4898 行 `localStorage.setItem(SESSION_KEY, empno);` **没有 try/catch**（紧跟其后的 `USER_CACHE_KEY`/`PLANT_KEY` 两行反而都包了）。Safari 无痕模式 / 存储受限时这行抛 `QuotaExceededError` → 整个 `attemptLogin` 中断 → 同样表现为「点了没反应」。
+
+   **④ 改了什么（4 处）**
+   - **认证段**（原 `const authReady = signInAnonymously(...)` 一坨）→ 拆成可查/可等/可重试的三件套：`authUser`（已完成的用户，null=没好）、`authPending`（进行中的 Promise，防并发重复发起）、`ensureAuth()`（**失败时把 authPending 置空 → 下次点登录会重新发起，不再是死局**）。`authReady = ensureAuth()` 保持原名，`init()` 那行 `await authReady` 一字未动。另加 `authReady.catch(()=>{})` 防 unhandledrejection（`init()` 在文件末尾才挂 handler）。
+   - **新增 `withTimeout(p, ms, code)`**：给任意 Promise 套超时。Firestore 没有超时机制，这是「点不动」的直接解药 —— 宁可超时报错，也不要无声卡住。
+   - **`attemptLogin` 重写**：① 先 `await withTimeout(ensureAuth(), 15000, 'auth-timeout')` 显式等认证（把"竞速失败"变成"稍等一下"）；② 查账号单次超时 10 秒、失败重试一次（间隔 1.2 秒）；③ 按钮期间 `disabled` + 文案「连接中…」，`finally` 复位，并加 `if (btn.disabled) return` 防连点；④ 错误文案分三类并**带错误码**（`正在连接服务器…（permission-denied）` / `网络不稳定…（timeout）` / `登录失败：xxx`）—— 工人截图发过来一眼能判断是哪类；⑤ `localStorage.setItem(SESSION_KEY)` 补 try/catch；⑥ 密码比对加 `pw.trim() !== user.password` 兜底（密码本偶尔带首尾空格）。
+   - **`onEmpnoInput` 重写**：原来**每敲一位就发一次 `getDoc`**（10 位工号最多 10 次读，弱网下排队加剧超时，还白烧读取额度）→ 改为**防抖 500ms + `authUser` 就绪才查 + 结果回来时输入框变了就丢弃**；先用 `findUser()` 给即时反馈。抽出 `applyLoginFields(user)` 消掉三处重复的 classList 操作。
+   - **HTML/CSS**：按钮加 `id="btn-login"` + `type="button"`（原来在 `<form>` 里没写 type，默认是 submit）；补 `.btn-primary:disabled` 样式。
+   - 另加 `pageshow`（`e.persisted`）监听：iOS 切走再切回来从 bfcache 恢复时重发认证（首次握手失败过的情况下不必让用户手动刷新）。
+
+   **⑤ 验证**（本容器无 jsdom，改用"抽取真实源码 + 桩环境"的办法）
+   - `build_test.py` 用正则从 `index.html` **原样切出**认证段（42 行）和登录段（110 行）拼进桩模块 —— **测的是真代码不是副本**；模块作用域内遮蔽 `setTimeout` 做 1/500 缩放，15s/10s 超时路径能在毫秒级测出来。
+   - 11 组场景 / **26 项断言全通过**：正常登录、**getDoc 永远挂起（原"点不动"场景）现在 47ms 超时返回且按钮恢复可点**、**认证 5 秒后才好也能登进去**、认证彻底失败文案分类正确且不再误导为工号问题、**localStorage 抛异常仍能进系统**、工号不存在/密码错误照旧拦住、密码带空格可通过、弱网重试一次成功、云端不通退回缓存、防连点只查一次、**10 次击键只发 1 次查询（认证没好时 0 次）**、首次登录提示照旧。
+   - 全文件 `node --check` 通过；重名检查（`ensureAuth`/`withTimeout`/`authUser`/`empnoQueryTimer` 等各 1 处）、`window.attemptLogin`/`window.onEmpnoInput` 暴露、6 个 `getElementById` 元素齐全、「工号不存在或网络异常」残留 0、未保护的 `setItem(SESSION_KEY` 残留 0；文件 1.14 MB。
+
+   **⑥ 给车间的话术**：升级前的应急办法是「**打开页面等 3~5 秒再点进入系统**，报错了就再点一次」；升级后点下去按钮会显示「连接中…」，等着就行。
+
 1. **v0.25 制酸车间接入（第四个车间）：52 台 A/B 类设备 + 7 个 `zs_` 模板 + 点检频次规则改动**（2026-08-12，代码 2 处 + 云端数据·rules 无变更）：
 
    **① 源文件与规模**
