@@ -5,6 +5,22 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **iOS Safari 登录「一直连接中」第二刀：绕开 IndexedDB + 登录页诊断行**（2026-08-12，纯代码 5 处·无云端/rules/迁移变更）：
+
+   **① 现象**：上一刀上线后用户再试，按钮**确实变成了「连接中…」**（证明新代码已生效），但**一直停在那儿**。此时登录页连密码框都没展开 —— 说明 `onEmpnoInput` 的防抖查询因 `authUser` 为 null 被跳过了，即**匿名认证根本没回来**（不是失败，是没返回；失败会走 `.catch` 弹 alert）。
+
+   **② 推定病因：WebKit 的 `indexedDB.open()` 挂起**。iOS Safari 上 `indexedDB.open()` 有概率**永远不回调**（既不 `onsuccess` 也不 `onerror`），常见于无痕模式、存储被 ITP 清理过、或上次异常退出之后。而 **Firebase Auth 默认的持久化就是 `indexedDBLocalPersistence`**，Firestore 的 `persistentLocalCache` 也要等 IndexedDB —— 一旦挂起，`signInAnonymously` 不返回、`getDoc` 也不返回，界面就是「连接中…」转到天荒地老。这也是上一刀「点不动」的更深一层根因：上一刀只是给上层加了超时，没解决底层为什么会挂。
+
+   **③ 改法（两道防线 + 一个观察窗）**
+   - **Auth 彻底绕开 IndexedDB**：`getAuth(app)` → **`initializeAuth(app, { persistence: [browserLocalPersistence, inMemoryPersistence] })`**。`browserLocalPersistence` 就是 localStorage（同步 API，不可能挂起）；无痕模式下 localStorage 写不了时自动落到内存持久化（每次打开重新匿名登录一次，功能无影响）。**这是 WebKit 上公认的 Firebase Auth 解法**。导入表里 `getAuth` 已删干净（全文 0 处残留）。
+   - **Firestore 缓存 sticky 降级**：新增 `probeIndexedDb()`（`indexedDB.open` + **4 秒不回调即判为挂起**）+ localStorage 标记 `ems_idb_bad_v01`。上次探测失败 → 本次直接用 `memoryLocalCache()`；探测通过 → 清除标记，下次恢复持久化缓存。**故意不用顶层 await 挡在初始化前面** —— 那会推迟 `window.fn = fn` 的绑定，那期间用户点按钮会直接 ReferenceError（比现在更糟）。代价是**第一次故障仍会卡，但刷新一次就好**，并且当场弹提示「本机存储异常，请下拉刷新一次页面」。降级后功能全在，只是关掉页面缓存就没了（读取量会涨，总比打不开强）。
+   - **登录页诊断行** `#login-diag`（按钮下方 11px 等宽小字 + `setLoginDiag()`）：常态显示「云端认证中…」→ 认证好了清空；认证 6 秒没回来显示「云端认证较慢，请稍候…」；认证失败显示「认证失败：<code>」；点登录时逐步显示「① 等待云端认证…」「② 查询账号…」「② 查询账号（重试）…」。**以后工人截个图就能定位卡在哪一步**，不用再猜。
+   - **超时收紧**：认证 15s→**8s**、查账号 10s→**8s**，最坏 36s→**17s**。
+
+   **④ 验证**：新增第二套桩测 `build_idb_test.py`/`run_idb_test.mjs` —— 同样是**从 index.html 正则抽取真实源码**，用**动态 import + query 串绕开模块缓存**跑 6 个场景 **12 项断言全通过**：IndexedDB 正常时用持久化缓存且不留标记 / 挂起时 4 秒写入降级标记并提示刷新 / 带标记再开自动切内存缓存 / 存储恢复后自动清标记 / **Auth 持久化链是 `["LOCAL","NONE"]` 不含 indexedDB** / 无痕模式 localStorage 读写全抛异常也不崩。原登录桩测 26 项断言重跑仍全过；全文件 `node --check` 通过，重名/元素/样式核对无误，1.14 MB。
+
+   **⑤ 若仍不行的下一步**：让用户看诊断行 —— 停在「云端认证中…」= 认证层（identitytoolkit 网络不通或 Auth 仍被卡）；停在「② 查询账号…」= Firestore 层；显示「认证失败：xxx」= 拿到确切错误码即可定性。
+
 1. **iOS Safari 登录失败/点不动 修复**（2026-08-12，纯代码 4 处·无云端/rules/迁移变更）：
 
    **① 用户现象（两张手机截图）**

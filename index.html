@@ -51,6 +51,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .btn-primary { width:100%; padding:15px; background:var(--ink); color:var(--paper); border:none; border-radius:12px; font-size:15px; font-weight:500; font-family:var(--font-sans); cursor:pointer; margin-top:28px; transition:background .2s; letter-spacing:.02em; }
 .btn-primary:active { background:var(--g-forest); }
 .btn-primary:disabled { background:var(--muted); cursor:default; }
+.login-diag { margin-top:12px; text-align:center; font-family:var(--font-mono); font-size:11px; color:var(--subtle); letter-spacing:.02em; min-height:14px; }
 .login-footer { margin-top:auto; padding-top:28px; text-align:center; }
 .login-footer-text { font-family:var(--font-mono); font-size:10px; letter-spacing:.2em; color:var(--subtle); text-transform:uppercase; }
 
@@ -2847,6 +2848,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <div class="login-hint" id="hint-first"><strong>首次登录</strong>：该账号尚未设置密码，点击下方按钮可直接进入。进入系统后可在"我的 → 设置密码"中添加密码保护。</div>
     <div class="login-error" id="login-error">工号不存在或密码错误</div>
     <button class="btn-primary" id="btn-login" type="button" onclick="attemptLogin()">进入系统</button>
+    <div class="login-diag" id="login-diag"></div>
   </form>
   <div class="login-footer"><div class="login-footer-text">hydrometallurgical · equipment · lifecycle</div></div>
 </div>
@@ -3311,13 +3313,14 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
    ============================================================ */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import {
-  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache,
   collection, doc, getDoc, getDocs, setDoc, deleteDoc,
   writeBatch, onSnapshot, serverTimestamp,
   query, where, limit
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
+  initializeAuth, browserLocalPersistence, inMemoryPersistence,
+  signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 // 您的 Firebase 项目配置
@@ -3331,13 +3334,59 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
+
+// 2026-08-12 iOS Safari 卡死排查：WebKit 上 indexedDB.open() 有概率**永远不回调**
+// （既不 success 也不 error，尤其是无痕模式、存储被 ITP 清理过、或上次异常退出之后）。
+// Firebase 的 Auth 和 Firestore 默认都要先等 IndexedDB 就绪 —— 一旦卡住，匿名认证不返回、
+// getDoc 也不返回，界面上就是「连接中…」一直转。两道防线：
+//   ① Firestore 缓存：上一次探测到 IndexedDB 不健康就直接用内存缓存（下面的 sticky 标记）
+//   ② Auth 登录态：改用 localStorage 持久化（同步 API，不会挂起），彻底绕开 IndexedDB
+const IDB_FLAG_KEY = 'ems_idb_bad_v01';   // '1' = 上次探测失败，本次用内存缓存
+let idbUnhealthy = false;
+try { idbUnhealthy = localStorage.getItem(IDB_FLAG_KEY) === '1'; } catch (e) {}
+
+// 探测 IndexedDB 是否真的能开（4 秒不回调即判定为挂起）。结果写回标记，下次启动生效 ——
+// 之所以不用 await 挡在前面，是因为顶层 await 会推迟 window.fn 绑定，那期间按钮点了会报错。
+function probeIndexedDb() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (okFlag) => { if (!settled) { settled = true; resolve(okFlag); } };
+    setTimeout(() => finish(false), 4000);
+    try {
+      const req = indexedDB.open('ems-idb-probe', 1);
+      req.onsuccess = () => { try { req.result.close(); } catch (e) {} finish(true); };
+      req.onerror = () => finish(false);
+      req.onblocked = () => finish(false);
+    } catch (e) { finish(false); }
+  });
+}
+
 // 2026-08-11 读取量优化：本地持久化缓存改用新版 API（原 enableIndexedDbPersistence 已弃用，
 // 且多开标签页时会直接失败降级为纯在线）。persistentMultipleTabManager 支持多标签页共享缓存。
 // 作用：断网可用 + 30 分钟内重复刷新几乎不产生云端读取（超过 30 分钟重连仍按新查询计费）。
+// 内存缓存是降级形态：功能全在，只是关掉页面缓存就没了（读取量会涨，但总比打不开强）。
 const db = initializeFirestore(firebaseApp, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  localCache: idbUnhealthy
+    ? memoryLocalCache()
+    : persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
-const auth = getAuth(firebaseApp);
+
+// 用 initializeAuth 显式指定持久化链，把默认的 indexedDBLocalPersistence 排除在外。
+// browserLocalPersistence = localStorage（同步、不会挂起）；无痕模式下 localStorage 写不了时
+// 自动落到 inMemoryPersistence（每次打开重新匿名登录一次，功能不受影响）。
+const auth = initializeAuth(firebaseApp, {
+  persistence: [browserLocalPersistence, inMemoryPersistence],
+});
+
+probeIndexedDb().then((healthy) => {
+  try {
+    if (healthy) localStorage.removeItem(IDB_FLAG_KEY);
+    else localStorage.setItem(IDB_FLAG_KEY, '1');
+  } catch (e) {}
+  console.log('[IDB] 本机 IndexedDB ' + (healthy ? '正常' : '异常（下次启动改用内存缓存）'));
+  if (!healthy && !idbUnhealthy) setLoginDiag('本机存储异常，请下拉刷新一次页面');
+  else if (idbUnhealthy) setLoginDiag(healthy ? '' : '已切换到内存模式运行');
+});
 
 // 匿名认证：所有 Firestore 读写需通过 Firebase Auth。init() 会先 await authReady
 // 之后再触发任何 cloudSave/onSnapshot/seed* 调用。
@@ -3384,8 +3433,22 @@ function withTimeout(p, ms, code) {
   ]);
 }
 
+// 登录页的诊断小字：把"卡在哪一步"直接显示出来。车间的人看不懂也没关系 ——
+// 出问题时截图发过来，一眼就能判断是认证、网络还是本机存储的问题。
+function setLoginDiag(text) {
+  const box = document.getElementById('login-diag');
+  if (box) box.textContent = text || '';
+}
+
 const authReady = ensureAuth();
 authReady.catch(() => {});   // init() 挂上 handler 之前先兜一下，避免 unhandledrejection
+setLoginDiag('云端认证中…');
+authReady.then(
+  () => setLoginDiag(''),
+  (err) => setLoginDiag('认证失败：' + ((err && err.code) || (err && err.message) || '未知'))
+);
+// 认证迟迟不回来时给个明确提示，别让用户对着「连接中…」干等
+setTimeout(() => { if (!authUser) setLoginDiag('云端认证较慢，请稍候…'); }, 6000);
 
 // 从后台/前进后退缓存恢复时（iOS Safari 切走再切回来很常见）重新确认认证：
 // 首次握手失败过的话这里会重发一次，不必让用户手动刷新页面。
@@ -4914,14 +4977,16 @@ async function attemptLogin() {
     // 1) 先等匿名认证到位。Firestore 拿不到 token 会把请求无限期挂着（＝按钮点不动），
     //    所以这里显式地等 + 超时；认证之前失败过的话 ensureAuth 会重发一次。
     let authErr = null;
-    try { await withTimeout(ensureAuth(), 15000, 'auth-timeout'); }
+    setLoginDiag('① 等待云端认证…');
+    try { await withTimeout(ensureAuth(), 8000, 'auth-timeout'); }
     catch (e) { authErr = e; console.warn('[Login] 认证未就绪，仍尝试查账号', e); }
 
-    // 2) 查账号：单次超时 10 秒，失败重试一次（弱网首包丢了很常见）
+    // 2) 查账号：单次超时 8 秒，失败重试一次（弱网首包丢了很常见）
     let user = null, lastErr = authErr;
     for (let i = 0; i < 2; i++) {
       try {
-        const snap = await withTimeout(getDoc(doc(db, 'users', empno)), 10000);
+        setLoginDiag('② 查询账号' + (i ? '（重试）' : '') + '…');
+        const snap = await withTimeout(getDoc(doc(db, 'users', empno)), 8000);
         if (!snap.exists()) { showErr('工号不存在，请联系管理员'); return; }
         user = snap.data(); lastErr = null; break;
       } catch (e) {
@@ -4957,6 +5022,7 @@ async function attemptLogin() {
     showErr(loginErrText(e));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '进入系统'; }
+    setLoginDiag('');
   }
 }
 
