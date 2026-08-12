@@ -3395,6 +3395,7 @@ const PLANTS = {
   hpal: { name: '高压酸浸车间', short: '高压酸浸', tag: '酸浸' },
   zh:   { name: '中和车间',     short: '中和',     tag: '中和' },
   cp:   { name: '产品车间',     short: '产品',     tag: '产品' },
+  zs:   { name: '制酸车间',     short: '制酸',     tag: '制酸' },
 };
 const currentPlant = (() => {
   try { const p = localStorage.getItem(PLANT_KEY); return PLANTS[p] ? p : 'hpal'; }
@@ -6388,10 +6389,16 @@ function getLatestInspectFor(equipmentId) {
   return old;
 }
 
-/* 工具：点检周期(天)。A/B/C 等级优先（A=1 / B=2 / C=7），未分级用模板 cycleDays */
+/* 工具：点检周期(天)。等级(A=1/B=2/C=7)与模板 cycleDays 取更勤的那个；未分级则只看模板。
+   2026-08-12：原来是"有等级就完全忽略模板"，制酸车间 B 类设备现场每天都点检、模板 cycleDays=1，
+   却被等级表压成 2 天。改成 Math.min 后：酸浸/中和模板全是 7、产品是 1/3/7，等级周期都 ≤ 模板值，
+   min 的结果与改动前逐条一致（零影响）；只有制酸这种"模板比等级更勤"的才会生效。 */
 function getInspectCycleDays(eq, tpl) {
-  if (eq && eq.abcClass && INSPECT_CYCLE_BY_CLASS[eq.abcClass]) return INSPECT_CYCLE_BY_CLASS[eq.abcClass];
-  return (tpl && tpl.cycleDays) || 30;
+  const byTpl = (tpl && tpl.cycleDays) || 30;
+  if (eq && eq.abcClass && INSPECT_CYCLE_BY_CLASS[eq.abcClass]) {
+    return Math.min(INSPECT_CYCLE_BY_CLASS[eq.abcClass], byTpl);
+  }
+  return byTpl;
 }
 
 /* 工具：计算下次巡检时间 —— 按自然日 + 早上 6 点更新（2026-07-07 用户定）
