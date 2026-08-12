@@ -11461,6 +11461,12 @@ async function init() {
     // 2026-06-21：二级库种子（57 条垫片现场库存）
     await seedSecondStockIfEmpty();
 
+    // 2026-08-12：所有种子/迁移的云端往返都跑完了，把状态灯拨回绿色。
+    // 原来 seedIfEmpty() 末尾设过一次绿，但紧接着 seedLubeIfEmpty() 开头又设成
+    // 「检查润滑数据…」的黄，之后十几个迁移函数都在 marker 检查处提前 return、
+    // 没人再拨回来 → 启动结束永远停在黄色，看着像没连上（其实一直是好的）。
+    setCloudStatus('online', '已连接云端');
+
     // 等首批数据到位再继续（订阅已在种子检查前开启）
     await new Promise(r => setTimeout(r, 800));
 
