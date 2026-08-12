@@ -2989,11 +2989,13 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <div class="detail-tab active" data-tab="basic" onclick="switchDetailTab('basic')">基础</div>
         <div class="detail-tab" data-tab="tech" onclick="switchDetailTab('tech')">技术参数</div>
         <div class="detail-tab" data-tab="records" onclick="switchDetailTab('records')">相关记录</div>
+        <div class="detail-tab" data-tab="lube" onclick="switchDetailTab('lube')">润滑点</div>
       </div>
       <div class="detail-body">
         <div class="detail-panel active" id="panel-basic"></div>
         <div class="detail-panel" id="panel-tech"></div>
         <div class="detail-panel" id="panel-records"></div>
+        <div class="detail-panel" id="panel-lube"></div>
       </div>
     </section>
 
@@ -5002,8 +5004,7 @@ const MODULE_SUBS = {
   'parts-txn':          SUBS_PARTS,
   // equipment / equipment-edit / profile / users 只用常驻的 equipments + users；
   // equipment-detail 的「相关记录」tab 点开时才另订 maintenancelogs（见下方 switchDetailTab 包装）。
-  // 注：详情页那个「润滑点」tab 的增强代码（enhanceDeviceDetailTabs IIFE）早已是死代码
-  //     —— 被后面的 window.openDetail = openDetail 覆盖掉，tab 根本没被创建，故不需要订润滑集合。
+  // 「润滑点」tab 也不订整个 lubepoints —— 点开时按位号定向查这一台（见 loadEqLubePoints）。
 };
 
 /* ========== 模块切换 ========== */
@@ -7477,6 +7478,12 @@ switchDetailTab = function(tab) {
     ensureSubs('maintenancelogs');
     if (currentEqId) renderDeviceRecords(currentEqId);
   }
+  if (tab === 'lube' && currentEqId) {
+    // 2026-08-12：先用缓存里已有的画一次，再按位号定向补这一台的（查完自动重画）。
+    // 刻意不用 ensureSubs('lubepoints') —— 那要付 891/486/441 次读，定向查通常只要几次。
+    renderDeviceLubePoints(currentEqId);
+    loadEqLubePoints(currentEqId);
+  }
 };
 
 
@@ -8368,7 +8375,9 @@ function backToLubeList() {
 }
 
 function openLubeDetail(id, from) {
-  const lp = lubePointsCache.find(p => p.id === id);
+  // 2026-08-12：从设备详情「润滑点」tab 点进来时，润滑模块可能还没订阅过，
+  // lubePointsCache 是空的 —— 回退到定向查来的 eqLubeExtra，否则会误报"润滑点不存在"。
+  const lp = (lubePointsCache || []).find(p => p.id === id) || eqLubeExtra.get(id);
   if (!lp) { showToast('润滑点不存在'); return; }
   currentLubePointId = id;
   lubeDetailFrom = from === 'history' ? 'history' : '';
@@ -8770,20 +8779,69 @@ async function exportLubeHistoryXlsx() {
 
 /* ------ 设备详情的"润滑点" Tab ------ */
 
+/* ---- 设备详情「润滑点」tab 的数据来源（2026-08-12）----
+   不订阅整个 lubepoints 集合（891/486/441 条太贵），改成点开 tab 时按位号定向查这一台
+   的润滑点（通常 1~5 条）。已经进过润滑模块的话缓存里就有，一次云端读取都不花。 */
+const eqLubeExtra = new Map();     // 定向查来的润滑点（id → doc）
+const eqLubeLoaded = new Set();    // 已查完的位号
+const eqLubeLoading = new Set();   // 查询在途的位号
+
+function deviceLubePoints(tag) {
+  const byId = new Map();
+  (lubePointsCache || []).forEach(lp => { if (lp && lp.tag === tag && lp.id) byId.set(lp.id, lp); });
+  eqLubeExtra.forEach(lp => { if (lp.tag === tag && !byId.has(lp.id)) byId.set(lp.id, lp); });
+  return Array.from(byId.values());
+}
+
+async function loadEqLubePoints(eqId) {
+  const eq = loadEquipments().find(e => e.id === eqId);
+  if (!eq || !eq.tag) return;
+  // 润滑模块已开过全量订阅、或这台已经查过 → 不用再花读取
+  if (subStarted.has('lubepoints') || eqLubeLoaded.has(eq.tag) || eqLubeLoading.has(eq.tag)) return;
+  eqLubeLoading.add(eq.tag);
+  try {
+    const snap = await getDocs(query(collection(db, 'lubepoints'), where('tag', '==', eq.tag)));
+    snap.docs.forEach(d => {
+      const lp = d.data();
+      const id = lp.id || d.id;
+      if (inPlant(lp)) eqLubeExtra.set(id, { ...lp, id });
+    });
+    eqLubeLoaded.add(eq.tag);
+  } catch (e) {
+    console.warn('[润滑] 定向拉取设备润滑点失败', e);
+  } finally {
+    eqLubeLoading.delete(eq.tag);
+  }
+  // 还停在这台设备的「润滑点」tab 上就重画
+  const mod = document.querySelector('.module[data-module="equipment-detail"]');
+  const tab = document.querySelector('.detail-tab.active');
+  if (mod && mod.classList.contains('active') && tab && tab.dataset.tab === 'lube' && currentEqId === eqId) {
+    renderDeviceLubePoints(eqId);
+  }
+}
+
 function renderDeviceLubePoints(eqId) {
   const eq = loadEquipments().find(e => e.id === eqId);
   if (!eq) return;
-  const points = lubePointsCache.filter(lp => lp.tag === eq.tag);
+  const points = deviceLubePoints(eq.tag);
   const panel = document.getElementById('panel-lube');
   if (!panel) return;
 
   if (points.length === 0) {
-    panel.innerHTML = `
-      <div class="empty" style="padding:32px 20px 16px;">
-        <div class="empty-mark">—</div>
-        <div class="empty-title">此设备暂无润滑点</div>
-        <div class="empty-hint">no lubrication points</div>
-      </div>`;
+    // 还没查完就说"暂无"会误导，先显示加载中
+    const loading = eqLubeLoading.has(eq.tag)
+      || (!eqLubeLoaded.has(eq.tag) && !subStarted.has('lubepoints'));
+    panel.innerHTML = loading
+      ? `<div class="empty" style="padding:32px 20px 16px;">
+           <div class="empty-mark">···</div>
+           <div class="empty-title">加载中…</div>
+           <div class="empty-hint">loading</div>
+         </div>`
+      : `<div class="empty" style="padding:32px 20px 16px;">
+           <div class="empty-mark">—</div>
+           <div class="empty-title">此设备暂无润滑点</div>
+           <div class="empty-hint">no lubrication points</div>
+         </div>`;
     return;
   }
 
@@ -8812,44 +8870,12 @@ function renderDeviceLubePoints(eqId) {
   `;
 }
 
-/* ------ 为设备详情页增加"润滑点" Tab ------ */
-(function enhanceDeviceDetailTabs() {
-  // 动态注入新 Tab，并覆盖 openDetail 的后处理
-  const _origOpenDetail = window.openDetail;
-  window.openDetail = function(id) {
-    _origOpenDetail(id);
-    // 在 tabs 容器里动态加入"润滑点" tab（如果还没加）
-    const tabs = document.querySelector('.detail-tabs');
-    if (tabs && !document.querySelector('.detail-tab[data-tab="lube"]')) {
-      const lubeTab = document.createElement('div');
-      lubeTab.className = 'detail-tab';
-      lubeTab.dataset.tab = 'lube';
-      lubeTab.textContent = '润滑点';
-      lubeTab.onclick = () => switchDetailTab('lube');
-      tabs.appendChild(lubeTab);
-    }
-    // 在 body 容器里动态加入润滑点 panel
-    const body = document.querySelector('.detail-body');
-    if (body && !document.getElementById('panel-lube')) {
-      const panel = document.createElement('div');
-      panel.className = 'detail-panel';
-      panel.id = 'panel-lube';
-      body.appendChild(panel);
-    }
-  };
-
-  // 覆盖 switchDetailTab 以支持 lube
-  const _origSwitchDetailTab = switchDetailTab;
-  window.switchDetailTab = function(tab) {
-    // 先清理所有激活
-    document.querySelectorAll('.detail-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-    document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
-    const target = document.getElementById('panel-' + tab);
-    if (target) target.classList.add('active');
-    if (tab === 'records' && currentEqId) renderDeviceRecords(currentEqId);
-    if (tab === 'lube' && currentEqId) renderDeviceLubePoints(currentEqId);
-  };
-})();
+/* 2026-08-12 删：原 enhanceDeviceDetailTabs IIFE（动态注入「润滑点」tab + 覆盖
+   openDetail/switchDetailTab）。它只赋给 window，又被文件末尾的
+   `window.openDetail = openDetail` / `window.switchDetailTab = switchDetailTab`
+   覆盖回模块作用域那版 → tab 从未被创建、renderDeviceLubePoints 不可达，是死代码。
+   现在 tab 与 panel 直接写在 HTML 里（搜 data-tab="lube"），lube 分支并进真正生效的
+   switchDetailTab 包装（搜 _origSwitchDetailTab），不再需要任何动态注入。 */
 
 
 /* ==========================================================
