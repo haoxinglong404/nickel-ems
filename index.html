@@ -3352,13 +3352,30 @@ try { idbUnhealthy = localStorage.getItem(IDB_FLAG_KEY) === '1'; } catch (e) {}
 // 运营商网络/中间设备下会被掐断，而且**不报错、只是永远不返回**（现象与 IndexedDB 挂起
 // 一模一样：getDoc 超时、界面转圈）。官方给了 experimentalForceLongPolling 开关走普通
 // 长轮询。默认不开（长轮询更费流量、延迟略高），登录连续超时后置位，下次启动自动启用。
-const NET_FLAG_KEY = 'ems_net_degrade_v01';   // '1' = 兼容连接模式（强制长轮询）
+// 标记存的是**置位时间戳**而不是 '1'：弱网抖动一次就永久走长轮询是不合理的（流量更高、
+// 延迟略增），所以 3 天后自动过期、回到默认连接再试一次；真有问题会当场重新置位。
+const NET_FLAG_KEY = 'ems_net_degrade_v01';
+const NET_DEGRADE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 let netDegraded = false;
-try { netDegraded = localStorage.getItem(NET_FLAG_KEY) === '1'; } catch (e) {}
+try {
+  const raw = localStorage.getItem(NET_FLAG_KEY);
+  if (raw) {
+    const ts = parseInt(raw, 10);
+    if (raw === '1' || !ts) {                     // 老格式（无时间戳）：补上，从现在起算
+      netDegraded = true;
+      localStorage.setItem(NET_FLAG_KEY, String(Date.now()));
+    } else if (Date.now() - ts < NET_DEGRADE_TTL_MS) {
+      netDegraded = true;
+    } else {
+      localStorage.removeItem(NET_FLAG_KEY);      // 过期：回默认连接，失败了会自动再置位
+      console.log('[Firestore] 兼容连接模式已过期，本次回到默认连接');
+    }
+  }
+} catch (e) {}
 
 // 登录连续超时 → 置位兼容模式标记，并把「刷新重试」按钮亮出来
 function markNetDegraded() {
-  try { localStorage.setItem(NET_FLAG_KEY, '1'); } catch (e) {}
+  try { localStorage.setItem(NET_FLAG_KEY, String(Date.now())); } catch (e) {}
   const rb = document.getElementById('login-retry');
   if (rb) rb.style.display = 'block';
 }
@@ -5044,6 +5061,15 @@ async function attemptLogin() {
     }
 
     // 密码比对：iOS 密码本自动填充偶尔会带首尾空格，去空格后相等也放行
+    // 认证慢的时候工号输入框的云端查询会被跳过 → 密码框没展开 → 用户根本没地方输密码。
+    // 这时 pw 是空的，不能报「密码错误」（会让人以为自己记错了），要把密码框亮出来。
+    if (user.password && !pw) {
+      applyLoginFields(user);
+      showErr('该账号需要密码，请输入密码后再试');
+      const pwInput = document.getElementById('input-pw');
+      if (pwInput) pwInput.focus();
+      return;
+    }
     if (user.password && pw !== user.password && pw.trim() !== user.password) { showErr('密码错误'); return; }
     err.classList.remove('active');
     // Safari 无痕模式 / 存储受限时 localStorage 会抛异常。原来这行没保护，一抛就整个
