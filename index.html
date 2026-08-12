@@ -51,6 +51,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .btn-primary { width:100%; padding:15px; background:var(--ink); color:var(--paper); border:none; border-radius:12px; font-size:15px; font-weight:500; font-family:var(--font-sans); cursor:pointer; margin-top:28px; transition:background .2s; letter-spacing:.02em; }
 .btn-primary:active { background:var(--g-forest); }
 .btn-primary:disabled { background:var(--muted); cursor:default; }
+.login-retry { display:none; width:100%; margin-top:12px; padding:13px; background:none; color:var(--g-deep); border:1px solid var(--g-primary); border-radius:12px; font-size:14px; font-family:var(--font-sans); cursor:pointer; }
+.login-retry:active { background:var(--g-mist); }
 .login-diag { margin-top:12px; text-align:center; font-family:var(--font-mono); font-size:11px; color:var(--subtle); letter-spacing:.02em; min-height:14px; }
 .login-footer { margin-top:auto; padding-top:28px; text-align:center; }
 .login-footer-text { font-family:var(--font-mono); font-size:10px; letter-spacing:.2em; color:var(--subtle); text-transform:uppercase; }
@@ -2848,6 +2850,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <div class="login-hint" id="hint-first"><strong>首次登录</strong>：该账号尚未设置密码，点击下方按钮可直接进入。进入系统后可在"我的 → 设置密码"中添加密码保护。</div>
     <div class="login-error" id="login-error">工号不存在或密码错误</div>
     <button class="btn-primary" id="btn-login" type="button" onclick="attemptLogin()">进入系统</button>
+    <button class="login-retry" id="login-retry" type="button" onclick="location.reload()">刷新页面重试</button>
     <div class="login-diag" id="login-diag"></div>
   </form>
   <div class="login-footer"><div class="login-footer-text">hydrometallurgical · equipment · lifecycle</div></div>
@@ -3345,6 +3348,21 @@ const IDB_FLAG_KEY = 'ems_idb_bad_v01';   // '1' = 上次探测失败，本次�
 let idbUnhealthy = false;
 try { idbUnhealthy = localStorage.getItem(IDB_FLAG_KEY) === '1'; } catch (e) {}
 
+// 2026-08-12 第二个卡死来源：Firestore 默认走 WebChannel 流式连接，在 Safari + 某些
+// 运营商网络/中间设备下会被掐断，而且**不报错、只是永远不返回**（现象与 IndexedDB 挂起
+// 一模一样：getDoc 超时、界面转圈）。官方给了 experimentalForceLongPolling 开关走普通
+// 长轮询。默认不开（长轮询更费流量、延迟略高），登录连续超时后置位，下次启动自动启用。
+const NET_FLAG_KEY = 'ems_net_degrade_v01';   // '1' = 兼容连接模式（强制长轮询）
+let netDegraded = false;
+try { netDegraded = localStorage.getItem(NET_FLAG_KEY) === '1'; } catch (e) {}
+
+// 登录连续超时 → 置位兼容模式标记，并把「刷新重试」按钮亮出来
+function markNetDegraded() {
+  try { localStorage.setItem(NET_FLAG_KEY, '1'); } catch (e) {}
+  const rb = document.getElementById('login-retry');
+  if (rb) rb.style.display = 'block';
+}
+
 // 探测 IndexedDB 是否真的能开（4 秒不回调即判定为挂起）。结果写回标记，下次启动生效 ——
 // 之所以不用 await 挡在前面，是因为顶层 await 会推迟 window.fn 绑定，那期间按钮点了会报错。
 function probeIndexedDb() {
@@ -3365,11 +3383,14 @@ function probeIndexedDb() {
 // 且多开标签页时会直接失败降级为纯在线）。persistentMultipleTabManager 支持多标签页共享缓存。
 // 作用：断网可用 + 30 分钟内重复刷新几乎不产生云端读取（超过 30 分钟重连仍按新查询计费）。
 // 内存缓存是降级形态：功能全在，只是关掉页面缓存就没了（读取量会涨，但总比打不开强）。
-const db = initializeFirestore(firebaseApp, {
+const firestoreSettings = {
   localCache: idbUnhealthy
     ? memoryLocalCache()
     : persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-});
+};
+if (netDegraded) firestoreSettings.experimentalForceLongPolling = true;
+const db = initializeFirestore(firebaseApp, firestoreSettings);
+console.log('[Firestore] 缓存=' + (idbUnhealthy ? '内存' : '持久化') + ' 连接=' + (netDegraded ? '长轮询(兼容)' : '默认'));
 
 // 用 initializeAuth 显式指定持久化链，把默认的 indexedDBLocalPersistence 排除在外。
 // browserLocalPersistence = localStorage（同步、不会挂起）；无痕模式下 localStorage 写不了时
@@ -3384,8 +3405,8 @@ probeIndexedDb().then((healthy) => {
     else localStorage.setItem(IDB_FLAG_KEY, '1');
   } catch (e) {}
   console.log('[IDB] 本机 IndexedDB ' + (healthy ? '正常' : '异常（下次启动改用内存缓存）'));
-  if (!healthy && !idbUnhealthy) setLoginDiag('本机存储异常，请下拉刷新一次页面');
-  else if (idbUnhealthy) setLoginDiag(healthy ? '' : '已切换到内存模式运行');
+  if (!healthy && !idbUnhealthy) setLoginDiag('本机存储异常，请下拉刷新一次页面', true);
+  else if (idbUnhealthy) setLoginDiag(healthy ? '' : '已切换到内存模式运行', true);
 });
 
 // 匿名认证：所有 Firestore 读写需通过 Firebase Auth。init() 会先 await authReady
@@ -3435,17 +3456,24 @@ function withTimeout(p, ms, code) {
 
 // 登录页的诊断小字：把"卡在哪一步"直接显示出来。车间的人看不懂也没关系 ——
 // 出问题时截图发过来，一眼就能判断是认证、网络还是本机存储的问题。
-function setLoginDiag(text) {
+// sticky=true 的消息（存储异常、已切兼容模式）会被记住，临时状态清空后自动恢复显示。
+let loginDiagSticky = '';
+function setLoginDiag(text, sticky) {
+  if (sticky) loginDiagSticky = text || '';
   const box = document.getElementById('login-diag');
-  if (box) box.textContent = text || '';
+  if (box) box.textContent = (text || loginDiagSticky || '');
 }
 
 const authReady = ensureAuth();
 authReady.catch(() => {});   // init() 挂上 handler 之前先兜一下，避免 unhandledrejection
+// 已经处于降级形态时常驻显示，方便远程判断当前是哪种连接方式
+if (netDegraded || idbUnhealthy) {
+  setLoginDiag('兼容模式：' + (netDegraded ? '长轮询连接' : '') + (netDegraded && idbUnhealthy ? ' + ' : '') + (idbUnhealthy ? '内存缓存' : ''), true);
+}
 setLoginDiag('云端认证中…');
 authReady.then(
   () => setLoginDiag(''),
-  (err) => setLoginDiag('认证失败：' + ((err && err.code) || (err && err.message) || '未知'))
+  (err) => setLoginDiag('认证失败：' + ((err && err.code) || (err && err.message) || '未知'), true)
 );
 // 认证迟迟不回来时给个明确提示，别让用户对着「连接中…」干等
 setTimeout(() => { if (!authUser) setLoginDiag('云端认证较慢，请稍候…'); }, 6000);
@@ -4999,7 +5027,20 @@ async function attemptLogin() {
     // 3) 云端始终不通 → 退回订阅缓存（同一会话里进过应用的话能救回来）
     if (!user) {
       user = findUser(empno);
-      if (!user) { showErr(loginErrText(lastErr)); return; }
+      if (!user) {
+        const code = (lastErr && lastErr.code) || '';
+        const netish = (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded');
+        // 连续超时 = 这条连接通道有问题（WebChannel 被掐 / IndexedDB 挂起）。
+        // 置位兼容模式标记，刷新一次即可用长轮询重连；已经在兼容模式还超时才是真连不上。
+        if (netish && !netDegraded) {
+          markNetDegraded();
+          showErr('连不上服务器，已切换兼容连接模式，请刷新页面后重试（' + code + '）');
+          setLoginDiag('下次打开将使用长轮询连接', true);
+          return;
+        }
+        showErr(loginErrText(lastErr));
+        return;
+      }
     }
 
     // 密码比对：iOS 密码本自动填充偶尔会带首尾空格，去空格后相等也放行
@@ -5022,7 +5063,7 @@ async function attemptLogin() {
     showErr(loginErrText(e));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '进入系统'; }
-    setLoginDiag('');
+    setLoginDiag('');   // 清临时状态，sticky 消息（存储/连接模式）会自动留下
   }
 }
 

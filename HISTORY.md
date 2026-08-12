@@ -5,6 +5,26 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **iOS Safari 登录第三刀：连接通道自动降级（强制长轮询）**（2026-08-12，纯代码 4 处·无云端/rules/迁移变更）：
+
+   **① 决定性情报**：第二刀部署之前那次「连接中…」卡了一阵后，最终弹出的是 **`网络不稳定，没连上服务器，请稍后重试（timeout）`**。错误码是 **`timeout` 而不是 `auth-timeout`** —— 说明**匿名认证是通的**，卡的是 `getDoc` 查账号那一步，两次各 8~10 秒都没回话。页面本体和 Firebase SDK（gstatic）都能正常下载，**唯独 Firestore 的数据通道不通**。
+
+   **② 第二个元凶：WebChannel 被掐**。Firestore 默认用 WebChannel（基于 fetch 流）通信，**Safari + 某些运营商网络/中间设备会把长连接掐断，而且不报错、只是永远不返回** —— 症状与 IndexedDB 挂起一模一样。官方给的开关是 `experimentalForceLongPolling`（改走普通长轮询）。默认不开是因为长轮询更费流量、延迟略高，所以做成**按需自动降级**。
+
+   **③ 改法**
+   - 新增 sticky 标记 `ems_net_degrade_v01` + `markNetDegraded()`：**登录连续两次超时即置位**，下次启动 `initializeFirestore` 带上 `experimentalForceLongPolling: true`。启动时 `console.log('[Firestore] 缓存=… 连接=…')` 打印当前形态。
+   - 失败文案与动作：首次连续超时 → 「连不上服务器，已**切换兼容连接模式**，请刷新页面后重试（timeout）」+ **登录页亮出「刷新页面重试」按钮**（`#login-retry`，平时 `display:none`，`onclick="location.reload()"` 无需暴露函数）。**已经在兼容模式还超时 = 真的连不上**，不重复标记，给普通「网络不稳定」文案。
+   - 诊断行支持 **sticky 消息**（`loginDiagSticky` + `setLoginDiag(text, sticky)`）：临时状态（① 等待认证 / ② 查询账号）清空后自动恢复显示常驻消息。降级形态下常驻显示「**兼容模式：长轮询连接 + 内存缓存**」—— **以后截一张登录页的图就知道当前跑在哪种模式**。存储异常、认证失败两条消息也改为 sticky（原本会被 `finally` 里的清空覆盖掉，等于白显示）。
+
+   **④ 三层降级的完整链路**（每层都是 sticky 标记 + 刷新一次生效）
+   | 症状 | 判定 | 下次启动的形态 |
+   |---|---|---|
+   | IndexedDB 4 秒不回调 | `probeIndexedDb()` | `memoryLocalCache()` |
+   | 登录连续超时 | `attemptLogin` | `experimentalForceLongPolling: true` |
+   | 兼容模式仍超时 | — | 真·网络问题，提示换网络 |
+
+   **⑤ 验证**：登录桩测从 26 项加到 **30 项断言**（新增：连续超时写入兼容标记并提示刷新 / 兼容模式下不重复标记且给普通网络文案），IndexedDB 桩测 12 项全过；桩环境补了 `netDegraded`/`markNetDegraded` 桩 + `_setNetDegraded()` 探针。全文件 `node --check` 通过，1.15 MB。
+
 1. **iOS Safari 登录「一直连接中」第二刀：绕开 IndexedDB + 登录页诊断行**（2026-08-12，纯代码 5 处·无云端/rules/迁移变更）：
 
    **① 现象**：上一刀上线后用户再试，按钮**确实变成了「连接中…」**（证明新代码已生效），但**一直停在那儿**。此时登录页连密码框都没展开 —— 说明 `onEmpnoInput` 的防抖查询因 `authUser` 为 null 被跳过了，即**匿名认证根本没回来**（不是失败，是没返回；失败会走 `.catch` 弹 alert）。
