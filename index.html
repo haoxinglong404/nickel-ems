@@ -3604,6 +3604,36 @@ function switchPlant(p) {
   location.reload();
 }
 
+/* ========== 车间模块开放范围（2026-08-17 用户拍板）==========
+   只有高压酸浸上了全套模块；中和/产品/制酸暂时只用「设备台账 + 点检」，
+   重点设备看板 / 检修（含当个事儿办）/ 二级库 / 润滑 四块整体隐藏。
+   **按当前车间一刀切，不看角色** —— 管理员/经理切到那些车间同样看不到（用户明确要求）。
+   要给某个车间放开：把它的 key 加进 FULL_MODULE_PLANTS，其余全自动（导航项、
+   设备详情的两个 tab、以及所有跳转守卫都读这一个开关）。 */
+const FULL_MODULE_PLANTS = ['hpal'];
+const LIMITED_NAV_KEYS = ['board', 'maintenance', 'parts', 'lube'];
+const LIMITED_MODULES = new Set([
+  'board',
+  'maintenance', 'maintenance-detail', 'maintenance-create', 'maintenance-keyeq', 'maintenance-eqlog',
+  'todo-detail', 'todo-edit',
+  'parts', 'parts-detail', 'parts-txn', 'parts-edit', 'parts-history',
+  'lube', 'lube-detail', 'lube-execute', 'lube-history',
+]);
+function plantHasFullModules() { return FULL_MODULE_PLANTS.includes(currentPlant); }
+function moduleBlocked(name) { return !plantHasFullModules() && LIMITED_MODULES.has(name); }
+/* 隐藏导航项和设备详情里两个相关 tab（「相关记录」= 检修、「润滑点」）· enterApp 里调用 */
+function applyPlantModuleUI() {
+  const hide = !plantHasFullModules();
+  LIMITED_NAV_KEYS.forEach(k => {
+    const el = document.querySelector(`.nav-item[data-nav="${k}"]`);
+    if (el) el.style.display = hide ? 'none' : '';
+  });
+  ['records', 'lube'].forEach(t => {
+    const el = document.querySelector(`.detail-tab[data-tab="${t}"]`);
+    if (el) el.style.display = hide ? 'none' : '';
+  });
+}
+
 /* ========== 按车间订阅（2026-08-11 读取量优化第二刀）==========
    equipments(1054) 每次开 App 都要付、lubepoints(1818) 每次进润滑模块都要付，是剩下两个
    最大的固定开销。改成服务端 where('plant','==',currentPlant) 过滤后：
@@ -5163,6 +5193,7 @@ function enterApp(user) {
   rt.className = 'profile-role-tag' + (user.role==='admin'?' admin':'');
   document.getElementById('profile-sub').textContent = roleLabel(user);
   renderMenu(user);
+  applyPlantModuleUI();   // 非酸浸车间隐藏 看板/检修/二级库/润滑（2026-08-17）
   renderEquipmentList();
   updateFab();
   // 登录欢迎
@@ -5283,6 +5314,13 @@ const MODULE_SUBS = {
 /* ========== 模块切换 ========== */
 const moduleScrollMap = new Map();
 function switchModule(name) {
+  // 非酸浸车间只开放「设备台账 + 点检」（2026-08-17）：导航项已隐藏，这里再挡一道，
+  // 防止代码里其它跳转（设备详情 tab、看板/档案页互跳等）把人送进隐藏模块
+  if (moduleBlocked(name)) {
+    showToast('该模块暂未对' + PLANTS[currentPlant].short + '车间开放');
+    name = 'equipment';
+    if (typeof renderEquipmentList === 'function') renderEquipmentList();
+  }
   // 进模块先把该模块要用的集合订上（只订一次；数据到位后各订阅回调会自动重渲染）
   ensureSubs(...(MODULE_SUBS[name] || []));
   // 保存当前 module 的滚动位置（详情页返回列表时恢复）

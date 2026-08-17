@@ -5,6 +5,22 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **非酸浸车间只保留「设备台账 + 点检」**（2026-08-17，纯代码 3 处·无云端/rules/迁移变更）：用户要求"其他几个车间的重点设备看板、检修、润滑等模块都删了"。**不是删代码**（酸浸还在用），是按当前车间隐藏。
+
+   **① 新增开关（放在 `switchPlant` 之后）**
+   - `FULL_MODULE_PLANTS = ['hpal']` —— 只有高压酸浸开全套；`LIMITED_NAV_KEYS = ['board','maintenance','parts','lube']`；`LIMITED_MODULES` 是含 17 个模块名的 Set（4 个主模块 + 检修 4 子页 + 当个事儿办 2 子页 + 润滑 3 子页 + 二级库 4 子页）。
+   - `plantHasFullModules()` / `moduleBlocked(name)` / `applyPlantModuleUI()` 三个 helper。**加新车间要放开模块只改 `FULL_MODULE_PLANTS` 一行**，导航项、设备详情 tab、跳转守卫全读这一个开关。
+   - **一刀切按 `currentPlant` 判断，不看角色**（用户明确要求"直接把相关模块删除，他们车间用不到"）—— 管理员/经理切到中和/产品/制酸同样看不到。代价：admin 想在 UI 里看中和/产品的润滑数据得切回酸浸（那边没有那些数据），实际等于看不了，用户已知悉。
+
+   **② 三处接线**
+   - `enterApp()` 里调 `applyPlantModuleUI()`（enterApp 是唯一入口漏斗，3 个调用点都经过它，含秒进快照那条路径）：隐藏 4 个导航项 + 设备详情页的「相关记录」「润滑点」两个 tab。
+   - `switchModule()` **第一行**加守卫（必须在 `ensureSubs` 之前）：`moduleBlocked(name)` 为真则 toast「该模块暂未对 X 车间开放」+ `name = 'equipment'` 回退。挡住代码里所有跳转路径 —— 看板↔单台档案互跳、设备详情 tab、`openLubeDetail`/`openMlEqLog`/`openSecondStockDetail` 等 40 多个 `switchModule('lube'/'parts'/'maintenance*'/'todo*'/'board')` 调用点。
+   - 导航项 CSS 里 `board` 有 `flex:0 0 86px`，`display:none` 后剩 3 项自动均分，窄宽屏都正常。
+
+   **③ 顺带收益**：这三个车间进不去那些模块 → `MODULE_SUBS` 里的 `maintenancelogs`/`lubepoints`/`secondstock`/`secondstockhistory`/`todos` 再也不会被订阅，冷启动读取量进一步下降。
+
+   **④ 验证（本地无法登录，密码不代输）**：按本项目老办法从 index.html **正则抽真实源码 + 真实导航/tab 的 HTML** 拼桩页面，**32 项断言全过**（四车间各自导航显隐、两个 tab 显隐、17 个子页面全被 `moduleBlocked` 拦、设备/点检/账号/我的 不受影响、切回酸浸全恢复），另有 4 项静态断言（守卫位于 `ensureSubs` 之前、回退目标是 equipment、enterApp 已接线、详情 tab 共 4 个）。`esprima` 全文解析通过；真实页面加载 0 报错；手机尺寸实测底部导航只剩「设备·点检·我的」。**踩坑**：生成桩页面时 `R.join('\n')` 里的换行被写成了真换行把 JS 字符串截断，改用 `String.fromCharCode(10)`。
+
 1. **8月润滑计划（第3周）补录 36 笔 + 1系列1隔室搅拌补建 2 个电机脂点**（2026-08-17，云端数据 + 1 处 SEED 同步）：用户给两张纸质计划表照片（36 行全部有执行记录，无未执行行），OCR 后出核对表由用户逐项订正，再走 preview 会话 writeBatch 一次原子写入。
 
    **① 表的内容与订正**
