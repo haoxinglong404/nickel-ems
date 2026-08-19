@@ -173,6 +173,8 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   .ml-tl-item:last-child { border-left-color:transparent; padding-bottom:4px; }
   .ml-tl-dot { position:absolute; left:-7px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--g-primary); border:2px solid #fff; box-shadow:0 0 0 1px var(--line); }
   .ml-tl-item.current .ml-tl-dot { background:var(--g-deep); }
+  .ml-tl-item.norepl .ml-tl-dot { background:var(--subtle); }
+  .ml-tl-item.norepl .ml-tl-date { color:var(--muted); font-weight:400; }
   .ml-tl-date { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-family:var(--font-mono); font-size:12px; color:var(--g-deep); font-weight:600; margin-bottom:6px; }
   .ml-tl-life { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-family:var(--font-mono); font-weight:400; background:var(--surface); color:var(--muted); }
   .ml-tl-life.current { background:var(--g-mist); color:var(--g-forest); }
@@ -6764,10 +6766,19 @@ const ML_KEY_EQ_GROUPS = [
   // 2026-07-10 改名后兼容："N系列-高压釜给料泵-A泵"；「-」紧跟泵字，排除"高压釜给料泵区污水泵/用空压机"
   // parts 顺序 = 备件名归属优先级（先命中先得）：O形圈这类通用名放在靠后的零件兜底
   // 隔热组件构成（2026-07-23 用户确认）：导杆、衬套（导套）、活塞、分离盘、隔热段盲板O形圈
+  // 2026-08-15 隔膜/隔热组件按腔室拆分（一台泵 3 个腔室各一套，独立磨损要分开算寿命）：
+  // fam = 零件族（备件名归属/消耗合计按族，寿命按腔室各算各的）；hidden = 不出现在登记表单标签里，
+  // 只用来接住老记录的笼统「隔膜」「隔热组件」标签（有这种记录时展开卡/档案页显示「未注明腔室」行）
   { key: 'feedpump', label: '高压釜给料泵', match: n => n === '高压釜给料泵' || /系列-高压釜给料泵-/.test(n), parts: [
     { key: 'checkvalve', label: '单向阀',   tags: ['单向阀'],           kw: ['单向阀', '止逆', '阀盖'] },
-    { key: 'diaphragm',  label: '隔膜',     tags: ['隔膜'],             kw: ['隔膜'] },
-    { key: 'heatshield', label: '隔热组件', tags: ['隔热组件', '隔热段'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
+    { key: 'diaphragm1', label: '隔膜（1腔室）', fam: 'diaphragm', tags: ['隔膜（1腔室）'], kw: ['隔膜'] },
+    { key: 'diaphragm2', label: '隔膜（2腔室）', fam: 'diaphragm', tags: ['隔膜（2腔室）'], kw: ['隔膜'] },
+    { key: 'diaphragm3', label: '隔膜（3腔室）', fam: 'diaphragm', tags: ['隔膜（3腔室）'], kw: ['隔膜'] },
+    { key: 'diaphragm0', label: '隔膜（未注明腔室）', fam: 'diaphragm', hidden: true, tags: ['隔膜'], kw: ['隔膜'] },
+    { key: 'heatshield1', label: '隔热组件（1腔室）', fam: 'heatshield', tags: ['隔热组件（1腔室）'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
+    { key: 'heatshield2', label: '隔热组件（2腔室）', fam: 'heatshield', tags: ['隔热组件（2腔室）'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
+    { key: 'heatshield3', label: '隔热组件（3腔室）', fam: 'heatshield', tags: ['隔热组件（3腔室）'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
+    { key: 'heatshield0', label: '隔热组件（未注明腔室）', fam: 'heatshield', hidden: true, tags: ['隔热组件', '隔热段'], kw: ['隔热', '导向杆', '导杆', '导套', '衬套', '活塞', '分离盘', 'SEPARATOR', 'GUIDE BUSH', 'O形圈', 'O型圈'] },
   ] },
   { key: 'agitator', label: '高压釜搅拌器', match: n => /高压釜\d隔室搅拌$/.test(n), parts: [
     { key: 'mechseal', label: '机械密封', tags: ['机械密封'],                kw: ['机械密封', '机封'] },
@@ -6927,6 +6938,14 @@ function mlSpareOwner(name, gParts) {
   for (const q of gParts) { if ((q.kw || []).some(k => name.includes(k))) return q.key; }
   return '';
 }
+/* 零件「族」：隔膜 3 个腔室 + 未注明 同属 diaphragm 族（2026-08-15 腔室拆分）。
+   备件名只能看出是"隔膜"看不出哪个腔室，所以归属比较一律按族不按 key */
+function mlPartFam(p) { return (p && (p.fam || p.key)) || ''; }
+function mlSpareOwnerFam(name, gParts) {
+  const k = mlSpareOwner(name, gParts);
+  const p = gParts.find(q => q.key === k);
+  return p ? mlPartFam(p) : '';
+}
 /* 备件显示名：二级库备件（有 ssId）一律跟随二级库当前名称，
    否则二级库改名后老检修记录还显示旧名、看板/汇总还按新旧两个名字分开统计（2026-08-08）。
    手填备件（无 ssId）或二级库条目已删除时，仍用登记时的名字。 */
@@ -6970,7 +6989,9 @@ function renderMlEqLogPage() {
   const parts = g.parts || [];
   const pills = ['<div class="ml-filter-pill' + (mlEqlogPart === 'all' ? ' active' : '') + '" onclick="setMlEqlogPart(\'all\')">全部记录<span class="n">' + recs.length + '</span></div>']
     .concat(parts.map(p => {
+      // 计数含 noReplace 维修记录（时间线里显示为「维修·未换件」节点，只是不计寿命）
       const n = recs.filter(m => mlRecMatchesPart(m, p)).length;
+      if (p.hidden && !n && mlEqlogPart !== p.key) return '';   // 「未注明腔室」兜底 pill：没有老记录就不显示
       return '<div class="ml-filter-pill' + (mlEqlogPart === p.key ? ' active' : '') + '" onclick="setMlEqlogPart(\'' + p.key + '\')">' + p.label + '<span class="n">' + n + '</span></div>';
     })).join('');
   let content;
@@ -6985,27 +7006,44 @@ function renderMlEqLogPage() {
 }
 
 function renderMlPartTimeline(recs, p) {
-  const list = recs.filter(m => mlRecMatchesPart(m, p));   // 已按日期倒序（最新在前）
-  if (!list.length) {
+  const full = recs.filter(m => mlRecMatchesPart(m, p));            // 该零件全部相关记录（含未换件维修），已按日期倒序
+  const list = full.filter(m => !m.noReplace);                      // 真更换——寿命/间隔/寿命图只算它们
+  if (!full.length) {
     return '<div class="empty" style="padding:40px 20px;"><div class="empty-mark">—</div><div class="empty-title">暂无「' + p.label + '」相关记录</div>' +
       '<div class="empty-hint">登记检修时在「故障部位」里选上「' + p.label + '」标签，就会自动归到这里</div></div>';
   }
   const gParts = (mlEqlogGroup() || {}).parts || [];
-  const items = list.map((m, i) => {
+  // 每次真更换的寿命标签（相对下一次真更换算；noReplace 的维修不打断计时）
+  const lifeOf = new Map();
+  list.forEach((m, i) => {
     const next = i > 0 ? list[i - 1] : null;   // 时间上更晚的一次更换
     const life = next ? _mlDaysBetween(next.repairDate, m.repairDate) : _mlDaysBetween(_today(), m.repairDate);
-    const lifeHtml = next
+    lifeOf.set(m.id, next
       ? '<span class="ml-tl-life">用了 ' + _mlLifeLabel(life) + ' 后更换</span>'
-      : '<span class="ml-tl-life current">在用 · 已 ' + _mlLifeLabel(life) + '</span>';
+      : '<span class="ml-tl-life current">在用 · 已 ' + _mlLifeLabel(life) + '</span>');
+  });
+  const curId = list.length ? list[0].id : '';
+  const items = full.map(m => {
+    const note = m.faultCause || m.measures || '';
+    if (m.noReplace) {
+      // 维修/调整节点：挂在时间线上但不计寿命（2026-08-15 用户要求）；用到的备件（垫片等）照常列出
+      const used = (m.spareParts || []).map(x =>
+        '<span class="ml-part-chip">' + escapeHtml(mlSpName(x)) + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
+      return '<div class="ml-tl-item norepl"><div class="ml-tl-dot"></div>' +
+        '<div class="ml-tl-date">' + escapeHtml(m.repairDate || '—') + '<span class="ml-tl-life">🔧 维修 · 未换件，不计寿命</span></div>' +
+        '<div class="ml-tl-card" onclick="openMlDetail(\'' + m.id + '\',\'eqlog\')">' +
+        (used ? '<div class="ml-tl-brand">' + used + '</div>' : '') +
+        (note ? '<div class="ml-tl-note">' + escapeHtml(note) + '</div>' : (used ? '' : '<div class="ml-tl-note">维修/调整，未更换新件</div>')) +
+        '</div></div>';
+    }
     // 品牌/规格：优先显示归属本零件的备件（mlSpareOwner 按关键词+组内优先级判定）；
     // 没有时仅当该次只修了这一个重点零件才显示全部备件（一次修多个零件不猜）
-    const hit = (m.spareParts || []).filter(x => mlSpareOwner(mlSpName(x), gParts) === p.key);
+    const hit = (m.spareParts || []).filter(x => mlSpareOwnerFam(mlSpName(x), gParts) === mlPartFam(p));
     const soloPart = gParts.filter(x => mlRecMatchesPart(m, x)).length === 1;
     const brandSrc = hit.length ? hit : (soloPart ? (m.spareParts || []) : []);
     const brands = brandSrc.map(x => '<span class="ml-part-chip">' + escapeHtml(mlSpName(x)) + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
-    const note = m.faultCause || m.measures || '';
-    return '<div class="ml-tl-item' + (!next ? ' current' : '') + '"><div class="ml-tl-dot"></div>' +
-      '<div class="ml-tl-date">' + escapeHtml(m.repairDate || '—') + lifeHtml + '</div>' +
+    return '<div class="ml-tl-item' + (m.id === curId ? ' current' : '') + '"><div class="ml-tl-dot"></div>' +
+      '<div class="ml-tl-date">' + escapeHtml(m.repairDate || '—') + (lifeOf.get(m.id) || '') + '</div>' +
       '<div class="ml-tl-card" onclick="openMlDetail(\'' + m.id + '\',\'eqlog\')">' +
       (brands ? '<div class="ml-tl-brand">' + brands + '</div>' : '<div class="ml-tl-brand"><span class="ml-part-chip more">未登记备件品牌/规格</span></div>') +
       (note ? '<div class="ml-tl-note">' + escapeHtml(note) + '</div>' : '') +
@@ -7023,8 +7061,10 @@ function renderMlPartTimeline(recs, p) {
       avgHtml = ' · 平均更换间隔 ' + _mlLifeLabel(avg);
     }
   }
-  return '<div style="font-size:12px;color:var(--subtle);margin:2px 0 14px;">共 ' + list.length + ' 次更换记录' + avgHtml + ' · 点卡片看检修详情</div>' +
-    renderMlPartLifeChart(list, p) +
+  const nFix = full.length - list.length;
+  return '<div style="font-size:12px;color:var(--subtle);margin:2px 0 14px;">共 ' + list.length + ' 次更换' +
+    (nFix ? ' + ' + nFix + ' 次维修（未换件）' : '') + avgHtml + ' · 点卡片看检修详情</div>' +
+    (list.length ? renderMlPartLifeChart(list, p) : '') +
     '<div class="ml-tl">' + items + '</div>';
 }
 
@@ -7034,7 +7074,7 @@ function renderMlPartLifeChart(list, p) {
   const gp2 = (mlEqlogGroup() || {}).parts || [];
   const brandOf = m => {
     const sp = m.spareParts || [];
-    const hit = sp.find(x => mlSpareOwner(mlSpName(x), gp2) === p.key);
+    const hit = sp.find(x => mlSpareOwnerFam(mlSpName(x), gp2) === mlPartFam(p));
     if (hit && mlSpName(hit)) return mlSpName(hit);
     // 该次检修只涉及这一个重点零件时才兜底取第一个备件；修了多个零件不猜
     if (gp2.filter(x => mlRecMatchesPart(m, x)).length === 1 && sp.length && mlSpName(sp[0])) return mlSpName(sp[0]);
@@ -7068,12 +7108,20 @@ let mlBoardSeries = '1';      // '1' / '2' / '3'（只看单个系列，避免�
 let mlBoardOpenTag = '';      // 方框网格里当前展开的设备 tag（'' = 都收起，2026-08-15）
 let mlEqlogFrom = '';         // 'board' = 从看板进的单台档案，返回时回看板
 
+/* fam/famLabel：隔膜、隔热组件 2026-08-15 按腔室拆分——每腔室一条 def（方框状态/展开卡逐腔室），
+   零件消耗表按 famLabel 合并成一行（采购看总量；平均寿命 = 各腔室间隔合在一起平均） */
 const MLB_PART_DEFS = [
-  { gkey: 'feedpump',  pkey: 'checkvalve', label: '单向阀',   color: '#3A5424' },
-  { gkey: 'feedpump',  pkey: 'diaphragm',  label: '隔膜',     color: '#C77F3B' },
-  { gkey: 'feedpump',  pkey: 'heatshield', label: '隔热组件', color: '#2B8AD9' },
-  { gkey: 'agitator',  pkey: 'mechseal',   label: '高压釜搅拌器机械密封', color: '#8A5FA8' },
-  { gkey: 'preheater', pkey: 'mechseal',   label: '预热器给料泵机械密封', color: '#B04A4A' },
+  { gkey: 'feedpump',  pkey: 'checkvalve',  label: '单向阀',   color: '#3A5424' },
+  { gkey: 'feedpump',  pkey: 'diaphragm1',  label: '隔膜（1腔室）', fam: 'diaphragm', famLabel: '隔膜', color: '#C77F3B' },
+  { gkey: 'feedpump',  pkey: 'diaphragm2',  label: '隔膜（2腔室）', fam: 'diaphragm', famLabel: '隔膜', color: '#C77F3B' },
+  { gkey: 'feedpump',  pkey: 'diaphragm3',  label: '隔膜（3腔室）', fam: 'diaphragm', famLabel: '隔膜', color: '#C77F3B' },
+  { gkey: 'feedpump',  pkey: 'diaphragm0',  label: '隔膜（未注明腔室）', fam: 'diaphragm', famLabel: '隔膜', color: '#C77F3B' },
+  { gkey: 'feedpump',  pkey: 'heatshield1', label: '隔热组件（1腔室）', fam: 'heatshield', famLabel: '隔热组件', color: '#2B8AD9' },
+  { gkey: 'feedpump',  pkey: 'heatshield2', label: '隔热组件（2腔室）', fam: 'heatshield', famLabel: '隔热组件', color: '#2B8AD9' },
+  { gkey: 'feedpump',  pkey: 'heatshield3', label: '隔热组件（3腔室）', fam: 'heatshield', famLabel: '隔热组件', color: '#2B8AD9' },
+  { gkey: 'feedpump',  pkey: 'heatshield0', label: '隔热组件（未注明腔室）', fam: 'heatshield', famLabel: '隔热组件', color: '#2B8AD9' },
+  { gkey: 'agitator',  pkey: 'mechseal',    label: '高压釜搅拌器机械密封', color: '#8A5FA8' },
+  { gkey: 'preheater', pkey: 'mechseal',    label: '预热器给料泵机械密封', color: '#B04A4A' },
 ];
 function mlbPartOf(gkey, pkey) {
   const g = ML_KEY_EQ_GROUPS.find(x => x.key === gkey);
@@ -7162,7 +7210,7 @@ function mlbPartMainSpare(m, g, pkey) {
   if (!m) return null;
   const gParts = g.parts || [];
   const part = gParts.find(x => x.key === pkey) || {};
-  const hit = (m.spareParts || []).filter(x => mlSpareOwner(mlSpName(x), gParts) === pkey);
+  const hit = (m.spareParts || []).filter(x => mlSpareOwnerFam(mlSpName(x), gParts) === mlPartFam(part));
   const solo = gParts.filter(x => mlRecMatchesPart(m, x)).length === 1;
   const src = hit.length ? hit : (solo ? (m.spareParts || []) : []);
   if (!src.length) return null;
@@ -7177,6 +7225,7 @@ function mlbPartBrandOf(m, g, pkey) {
 function mlbEqExpandHtml(g, u) {
   const rows = (g.parts || []).map(p => {
     const ps = u.parts[p.key] || { count: 0 };
+    if (p.hidden && !ps.count) return '';   // 「未注明腔室」兜底行：没有老记录就不显示
     let meta, brand = '';
     if (!ps.count) {
       meta = '暂无记录 · 登记检修勾「' + p.label + '」标签后自动归类';
@@ -7210,7 +7259,8 @@ function mlbUnitStats() {
       const parts = {};
       defs.forEach(d => {
         const p = mlbPartOf(d.gkey, d.pkey);
-        const list = p ? recs.filter(m => mlRecMatchesPart(m, p)) : [];
+        // noReplace = 只维修/调整未换新件（2026-08-15）：不算一次更换，不进寿命/消耗/厂家统计
+        const list = p ? recs.filter(m => mlRecMatchesPart(m, p) && !m.noReplace) : [];
         const inUse = list.length ? _mlDaysBetween(_today(), list[0].repairDate) : null;
         const intervals = [];
         for (let i = 0; i < list.length - 1; i++) {
@@ -7233,22 +7283,35 @@ function mlbConsumeCardHtml(stats) {
   const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   const qStartMonth = Math.floor(now.getMonth() / 3) * 3;
   const qs = now.getFullYear() + '-' + String(qStartMonth + 1).padStart(2, '0') + '-01';
-  const rows = MLB_PART_DEFS.map(d => {
-    const g = ML_KEY_EQ_GROUPS.find(x => x.key === d.gkey);
+  // 按「族」聚合：隔膜 3 腔室 + 未注明 = 一行「隔膜」——消耗看总量，寿命间隔按各腔室分别算再合并平均
+  const fams = [];
+  const famIdx = new Map();
+  MLB_PART_DEFS.forEach(d => {
+    const fk = d.gkey + '|' + (d.fam || d.pkey);
+    let e = famIdx.get(fk);
+    if (!e) { e = { gkey: d.gkey, label: d.famLabel || d.label, defs: [] }; famIdx.set(fk, e); fams.push(e); }
+    e.defs.push(d);
+  });
+  const rows = fams.map(f => {
+    const g = ML_KEY_EQ_GROUPS.find(x => x.key === f.gkey);
+    const gPart = (g.parts || []).find(x => x.key === f.defs[0].pkey) || {};
     let mQty = 0, qQty = 0, unit = '', nRec = 0;
     const intervals = [];
-    stats.filter(s => s.gkey === d.gkey).forEach(s => {
-      const ps = s.parts[d.pkey];
-      if (!ps || !ps.count) return;
-      nRec += ps.count;
-      const list = ps.records;   // 已按日期倒序
-      for (let i = 0; i < list.length - 1; i++) {
-        const dd = _mlDaysBetween(list[i].repairDate, list[i + 1].repairDate);
-        if (dd != null) intervals.push(dd);
-      }
-      const gPart = (g.parts || []).find(x => x.key === d.pkey) || {};
-      list.forEach(m => {
-        const sp = mlbPartMainSpare(m, g, d.pkey);
+    stats.filter(s => s.gkey === f.gkey).forEach(s => {
+      const uniq = new Map();   // 同一条记录勾了多个腔室标签，消耗只算一次
+      f.defs.forEach(d => {
+        const ps = s.parts[d.pkey];
+        if (!ps || !ps.count) return;
+        nRec += ps.count;
+        const list = ps.records;   // 已按日期倒序（本腔室的）
+        for (let i = 0; i < list.length - 1; i++) {
+          const dd = _mlDaysBetween(list[i].repairDate, list[i + 1].repairDate);
+          if (dd != null) intervals.push(dd);
+        }
+        list.forEach(m => uniq.set(m.id, m));
+      });
+      uniq.forEach(m => {
+        const sp = mlbPartMainSpare(m, g, f.defs[0].pkey);
         // 数量只认名字确实带零件关键词的主备件（如「单向阀组件」「机械密封」）；
         // 该次只登记了垫片/O形圈这类附件时不计数量，免得把附件错算成主件消耗（2026-08-15）
         const okName = sp && (gPart.kw || []).some(k => mlSpName(sp).includes(k));
@@ -7261,7 +7324,7 @@ function mlbConsumeCardHtml(stats) {
     });
     if (!nRec) return '';
     const avg = intervals.length ? Math.round(intervals.reduce((s, x) => s + x, 0) / intervals.length) : null;
-    return '<div class="mlb-cs-row"><span class="nm">' + d.label + '</span>' +
+    return '<div class="mlb-cs-row"><span class="nm">' + f.label + '</span>' +
       '<span class="v">' + mQty + escapeHtml(unit) + '</span>' +
       '<span class="v">' + qQty + escapeHtml(unit) + '</span>' +
       '<span class="v">' + (avg != null ? avg + ' 天' : '—') + '</span></div>';
@@ -7410,7 +7473,8 @@ function renderMlCard(ml, from) {
   const cat = ML_CATEGORY_MAP[ml.category] || { label: '—', color: 'var(--subtle)' };
   const cls = eqClassOf(ml.equipmentId);
   const fp = ml.faultParts || [];
-  const parts = fp.slice(0, 3).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('');
+  const norepl = ml.noReplace ? '<span class="ml-part-chip more">🔧 未换件</span>' : '';
+  const parts = norepl + fp.slice(0, 3).map(p => '<span class="ml-part-chip">' + escapeHtml(p) + '</span>').join('');
   const more = fp.length > 3 ? '<span class="ml-part-chip more">+' + (fp.length - 3) + '</span>' : '';
   const spN = (ml.spareParts || []).length;
   return '<div class="ml-card' + (ml.deleted ? ' deleted' : '') + '" onclick="openMlDetail(\'' + ml.id + '\'' + (from ? ',\'' + from + '\'' : '') + ')">' +
@@ -7469,6 +7533,7 @@ function renderMaintenanceDetail(ml) {
     '<div class="ml-field"><div class="ml-field-label">检修日期</div><div class="ml-field-val">' + escapeHtml(ml.repairDate || '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">检修人</div><div class="ml-field-val">' + escapeHtml(ml.repairerName || '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">故障部位</div><div class="ml-field-val">' + parts + '</div></div>' +
+    (ml.noReplace ? '<div class="ml-field"><div class="ml-field-label">换件情况</div><div class="ml-field-val">🔧 未更换新件（只维修/调整）——不计入零件更换寿命统计</div></div>' : '') +
     '<div class="ml-field"><div class="ml-field-label">故障原因</div><div class="ml-field-val ml-pre">' + escapeHtml(ml.faultCause || '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">处理措施</div><div class="ml-field-val ml-pre">' + escapeHtml(ml.measures || '—') + '</div></div>' +
     '<div class="ml-field"><div class="ml-field-label">使用备件</div><div class="ml-field-val" style="display:block;">' + spHtml + '</div></div>' +
@@ -7499,6 +7564,7 @@ function openMlCreate() {
     category: 'fault',
     repairDate: ymd,
     faultParts: [], faultCause: '', measures: '',
+    noReplace: false,   // true = 本次未更换新件（只维修/调整），不计入零件更换寿命统计（2026-08-15）
     spareParts: [],
     repairerId: user.empno, repairerName: user.name,
     note: '',
@@ -7568,7 +7634,8 @@ function toggleFaultPart(tag) {
 // 故障部位可选标签：重点设备（高压釜给料泵/搅拌器）把该组重点零件标签排在最前，其余设备只有通用标签
 function mlFormFaultPartOptions(b) {
   const g = ML_KEY_EQ_GROUPS.find(x => x.match((b && b.equipmentName) || ''));
-  const extra = g ? g.parts.map(p => p.label).filter(l => COMMON_FAULT_PARTS.indexOf(l) === -1) : [];
+  // hidden 零件（「未注明腔室」兜底）不进登记表单——新记录必须选具体腔室
+  const extra = g ? g.parts.filter(p => !p.hidden).map(p => p.label).filter(l => COMMON_FAULT_PARTS.indexOf(l) === -1) : [];
   return extra.concat(COMMON_FAULT_PARTS);
 }
 
@@ -7594,6 +7661,7 @@ function renderMlForm() {
     '<div class="edit-field"><div class="edit-field-label">检修人</div><input class="edit-input" id="f-ml-repairer" value="' + escapeAttr(b.repairerName || '') + '" placeholder="默认本人，可改" oninput="mlBuffer.repairerName = this.value"></div>' +
     '<div class="edit-group-label">③ 故障与处理</div>' +
     '<div class="edit-field"><div class="edit-field-label">故障部位（可多选）</div><div class="tag-chips" id="ml-parts-chips">' + stdParts + customParts + '</div><button class="wo-act-btn" style="margin-top:8px;" onclick="addCustomFaultPart()">＋ 补充部位</button></div>' +
+    '<div class="edit-field"><label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink);cursor:pointer;padding:2px 0;"><input type="checkbox" id="f-ml-norepl"' + (b.noReplace ? ' checked' : '') + ' onchange="mlBuffer.noReplace = this.checked" style="width:20px;height:20px;accent-color:var(--g-forest);flex:0 0 auto;">🔧 本次未更换新件（只维修/调整）<span style="color:var(--subtle);font-size:12px;">— 不计入零件更换寿命统计</span></label></div>' +
     '<div class="edit-field"><div class="edit-field-label">故障原因</div><textarea class="edit-textarea" id="f-ml-cause" placeholder="如：密封面磨损、冷却水中断致干磨" oninput="mlBuffer.faultCause = this.value">' + escapeHtml(b.faultCause || '') + '</textarea></div>' +
     '<div class="edit-field"><div class="edit-field-label">处理措施</div><textarea class="edit-textarea" id="f-ml-measures" placeholder="如：更换机封、重新对中、试运正常" oninput="mlBuffer.measures = this.value">' + escapeHtml(b.measures || '') + '</textarea></div>' +
     '<div class="edit-group-label">④ 使用备件</div>' +
