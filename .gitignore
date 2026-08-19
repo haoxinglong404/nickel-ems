@@ -55,10 +55,11 @@ secrets.json
 *_F12脚本.js
 清空*.js
 
-# 润滑/审核本地工作文件（生成器 + 待改清单 + 审核 HTML，不进仓库）
+# 润滑/审核/核对本地工作文件（生成器 + 待改清单 + 审核/核对 HTML，不进仓库）
 _gen_lube_audit.py
 _pending_lube_fixes.json
 *审核.html
+*核对*.html
 
 # 五定表模板填充脚本（本地跑，数据从预览会话导出，不进仓库）
 填五定表_*.py
