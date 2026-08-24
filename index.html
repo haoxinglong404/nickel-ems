@@ -3319,6 +3319,11 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
         <div class="user-mgmt-count" id="user-count">0 accounts</div>
         <button class="btn-add" onclick="showSheet('addUser')">+ 添加账号</button>
       </div>
+      <div class="eq-search-bar">
+        <input class="eq-search-input" id="user-search" placeholder="搜索姓名、工号、角色…" oninput="onUserSearchInput()">
+        <div class="eq-search-clear" id="user-search-clear" onclick="clearUserSearch()">×</div>
+        <svg class="eq-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
       <div id="user-list-admin"></div>
     </section>
 
@@ -5905,12 +5910,39 @@ function updateFab() {
 }
 
 /* ========== 用户管理（继承 v0.3） ========== */
+/* 账号搜索（2026-08-24，账号涨到 51 个后不好翻）：匹配姓名 / 工号 / 角色标签（标签带车间前缀，
+   所以搜「中和」能筛出中和车间的人）。纯前端过滤，不影响权限可见范围。 */
+let userSearchText = '';
+function onUserSearchInput() {
+  const v = document.getElementById('user-search').value;
+  userSearchText = v.trim();
+  document.getElementById('user-search-clear').classList.toggle('active', !!v);
+  renderUserListAdmin();
+}
+function clearUserSearch() {
+  const el = document.getElementById('user-search');
+  if (el) el.value = '';
+  userSearchText = '';
+  const cl = document.getElementById('user-search-clear');
+  if (cl) cl.classList.remove('active');
+  renderUserListAdmin();
+}
+function userMatchesSearch(u, kw) {
+  return (u.name || '').toLowerCase().includes(kw)
+      || String(u.empno || '').toLowerCase().includes(kw)
+      || roleLabel(u).toLowerCase().includes(kw);
+}
 function renderUserListAdmin() {
   const viewer = getCurrentUser();
   let users = loadUsers();
   // 管理员/经理见全部（经理点开管理员账号会被拦）；工程师/技术员只见本车间非管理员账号
   if (!isAdmin(viewer) && !isManager(viewer)) users = users.filter(u => userPlant(u) === userPlant(viewer) && u.role !== 'admin');
-  document.getElementById('user-count').textContent = users.length + ' accounts';
+  const total = users.length;
+  const kw = userSearchText.toLowerCase();
+  if (kw) users = users.filter(u => userMatchesSearch(u, kw));
+  document.getElementById('user-count').innerHTML = kw
+    ? '<span style="color:var(--g-forest);">' + users.length + '</span> / ' + total + ' accounts'
+    : total + ' accounts';
   document.getElementById('user-list-admin').innerHTML = users.map(u=>{
     const initial = u.role==='admin'?'总':u.name.slice(0,1);
     return `<div class="user-row-admin" onclick="showSheet('editUser','${u.empno}')">
@@ -5918,7 +5950,7 @@ function renderUserListAdmin() {
       <div class="u-meta"><div class="u-name">${u.name}</div><div class="u-empno">工号 ${u.empno} · ${u.password?'已设密码':'免密登录'}</div></div>
       <span class="u-role ${u.role}">${roleLabel(u)}</span>
     </div>`;
-  }).join('');
+  }).join('') || `<div class="empty" style="padding:48px 20px;"><div class="empty-mark">—</div><div class="empty-title">没有匹配「${escapeHtml(userSearchText)}」的账号</div><div class="empty-hint">name · employee no · role</div></div>`;
 }
 
 /* ========== 抽屉 ========== */
@@ -11728,6 +11760,8 @@ window.switchModule = switchModule;  // 2026-04-23: 暴露给备件 tab 等内�
 window.switchInspectTab = switchInspectTab;
 window.clearInspectSearch = clearInspectSearch;
 window.renderInspectOverview = renderInspectOverview;
+window.onUserSearchInput = onUserSearchInput;
+window.clearUserSearch = clearUserSearch;
 window.openInspectDetail = openInspectDetail;
 window.setInspectItemStatus = setInspectItemStatus;
 window.toggleInspectStopped = toggleInspectStopped;
