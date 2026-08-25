@@ -5,6 +5,35 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **跨车间借用 `alsoPlants`：218 区归酸浸，石灰石也能看/点检**（2026-08-24，代码 4 处 + 云端 78 条数据·无 rules/迁移变更）：
+
+   **① 起因**：用户提「218 归属于高压酸浸车间，但是是石灰石车间的检修在负责，有没有办法让石灰石能访问 218」。218 区 54 台（隔膜泵 10 / 搅拌器 19 / 地坑泵 9 / 离心泵 7 / 成套设备 3 / 风机 3 / 起重机 2 / 给料器 1），云端全部 `plant:'hpal'`。
+
+   **② 为什么不用改归属**：把 218 的 `plant` 改成 `'shs'` 会让酸浸自己丢掉这 54 台（他们的润滑点、检修记录、重点设备都还挂着）；给石灰石的人发 `plant:'all'` 账号又等于放开全部五个车间。所以走"归属不变 + 多列一个可见车间"。
+
+   **③ 新字段 `alsoPlants`**（可选，字符串数组）：`equipments` / `inspectmonthly` / `inspecthistory` 三个集合用。语义 = **归属仍是 `plant`，但 `alsoPlants` 里列的车间同样能看到它、能给它做点检**。
+
+   **④ 代码改了 4 处**：
+   - `inPlant(d)` → `docPlant(d)===currentPlant || docAlsoPlants(d).indexOf(currentPlant)>=0`（新增 `docAlsoPlants(d)` 取数组、非数组返回 `[]`）。
+   - `subscribeEquipments()` → **两路 onSnapshot 合并**。Firestore 查不了 `plant==X OR alsoPlants contains X`，只能第一路照旧 `plantQuery('equipments')`、第二路 `where('alsoPlants','array-contains',currentPlant)`，各自把 docs 存进 `eqOwnDocs` / `eqBorrowDocs`，任一路更新都跑 `applyEqSnapshots()` 用 `Map` 按 id 去重合并再 `.filter(inPlant)`。**第二路只在 `plantFilterReady` 为真时才起** —— 补写未完成退回整集合订阅时第一路已经全拿到了，再起一路纯属重复。`array-contains` 用的是自动单字段索引，不需要去 Console 建复合索引。
+   - 新 helper **`stampPlantFromEq(obj, eq)`**：`obj.plant` 缺省时记**设备的** `plant`（不是 `currentPlant`），并把设备的 `alsoPlants` 一并复制过去。
+   - `cloudSaveInspectDay(eq,…)` 和 `cloudSaveInspectHistory(record)` 由 `stampPlant` 改成 `stampPlantFromEq`；后者手上没有 eq 对象，按 `record.equipmentId` 从 `eqCache` 反查，查不到就退回按当前车间盖章。
+
+   **⑤ 为什么点检记录必须跟着设备走**：如果沿用 `stampPlant`，石灰石做的点检会被盖成 `plant:'shs'` → 酸浸那边看不见 → 同一台 218 设备，两个车间显示的「上次点检」不一样，酸浸永远以为没人点。改成继承设备的 `plant:'hpal' + alsoPlants:['shs']` 后，**两个车间读的是同一份记录**。
+
+   **⑥ 云端数据（78 条，只写字段不动 `updatedAt`）**：
+   - `equipments` `where(area=='218')` → 54 条，**先核 `metadata.fromCache` 为 false、条数必须恰等于 54、且 54 条全是 `plant=='hpal'`**，三闸都过才 `writeBatch` 加 `alsoPlants:['shs']`。回读 `where('alsoPlants','array-contains','shs')` = 54，区域全是 218。
+   - `inspectmonthly` 按 `where('equipmentId','in',chunk)` 分 6 块定向查（不全量扫），命中 **24 条**（全是 `2026-07`、原本连 `plant` 字段都没有 → `docPlant()` 兜底 hpal），同样加 `alsoPlants:['shs']`，回读 24/24。`inspecthistory` 命中 **0 条**，无需处理。
+   - **没给它们补写显式 `plant`** —— `inspectmonthly` 的订阅是 `where('month','in',[上月,本月])` 后客户端 `.filter(inPlant)`，不走服务端 plant 过滤，`docPlant()` 的 `|| 'hpal'` 兜底就够，沿用"老数据勿补写 plant"的原约定。
+
+   **⑦ 效果**：石灰石设备台账 144→**198 台**（区域筛选多出「区域 218 · 54」）、点检 113→**154 台**（218 有 13 台是 2026-07-06 起就暂缓数值点检的潜水泵 9 / 成套设备 3 / 给料器 1）；石灰石点检页出现「逾期 24」= 那 24 条 7 月记录。**高压酸浸一条没变**（422 台 / 在检 318 / 218 区 41 台在检），中和 305 / 产品 66 / 制酸 52 借用数均为 0。
+
+   **⑧ 权限没动**：`canSubmitField(u)` = `inHomePlant(u) || isManager(u)`，只看**用户的 home plant 是否等于 currentPlant**，跟设备归属无关 —— 所以石灰石的人在石灰石视图里可以直接提交 218 的点检，不需要额外开口子。（郝行龙是 hpal 账号，切到石灰石仍显示「👀 参观中·只读」，这是原有行为。）
+
+   **⑨ 已知限制**：石灰石不在 `FULL_MODULE_PLANTS`，**没有检修 / 二级库 / 润滑模块**，所以他们对 218 目前只能"看铭牌 + 做点检"，登不了检修记录也领不了备件。真要放开只能改 `FULL_MODULE_PLANTS`，但那是一刀切、会连带放开四个模块。另：218 的 `lubepoints` 和 `maintenancelogs` **没有加 `alsoPlants`**（那两个模块石灰石看不见，加了也没用）；将来若放开模块，需要一并补。
+
+   **⑩ 验证**：从 index.html 正则抽出真实的 `docPlant` / `docAlsoPlants` / `inPlant` / `stampPlant` / `stampPlantFromEq` 源码，用 `new Function('currentPlant','ok',SRC)` 分别注入 `hpal` / `shs` / `zh` 跑 **16 项断言全过**（含"hpal 老数据无 plant 字段仍算自家"、"zh 看不见借出去的 218"、"已有 plant 不被改写"、"设备找不到时退回按当前车间盖章"）；线上实测两个车间打开 `218-PE-AG-001A` 的「上次：1 月前 · 逾期 41 天」完全一致；控制台 0 报错。
+
 1. **石灰石车间设备台账 144 台 + 14 个点检模板导入**（2026-08-24，纯云端数据·无代码/SEED/rules/迁移变更）：
 
    **① 来料四份**（微信 2026-08 文件夹）：`001-石灰石车间晨曦动设备清单.xlsx`（1 sheet，59 数据行，数量列合计 184 台）、`设备点检表(公辅车间庄.xlsx).xlsx`（24 sheet）、`设备点检表(机修-二车间.xlsx5.27(1).xlsx`（12 sheet）、`最终的版本.zip`（6 个 xlsx / 22 sheet，中印双语）。
