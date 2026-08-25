@@ -3603,9 +3603,27 @@ const currentPlant = (() => {
   catch (e) { return 'hpal'; }
 })();
 function docPlant(d) { return (d && d.plant) || 'hpal'; }
-function inPlant(d) { return docPlant(d) === currentPlant; }
+/* 跨车间借用（2026-08-24）：设备可选 `alsoPlants:['shs']` —— 归属仍是 `plant`（不变），
+   但 alsoPlants 里列的车间同样能看到它、能给它做点检。
+   现实场景：218 区 54 台设备归高压酸浸，现场检修却是石灰石车间在负责。
+   点检记录（inspectmonthly / inspecthistory）通过 stampPlantFromEq 把设备的 plant + alsoPlants
+   一起继承下来，所以两个车间看到的是同一份记录，不会各记各的。 */
+function docAlsoPlants(d) { return (d && Array.isArray(d.alsoPlants)) ? d.alsoPlants : []; }
+function inPlant(d) {
+  if (!d) return false;
+  return docPlant(d) === currentPlant || docAlsoPlants(d).indexOf(currentPlant) >= 0;
+}
 // 已有 plant 保留（编辑不换归属），没有则记当前车间
 function stampPlant(obj) { if (obj && !obj.plant) obj.plant = currentPlant; return obj; }
+/* 派生记录（点检等）跟着设备走：归属记设备的 plant，借用车间也一并继承，
+   这样石灰石在 218 做的点检，高压酸浸那边照样看得见。 */
+function stampPlantFromEq(obj, eq) {
+  if (!obj) return obj;
+  if (!obj.plant) obj.plant = eq ? docPlant(eq) : currentPlant;
+  const also = docAlsoPlants(eq);
+  if (also.length && !obj.alsoPlants) obj.alsoPlants = also.slice();
+  return obj;
+}
 function switchPlant(p) {
   if (!PLANTS[p] || p === currentPlant) { hideSheet(); return; }
   try { localStorage.setItem(PLANT_KEY, p); } catch (e) {}
@@ -4217,6 +4235,10 @@ let usersCache = [];
 let eqCache = [];
 let usersUnsub = null;
 let eqUnsub = null;
+// 借用订阅（alsoPlants 命中当前车间的设备）：服务端查不了 OR，只能另起一路再合并
+let eqBorrowUnsub = null;
+let eqOwnDocs = [];
+let eqBorrowDocs = [];
 
 // 以下函数保持原来的同步接口（内存操作），写入改为云端异步
 function loadUsers() { return usersCache; }
@@ -4339,10 +4361,13 @@ if (PREVIEW_MODE) {
 // 订阅设备集合
 function subscribeEquipments() {
   if (eqUnsub) eqUnsub();
-  // 2026-08-11：补写完 plant 后走服务端按车间过滤（1054 → 422/305/327）。
-  // 下面的 .filter(inPlant) 保留不动 —— 补写未完成时退回整集合订阅，靠它兜底。
-  eqUnsub = onSnapshot(plantQuery('equipments'), (snap) => {
-    eqCache = applyPreviewOverlay(snap.docs.map(d => d.data()).filter(inPlant));
+  if (eqBorrowUnsub) eqBorrowUnsub();
+  eqOwnDocs = []; eqBorrowDocs = [];
+  // 两路快照合并成一份缓存：本车间的 + 借来的（alsoPlants 含本车间）。按 id 去重。
+  const applyEqSnapshots = () => {
+    const map = new Map();
+    eqOwnDocs.concat(eqBorrowDocs).forEach(d => map.set(d.id, d));
+    eqCache = applyPreviewOverlay(Array.from(map.values()).filter(inPlant));
     // 自动刷新设备列表
     const eqModule = document.querySelector('.module[data-module="equipment"]');
     if (eqModule && eqModule.classList.contains('active')) {
@@ -4357,10 +4382,24 @@ function subscribeEquipments() {
         if (detailActive) openDetail(currentEqId);
       }
     }
+  };
+  // 2026-08-11：补写完 plant 后走服务端按车间过滤（1054 → 422/305/327）。
+  // 下面的 .filter(inPlant) 保留不动 —— 补写未完成时退回整集合订阅，靠它兜底。
+  eqUnsub = onSnapshot(plantQuery('equipments'), (snap) => {
+    eqOwnDocs = snap.docs.map(d => d.data());
+    applyEqSnapshots();
   }, (err) => {
     console.error('[Firebase] 订阅设备失败', err);
     setCloudStatus('error', '连接失败');
   });
+  // 借用设备（2026-08-24）：只在服务端过滤生效时才需要 —— 退回整集合订阅时第一路已经全拿到了
+  if (plantFilterReady) {
+    const qy = query(collection(db, 'equipments'), where('alsoPlants', 'array-contains', currentPlant));
+    eqBorrowUnsub = onSnapshot(qy, (snap) => {
+      eqBorrowDocs = snap.docs.map(d => d.data());
+      applyEqSnapshots();
+    }, (err) => console.error('[Firebase] 订阅借用设备失败', err));
+  }
 }
 
 
@@ -6498,10 +6537,12 @@ function subscribeInspectHistory() {
 async function cloudSaveInspectHistory(record) {
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'inspecthistory', record.id), stampPlant({
+    // 归属跟着设备走（借用设备的记录两个车间都看得见），设备找不到时退回按当前车间盖章
+    const eq = eqCache.find(e => e.id === record.equipmentId);
+    await setDoc(doc(db, 'inspecthistory', record.id), stampPlantFromEq({
       ...record,
       updatedAt: Date.now(),
-    }));
+    }, eq));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存巡检记录失败', err);
@@ -6616,7 +6657,7 @@ async function cloudSaveInspectDay(eq, tplKey, dayEntry) {
   base.updatedAt = Date.now();
   setCloudStatus('syncing', '保存中...');
   try {
-    await setDoc(doc(db, 'inspectmonthly', docId), stampPlant(base));
+    await setDoc(doc(db, 'inspectmonthly', docId), stampPlantFromEq(base, eq));
     setCloudStatus('online', '已同步');
   } catch (err) {
     console.error('[Firebase] 保存月度点检失败', err);
