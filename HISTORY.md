@@ -5,6 +5,32 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **借用设备的提交权限改成"按台判"（`canSubmitForEq`）**（2026-08-25，纯代码 5 处·无云端/rules/迁移变更）：
+
+   **① 起因**：08-24 那刀只解决了"石灰石在**自己车间视图里**能看见并点检 218"。但用户反馈「石灰石车间的人习惯点到高压酸浸车间去点检 218 的设备，一点过去就提示他们只能查看，不能提交」—— 因为 `canSubmitField(u)` = `inHomePlant(u) || isManager(u)`，是**整车间一刀切**的：shs 账号 + currentPlant=hpal → 直接拦死，跟点的是哪台设备无关。
+
+   **② 改法：把闸门从"按车间"降到"按台"**。新增 `canSubmitForEq(u, eq)`：
+   ```
+   canSubmitField(u) 为真 → 放行（在自家车间，或经理）
+   否则 eq 为空 → 拒绝
+   否则 docPlant(eq) === userPlant(u) || docAlsoPlants(eq).includes(userPlant(u)) → 放行
+   ```
+   语义 = "参观别的车间时，只有**归属自己车间**或**借给自己车间**的设备能提交"。对称生效：石灰石的人在酸浸视图能点 218；酸浸的人在石灰石视图也能点 218（218 本来就是他们的），但点不了石灰石自己的设备。
+
+   **③ 接线两处（都是点检提交入口）**：
+   - `submitInspectV2()`：原来第一行就判权限，现在**把 `loadEquipments().find(...)` 挪到权限判断之前**，拿到 eq 再判。
+   - `submitInspect()`（v1 路径）：把 `if (inspectExecBuffer.v2) return submitInspectV2();` 提到权限判断之前（v2 自己会判，不重复），再按 `inspectExecBuffer.equipmentId` 查一次 eq 后判。
+   - **被拦文案改了**：原来是「参观其他车间时只能查看，不能提交」，现在是「**这台设备不归你们车间，参观时只能查看**」—— 原话容易让人以为整个车间都点不了，实际现在是一台一台判的。
+
+   **④ 顶栏提示同步改口径**：原来 `enterApp` 里一行三元 `inHomePlant(user) ? '👈 点此切换车间' : '👀 参观中·只读 点此切回'`。抽成 `updatePlantHint()`，加判据 `hasBorrowedHere(u)` —— **口径必须与 `canSubmitForEq` 完全一致**（`docPlant(e)===home || alsoPlants 含 home`，第一版只写了后半句，被断言测出来 FAIL 后补上），命中时显示「👀 参观中·**借用设备可点检** 点此切回」。因为要读 `eqCache`，光在 `enterApp` 调一次不够（那时缓存还空），所以 `applyEqSnapshots()` 里 eqCache 赋值后也调一次。
+
+   **⑤ 故意没动的地方**：润滑两个入口 `confirmBulkLube()` / `submitLubeExec()` 仍用 `canSubmitField`。原因：`lubepoints` 集合上没有 `alsoPlants` 字段（08-24 只给了 `equipments` 和 `inspectmonthly`），218 的润滑现在也确实是酸浸的何甫林/张承钢在做。将来若石灰石要接 218 的润滑，得先给 218 的 `lubepoints` 补 `alsoPlants`，再把这两处换成按点位判。同理 `maintenancelogs`（石灰石根本没有检修模块）。
+
+   **⑥ 验证**：
+   - **桩测**：从 index.html 抽真实源码（`docPlant`/`docAlsoPlants`/`inPlant`/`stampPlant*` + `hasRole`/`isAdmin`/`isManager`/`userPlant`/`inHomePlant`/`canSubmitField`/`canSubmitForEq`/`hasBorrowedHere`），注入 `hpal`/`shs`/`zh` 三种 currentPlant 跑 **16 项断言全过**：石灰石工人在酸浸能提交 218、不能提交酸浸自己的设备、eq 查不到时拒绝、酸浸工人在自家不受影响、经理全放行、三种视图下顶栏提示措辞正确、中和完全不受影响。
+   - **真账号端到端**（石灰石车间 08-25 已建 5 个账号）：用 **曲刚 / 6724092515 / 检修员工 / plant=shs（免密）** 登录 → 自动落到石灰石（符合设计）→ 手动切到高压酸浸 → 顶栏显示「👀 参观中·借用设备可点检」→ 打开 `218-PE-AG-001A-TBD`（eq_new_016）勾"设备停机未运行"提交 → 成功，云端 `im_eq_new_016_202608` 写入 `plant:'hpal'` + `alsoPlants:['shs']`、`days["27"] = 曲刚(6724092515) stopped=true`；同一视图打开 `201-PE-AG-001A` 提交 → 被拦，弹「这台设备不归你们车间，参观时只能查看」。
+   - **测试数据已清理**：删除前先核对该文档只有 1 天记录、byId 是 6724092515、stopped 为 true，确认是测试记录才 `deleteDoc`；删后回读不存在，且 `inspecthistory` 里该设备 0 条（v2 路径只在有异常且非停机时才写历史，本次没写）。云端零残留。
+
 1. **跨车间借用 `alsoPlants`：218 区归酸浸，石灰石也能看/点检**（2026-08-24，代码 4 处 + 云端 78 条数据·无 rules/迁移变更）：
 
    **① 起因**：用户提「218 归属于高压酸浸车间，但是是石灰石车间的检修在负责，有没有办法让石灰石能访问 218」。218 区 54 台（隔膜泵 10 / 搅拌器 19 / 地坑泵 9 / 离心泵 7 / 成套设备 3 / 风机 3 / 起重机 2 / 给料器 1），云端全部 `plant:'hpal'`。

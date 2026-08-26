@@ -4368,6 +4368,7 @@ function subscribeEquipments() {
     const map = new Map();
     eqOwnDocs.concat(eqBorrowDocs).forEach(d => map.set(d.id, d));
     eqCache = applyPreviewOverlay(Array.from(map.values()).filter(inPlant));
+    updatePlantHint();   // 借用设备到位后，顶栏参观提示改口径
     // 自动刷新设备列表
     const eqModule = document.querySelector('.module[data-module="equipment"]');
     if (eqModule && eqModule.classList.contains('active')) {
@@ -4998,6 +4999,32 @@ function canTouchUser(editor, target) {
 function canPickPlant(u) { return isAdmin(u) || isManager(u); }
 // 点检/润滑提交：全员限自家车间；经理跨车间
 function canSubmitField(u) { return !!u && (inHomePlant(u) || isManager(u)); }
+/* 单台设备的提交权限（2026-08-25）：在自家车间照旧全放行；
+   参观别的车间时，只放行「归属自己车间」或「借给自己车间」（alsoPlants 含自己 home plant）的那几台。
+   场景：石灰石的人习惯直接切到高压酸浸去点检 218，218 的 alsoPlants 含 shs → 放行；
+   同一视图里酸浸自己那 368 台仍然只读。 */
+function canSubmitForEq(u, eq) {
+  if (canSubmitField(u)) return true;
+  if (!u || !eq) return false;
+  const home = userPlant(u);
+  return docPlant(eq) === home || docAlsoPlants(eq).indexOf(home) >= 0;
+}
+/* 参观当前车间时，视野里有没有"我能提交"的设备（口径与 canSubmitForEq 一致，决定顶栏提示措辞） */
+function hasBorrowedHere(u) {
+  if (!u) return false;
+  const home = userPlant(u);
+  if (home === 'all' || home === currentPlant) return false;
+  return eqCache.some(e => docPlant(e) === home || docAlsoPlants(e).indexOf(home) >= 0);
+}
+/* 顶栏车间提示：设备缓存到位后会再刷一次（借用设备要等 eqCache 才能判断） */
+function updatePlantHint() {
+  const el = document.querySelector('.topbar-plant-hint');
+  if (!el) return;
+  const u = getCurrentUser();
+  if (!u) return;
+  el.textContent = inHomePlant(u) ? '👈 点此切换车间'
+    : (hasBorrowedHere(u) ? '👀 参观中·借用设备可点检 点此切回' : '👀 参观中·只读 点此切回');
+}
 // 硬删历史：仅郝行龙本人（李宁翔同为总管理员但不可硬删，2026-08-07 用户指定）
 const HARD_DELETE_EMPNO = '6725102247';
 function canHardDelete(u) { return isAdmin(u) && String(u.empno) === HARD_DELETE_EMPNO; }
@@ -5228,8 +5255,7 @@ function enterApp(user) {
   const plantBadge = document.getElementById('topbar-plant');
   if (plantBadge) plantBadge.textContent = PLANTS[currentPlant].short;
   // 不在自家车间 = 参观模式（所有写入口已被权限函数拦），提示语说明白（2026-08-07）
-  const plantHint = document.querySelector('.topbar-plant-hint');
-  if (plantHint) plantHint.textContent = inHomePlant(user) ? '👈 点此切换车间' : '👀 参观中·只读 点此切回';
+  updatePlantHint();
   const avatar = document.getElementById('profile-avatar');
   avatar.textContent = initial;
   avatar.className = 'profile-avatar' + (user.role==='admin'?' admin':'');
@@ -9902,10 +9928,11 @@ function toggleInsStopped() {
 }
 
 async function submitInspectV2() {
-  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能提交'); return; }
   const buf = inspectExecBuffer;
   const eq = loadEquipments().find(e => e.id === buf.equipmentId);
   if (!eq) { showToast('设备未找到'); return; }
+  // 按单台设备判（借用设备参观时也能提交，2026-08-25）
+  if (!canSubmitForEq(getCurrentUser(), eq)) { showToast('这台设备不归你们车间，参观时只能查看'); return; }
   const now = Date.now();
   const vals = {}, notes = {};
   let abn = [];
@@ -10001,9 +10028,11 @@ function toggleInspectStopped(idx) {
 }
 
 async function submitInspect() {
-  if (!canSubmitField(getCurrentUser())) { showToast('参观其他车间时只能查看，不能提交'); return; }
   if (!inspectExecBuffer) return;
   if (inspectExecBuffer.v2) return submitInspectV2();
+  // 按单台设备判（借用设备参观时也能提交，2026-08-25）
+  const eqV1 = loadEquipments().find(e => e.id === inspectExecBuffer.equipmentId);
+  if (!canSubmitForEq(getCurrentUser(), eqV1)) { showToast('这台设备不归你们车间，参观时只能查看'); return; }
   const items = inspectExecBuffer.items;
   const firstItem = items[0];
   const isStopped = firstItem && firstItem.name === '设备停机未运行' && firstItem.status === 'stopped';
