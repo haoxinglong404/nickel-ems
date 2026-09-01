@@ -7208,6 +7208,10 @@ let mlBoardSeries = '1';      // '1' / '2' / '3'（只看单个系列，避免�
 let mlBoardOpenTag = '';      // 方框网格里当前展开的设备 tag（'' = 都收起，2026-08-15）
 let mlEqlogFrom = '';         // 'board' = 从看板进的单台档案，返回时回看板
 
+/* 各系列投料（投产）日期（2026-09-01 用户提供）：从没换过的重点零件按此算「在用 N 天」——
+   没换过 = 还是投产时的原装件。1 系列日期未知，留空则其原装件仍显示「暂无记录」 */
+const MLB_SERIES_ONSTREAM = { '1': '', '2': '2026-08-08', '3': '2026-07-08' };
+
 /* fam/famLabel：隔膜、隔热组件 2026-08-15 按腔室拆分——每腔室一条 def（方框状态/展开卡逐腔室），
    零件消耗表按 famLabel 合并成一行（采购看总量；平均寿命 = 各腔室间隔合在一起平均） */
 const MLB_PART_DEFS = [
@@ -7328,7 +7332,9 @@ function mlbEqExpandHtml(g, u) {
     if (p.hidden && !ps.count) return '';   // 「未注明腔室」兜底行：没有老记录就不显示
     let meta, brand = '';
     if (!ps.count) {
-      meta = '暂无记录 · 登记检修勾「' + p.label + '」标签后自动归类';
+      meta = (ps.sinceOnstream && ps.inUse != null)
+        ? '投料 ' + escapeHtml((ps.onstream || '').slice(5)) + ' · 在用 ' + ps.inUse + ' 天 · 暂无更换'
+        : '暂无记录 · 登记检修勾「' + p.label + '」标签后自动归类';
     } else {
       meta = '上次更换 ' + escapeHtml(((ps.records[0] || {}).repairDate || '').slice(5)) +
         ' · 在用 ' + (ps.inUse != null ? ps.inUse + ' 天' : '—') +
@@ -7357,18 +7363,23 @@ function mlbUnitStats() {
       const recs = live.filter(m => m.equipmentTag === u.tag || m.equipmentId === u.id)
         .sort((a, b) => (b.repairDate || '').localeCompare(a.repairDate || ''));
       const parts = {};
+      const onstream = MLB_SERIES_ONSTREAM[mlbSeriesOf(u.name)] || '';
       defs.forEach(d => {
         const p = mlbPartOf(d.gkey, d.pkey);
         // noReplace = 只维修/调整未换新件（2026-08-15）：不算一次更换，不进寿命/消耗/厂家统计
         const list = p ? recs.filter(m => mlRecMatchesPart(m, p) && !m.noReplace) : [];
-        const inUse = list.length ? _mlDaysBetween(_today(), list[0].repairDate) : null;
+        // 有更换记录：从最近一次更换算在用；没有记录：从系列投料日算（原装件，2026-09-01）
+        const sinceOnstream = !list.length && !!onstream;
+        const inUse = list.length ? _mlDaysBetween(_today(), list[0].repairDate)
+          : (sinceOnstream ? _mlDaysBetween(_today(), onstream) : null);
         const intervals = [];
         for (let i = 0; i < list.length - 1; i++) {
           const dd = _mlDaysBetween(list[i].repairDate, list[i + 1].repairDate);
           if (dd != null) intervals.push(dd);
         }
         const avg = intervals.length ? Math.round(intervals.reduce((s, x) => s + x, 0) / intervals.length) : null;
-        parts[d.pkey] = { count: list.length, inUse, avg, over: avg != null && inUse != null && inUse > avg, records: list };
+        parts[d.pkey] = { count: list.length, inUse, avg, over: avg != null && inUse != null && inUse > avg, records: list,
+          sinceOnstream: sinceOnstream, onstream: sinceOnstream ? onstream : '' };
       });
       out.push({ tag: u.tag, series: mlbSeriesOf(u.name), short: mlbShortName(u), gkey: g.key, parts });
     });
