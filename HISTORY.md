@@ -5,6 +5,42 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **印尼语支持 v0.27：语言切换 + 界面骨架与点检全流程翻译**（2026-09-07，纯代码·无云端/rules/迁移变更·**待用户线上验证后 push**）：
+
+   **① 起因与范围**：车间在印尼，要让印尼同事看得懂。用户拍板第一期 = **界面骨架 + 点检全流程**（登录页/底部导航/我的/设备台账列表与详情/点检从选设备到提交），测点名**跟随语言单语显示**（不做中印双语两行），随手发来的 3 个 xlsx **只当术语库不动模板**。检修/二级库/润滑/看板留第二期（但其标题按钮顺手翻了，避免酸浸的印尼工人切过去看到半页中文）。
+
+   **② 术语来源（关键）**：用户给的 `其他设备--Peralatan Lainnya.xlsx` / `起重类设备--peralatan pengangkat.xlsx` / `筛分磨矿类设备--peralatan pengayakan...xlsx` 是**车间自己的中印双语点检表**；加上 08-24 石灰石那批《最终的版本.zip》里的另 3 个文件，共 **6 个 xlsx / 22 张双语表**，提取出 **256 条官方中印对照**（"驱动端 = Ujung Penggerak (Drive End)"、"测振仪 = Vibrometer"、"轴承无异响 = Bantalan tidak ada suara abnormal"…）。**字典优先用这批译法**，工人才对得上纸质表。⚠️ 原表本身有几处错位（"润滑正常、无异常响声" 被译成 "Permukaan bersih…"、"表面清洁…" 被译成 "Terpasang kuat…"），这些**没有照抄**，按正确含义重译。
+
+   **③ 为什么用 DOM 出口统一翻译，而不是逐处包 `t()`**：全库 UI 文字 95% 是 JS 拼 `innerHTML` 生成的（93 处 `innerHTML=` + 55 处 `textContent=`），逐处包要改 600 多个地方。改用：
+   - 字典 **`I18N_ID` 以中文原文为 key** —— 没收录的原样显示中文，绝不会出现空白按钮或 "missing key"
+   - 只做**整段文本精确匹配**，不做子串替换 → 设备名/位号/人名/铭牌参数/工人写的备注**不会被误翻**
+   - **`MutationObserver`** 盯 `document.body`（childList + subtree + characterData + attributeFilter:[placeholder,title]），任何新渲染内容自动翻译；`i18nBusy` 标志防自身重入
+   - **动手前先确认了安全性**：全库 grep `textContent ===` / `innerText` / `innerHTML +=` / 读 innerHTML 比较 **全部 0 命中**，即代码从不读 DOM 文字回头做逻辑判断 → 翻译只影响显示层，**写进 Firestore 的永远是中文原文，两种语言的用户存的是同一份数据**
+   - `showToast` **一个函数覆盖 193 处提示**（不用改它 —— 它 `textContent=` 赋值会被 observer 捕获；注意其内部有局部变量 `const t = getElementById('toast')` 会遮蔽全局 `t()`，所以**不能**在里面直接调 `t()`）
+   - 原生 `alert`/`confirm` 做了劫持（只剩 18 处调用）
+
+   **④ 拼接文案用模式匹配 `I18N_PATTERNS`**：界面上大量「固定词 + 数据」拼出来的串（`区域 202`、`共 259 台设备`、`异常 3 项`、`上次：11 天前`、`保存失败：xxx`、`还有 3 项未打钩`…）整段匹配盖不住，用 30 条正则模式翻。**`i18nPattern` 支持捕获组再翻一层**（`上次：11 天前` → `Terakhir: 11 hari lalu`，递归只一层防死循环）。
+
+   **⑤ 改了 3 处渲染代码把拼接拆成独立文本节点**（否则 observer 盖不住）：
+   - `renderInsMetricRow` 的 `stdLine`：`${r.std}${' · '+r.mth}` → std 与 mth 各套一个 `<span>`（原来标准值+检测方法是一个文本节点，翻不了）
+   - 点检详情 hero 行：`${eq.type} · 模板：${tpl.name} · B 类 · 周期 N 天` → 各段套 span
+   - 上次点检行：`上次点检：${formatRelTime()} · ${name}` → 各段套 span
+   - **视觉零变化已实测**：取 12 个 `.ins-m-head`，对比「拆 span 版」与「还原成纯文本版」的 `getBoundingClientRect`（容器宽高、name/std 的 left/width/right），**几何差异 0 处**。`.ins-m-std` 本身是 flex item 已被 blockify，内部多两层 inline span 不参与 flex 布局。
+
+   **⑥ 字典规模 999 条**，分 8 段 `Object.assign` 便于日后按模块增补：界面框架/登录/设备台账/我的 154 · 点检方法与部位与分组与模板名 196 · 点检测点名 186 · 点检标准值 181 · 扫漏补充 75 · toast 提示 76 · 收尾（点检备注 + 其余模块标题）49 · 设备详情编辑 30。**点检模板术语是从云端 79 个模板实拉的**（不是本地 SEED —— SEED 只有 55 个，`zs_`/`shs_` 那 24 个只在云端）：1748 个测点去重后 = 模板名 79 / 组名 101 / 部位 47 / 测点名 194 / 标准值 192 / 方法 28 / v1 项 13，共 654 条，全部翻完。制酸 DCS 位号（`606TI11` 等）与振动标注 `ⅠA/Ⅰa` **原样保留**，工人靠它对 DCS 画面和纸质表。
+
+   **⑦ 语言切换入口 3 处**（顺序按用户当场反馈调整了两轮：先要求「我的」菜单里挪到第一项，再要求放到顶栏）：**顶栏胶囊 `#topbar-lang`**（`.topbar-lang` 新 CSS，与车间徽章 `.topbar-plant` 同款但用中性描边色区分；显示**当前**语言 `🇨🇳 中` / `🇮🇩 ID`，**点一下直接 toggle** 不弹层，`toggleLang()`；内容运行时由 `updateLangBadge()` 写，`🇨🇳 中`/`🇮🇩 ID` 不在字典里所以不会被 DOM 翻译动到）· 「我的」菜单**第一项**「语言 · Bahasa」（在切换车间之上）· 登录页胶囊。
+
+   **⑦-补 顶栏放不下的处理**：加了语言胶囊后 375px 窄屏顶栏**溢出 53px**（scrollWidth 428 > 375）。根因是印尼语「点此切换车间」译成 `Ketuk untuk ganti bengkel` 有 145px。两步解决：**译文缩短为 `Ganti bengkel`（85px，实测 scrollW 回到 375）** + `.topbar-plant-hint` 加 `overflow:hidden/text-overflow:ellipsis` 兜底 + **`@media(max-width:400px)` 隐藏该提示**（手机上顶栏 = Nickel + 车间徽章 + 语言胶囊 + 用户名，提示让位给语言开关；用户认可这个取舍）。参观提示两条也一并给了短译文（`👀 Mode lihat saja · kembali` / `👀 Tamu · alat pinjaman bisa diperiksa`）。⚠️ **排查时踩过一次坑**：想量「中文文案有多宽」而用 JS 改 `hint.textContent='👈 点此切换车间'`，结果 **i18n observer 立刻又把它翻回印尼语**，量到的还是 145px，一度误判「中文模式也溢出」。**在印尼语模式下用 JS 改 DOM 文本来做对比测量是无效的**，要么先切回中文，要么临时 disconnect observer。
+
+   **⑦-原**：登录页胶囊（🇨🇳 中文 / 🇮🇩 Bahasa Indonesia，新增 `.lang-switch`/`.lang-btn` 两条 CSS）· 「我的」菜单新增「语言 · Bahasa」项（挨着切换车间）· 弹层 `showSheet('langSwitch')`。存 **`localStorage['ems_lang_v01']`**（默认 `zh`），**切换 = 写 key + `location.reload()`**（与切换车间同套路，避免半翻译状态）。`LANGS` 常量 = `{zh:{label:'中文'...}, id:{label:'Bahasa Indonesia'...}}`，**加第三种语言只需往 `LANGS` 加一个 key + 一段字典**。
+
+   **⑧ 布局**：印尼语比中文长 50%~100%，实测 375px 窄屏底部导航 7 项 **无截断、无横向溢出**（项宽是固定的 68px/86px，不由文字撑开）；只有「重点设备看板」译名 `Peralatan Utama` 实测 88px 超出 86px 槽宽，**改短为 `Papan Utama`（64px）**。
+
+   **⑨ 验证**：esprima 解析通过 · 预览页控制台 0 报错 · 12 个 `window.fn` 全 `function` · **中文模式逐屏回归**（点检表单/toast/placeholder 与改动前逐字一致，`currentLang==='zh'` 时 `t()`/`i18nApply`/`startI18n` 全部首行 return，observer 根本不启动）· 印尼语模式逐屏扫漏（遍历真实 DOM 文本节点 + placeholder/title 属性，统计未翻译中文，反复补到只剩设备名/铭牌/人名/工人备注这些**本就该保持中文的数据**）· toast 9 条实测（含 5 个带变量的模板串）· 语言弹层实测。
+
+   **⑩ 已知边界（第一期不做，已告知用户）**：设备名 989 条、润滑点位名、二级库备件名、工人手写的异常备注 —— 都是 Firestore 里的**数据**，保持中文；位号本来就是数字字母。点检异常提示里带的测点 key（`电机_驱动端_水平振动`）也仍是中文。
+
 1. **第5周润滑计划（8.24-8.30）补录 52 笔 + 吹扫空压机撬装拆 A/B + 阀门油压站 6 点标免维护**（2026-09-03，云端数据 + SEED 3 类改动·无 rules/迁移变更）：
 
    **① 来料与读法**：`CCO_20260902_205353_0001.pdf`，ControlCenter4 扫的 3 页（会话开头系统提示说 21 页，实际 3 页）。PDF **带 OCR 文字层但取出来是乱码**（CID 字体无 ToUnicode，latin-1→gbk 回转也救不回中文），**改用 PyMuPDF 渲染成图再看图**（本机无 poppler，`pdftoppm` 不可用；`python -m fitz` 装的是 PyMuPDF 1.27.2）。每页横向表格，按上下半页各 300dpi 切一刀才够清晰，手写批注处再单独 500dpi 局部放大。

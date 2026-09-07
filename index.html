@@ -65,7 +65,12 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .topbar-dot { width:8px; height:8px; border-radius:50%; background:var(--g-primary); }
 .topbar-name { font-family:var(--font-serif); font-size:20px; font-weight:500; letter-spacing:-.01em; }
 .topbar-plant { font-size:11px; font-family:var(--font-mono); color:var(--g-deep); background:var(--g-mist); border:1px solid var(--g-primary); border-radius:999px; padding:2px 9px; white-space:nowrap; cursor:pointer; }
-.topbar-plant-hint { font-size:10px; color:var(--muted); white-space:nowrap; cursor:pointer; letter-spacing:.02em; }
+.topbar-lang { font-size:11px; font-family:var(--font-mono); color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:999px; padding:2px 9px; white-space:nowrap; cursor:pointer; display:flex; align-items:center; gap:4px; transition:background .15s, border-color .15s, color .15s; }
+.topbar-lang:active { background:var(--g-mist); border-color:var(--g-primary); color:var(--g-deep); }
+.topbar-plant-hint { font-size:10px; color:var(--muted); white-space:nowrap; cursor:pointer; letter-spacing:.02em; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+/* 顶栏加了语言胶囊后，窄屏优先保住 车间徽章 + 语言 + 用户；提示可被压缩/截断 */
+.topbar-brand { min-width:0; }
+@media (max-width: 400px) { .topbar-plant-hint { display:none; } }
 /* 窄屏放不下「日期 + 切换提示」两样，让位给提示（手机上时间随处可见，日期最不要紧） */
 @media (max-width: 560px) { .topbar-date { display:none; } }
 .topbar-right { display:flex; align-items:center; gap:12px; }
@@ -2875,6 +2880,21 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 </head>
 <body>
 
+<style>
+/* 语言切换（2026-09-07 印尼语支持）*/
+.lang-switch { display:flex; gap:8px; justify-content:center; margin:0 0 20px; flex-wrap:wrap; }
+.lang-btn {
+  padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+  background:transparent; color:var(--muted); font-family:var(--font-sans);
+  font-size:13px; line-height:1.2; cursor:pointer; min-height:38px;
+  transition:background .15s, border-color .15s, color .15s;
+}
+.lang-btn.active {
+  background:var(--g-mist); border-color:var(--g-primary);
+  color:var(--g-forest); font-weight:600;
+}
+</style>
+
 <!-- 登录页 -->
 <div id="login-screen">
   <div class="brand">
@@ -2882,6 +2902,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
     <div class="brand-title">Nickel<br>Plant</div>
     <div class="brand-sub">湿法冶镍设备管理系统</div>
     <div class="brand-line"></div>
+  </div>
+  <div class="lang-switch" id="lang-switch">
+    <button type="button" class="lang-btn" data-lang="zh" onclick="setLang('zh')">🇨🇳 中文</button>
+    <button type="button" class="lang-btn" data-lang="id" onclick="setLang('id')">🇮🇩 Bahasa Indonesia</button>
   </div>
   <form class="login-form" onsubmit="return false;">
     <div>
@@ -2907,6 +2931,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
   <header class="topbar" id="topbar-main">
     <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div><div class="topbar-plant-hint" onclick="showSheet('plantSwitch')">👈 点此切换车间</div></div>
     <div class="topbar-right">
+      <div class="topbar-lang" id="topbar-lang" onclick="toggleLang()">🇨🇳 中</div>
       <div class="topbar-date" id="topbar-date">—</div>
       <div class="topbar-user" onclick="showSheet('account')">
         <div class="topbar-user-circle" id="topbar-circle">—</div>
@@ -3375,6 +3400,1237 @@ import {
   initializeAuth, browserLocalPersistence, inMemoryPersistence,
   signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+
+/* ============================================================
+   多语言 · 印尼语支持（2026-09-07）
+   ------------------------------------------------------------
+   为什么这样实现：本项目 95% 的界面文字是 JS 拼 innerHTML 生成的，
+   逐处包 t() 要改 600 多个地方、风险高。改用「DOM 出口统一翻译」：
+     ① 字典以【中文原文】为 key —— 没收录的原样显示中文，
+        绝不会出现空白按钮或 "missing key"
+     ② 只做【整段文本精确匹配】，不做子串替换
+        → 设备名、位号、人名、备注、数字这些数据不会被误翻
+     ③ MutationObserver 盯住 DOM，任何新渲染的内容自动翻译
+   安全性：已确认全库没有任何「读 DOM 文字回头做逻辑判断」的代码
+   （textContent/innerHTML 全是单向写入），所以翻译只影响显示层，
+   写进 Firestore 的永远是中文原文，两种语言的用户存的是同一份数据。
+   ============================================================ */
+const LANG_KEY = 'ems_lang_v01';
+const LANGS = {
+  zh: { label: '中文',             short: '中',  flag: '🇨🇳' },
+  id: { label: 'Bahasa Indonesia', short: 'ID',  flag: '🇮🇩' }
+};
+let currentLang = 'zh';
+try { if (localStorage.getItem(LANG_KEY) === 'id') currentLang = 'id'; } catch (e) {}
+
+/* 字典分段填充，方便日后按模块增补（段与段之间可以有重复 key，后者覆盖前者） */
+const I18N_ID = Object.create(null);
+
+Object.assign(I18N_ID, /* 界面框架 · 登录 · 设备台账 · 我的 */ {
+  "重点设备看板": "Papan Utama",
+  "设备": "Peralatan",
+  "点检": "Inspeksi",
+  "检修": "Perbaikan",
+  "二级库": "Gudang",
+  "润滑": "Pelumasan",
+  "我的": "Akun",
+  "设备台账": "Daftar Peralatan",
+  "设备点检": "Inspeksi Peralatan",
+  "检修记录": "Catatan Perbaikan",
+  "润滑管理": "Manajemen Pelumasan",
+  "用户管理": "Manajemen Pengguna",
+  "当个事儿办": "Daftar Tugas",
+  "湿法冶镍设备管理系统": "Sistem Manajemen Peralatan Pabrik Nikel HPAL",
+  "工号": "Nomor Karyawan",
+  "密码": "Kata Sandi",
+  "请输入工号": "Masukkan nomor karyawan",
+  "请输入密码": "Masukkan kata sandi",
+  "进入系统": "Masuk",
+  "刷新页面重试": "Muat ulang halaman",
+  "工号不存在或密码错误": "Nomor karyawan tidak ditemukan atau kata sandi salah",
+  "工号不存在": "Nomor karyawan tidak ditemukan",
+  "密码错误": "Kata sandi salah",
+  "请输入工号和密码": "Masukkan nomor karyawan dan kata sandi",
+  "连接中...": "Menghubungkan...",
+  "连接中…": "Menghubungkan…",
+  "欢迎回来": "Selamat datang kembali",
+  "该账号需要密码，请输入密码后再试": "Akun ini memerlukan kata sandi, silakan masukkan lalu coba lagi",
+  "云端认证中…": "Autentikasi server…",
+  "① 等待云端认证…": "① Menunggu autentikasi server…",
+  "② 查询账号…": "② Mencari akun…",
+  "认证失败：": "Autentikasi gagal: ",
+  "保存": "Simpan",
+  "取消": "Batal",
+  "编辑": "Ubah",
+  "删除": "Hapus",
+  "导出": "Ekspor",
+  "返回": "Kembali",
+  "关闭": "Tutup",
+  "完成": "Selesai",
+  "提交": "Kirim",
+  "新增": "Tambah",
+  "搜索": "Cari",
+  "确认": "Konfirmasi",
+  "全部": "Semua",
+  "加载更多": "Muat lebih banyak",
+  "加载中…": "Memuat…",
+  "加载中...": "Memuat...",
+  "保存中...": "Menyimpan...",
+  "删除中...": "Menghapus...",
+  "已保存": "Tersimpan",
+  "保存失败：": "Gagal menyimpan: ",
+  "删除失败：": "Gagal menghapus: ",
+  "操作失败：": "Operasi gagal: ",
+  "同步失败：": "Gagal sinkronisasi: ",
+  "已同步": "Tersinkron",
+  "已删除": "Terhapus",
+  "已上传": "Terunggah",
+  "执行失败": "Gagal dijalankan",
+  "失败": "Gagal",
+  "成功": "Berhasil",
+  "保存更改": "Simpan perubahan",
+  "返回列表": "Kembali ke daftar",
+  "暂无": "Tidak ada",
+  "暂无数据": "Tidak ada data",
+  "共": "Total",
+  "台": "unit",
+  "条": "data",
+  "笔": "transaksi",
+  "次": "kali",
+  "件": "pcs",
+  "种": "jenis",
+  "天": "hari",
+  "剩": "sisa",
+  "还有": "tersisa",
+  "合计": "Jumlah",
+  "总": "Total",
+  "今天": "Hari ini",
+  "日期": "Tanggal",
+  "时间": "Waktu",
+  "备注": "Keterangan",
+  "单位": "Satuan",
+  "数量": "Jumlah",
+  "序号": "Nomor Urut",
+  "其他": "Lainnya",
+  "选填": "Opsional",
+  "未填写": "Belum diisi",
+  "未记录": "Belum tercatat",
+  "无权限": "Tidak ada izin",
+  "请先登录": "Silakan masuk terlebih dahulu",
+  "无操作权限（仅本车间设备管理人员）": "Tidak ada izin (hanya staf peralatan bengkel ini)",
+  "无权限（仅本车间设备管理人员）": "Tidak ada izin (hanya staf peralatan bengkel ini)",
+  "已连接云端": "Terhubung ke server",
+  "连接失败": "Gagal terhubung",
+  "位号": "Nomor Tag",
+  "设备位号": "Nomor Tag Peralatan",
+  "设备名称": "Nama Peralatan",
+  "设备类型": "Jenis Peralatan",
+  "类型": "Jenis",
+  "规格型号": "Spesifikasi / Model",
+  "区域": "Area",
+  "安装区域": "Area Pemasangan",
+  "当前状态": "Status Saat Ini",
+  "责任人": "Penanggung Jawab",
+  "供应商": "Pemasok",
+  "所属车间": "Bengkel",
+  "电机参数": "Parameter Motor",
+  "减速机 / 泵参数": "Parameter Gearbox / Pompa",
+  "基础": "Dasar",
+  "技术参数": "Parameter Teknis",
+  "相关记录": "Catatan Terkait",
+  "润滑点": "Titik Pelumasan",
+  "新增设备": "Tambah Peralatan",
+  "编辑设备": "Ubah Peralatan",
+  "该位号已存在": "Nomor tag ini sudah ada",
+  "设备未找到": "Peralatan tidak ditemukan",
+  "未找到匹配的设备": "Tidak ada peralatan yang cocok",
+  "全部区域": "Semua Area",
+  "全部类型": "Semua Jenis",
+  "全部等级": "Semua Kelas",
+  "运行": "Beroperasi",
+  "停机": "Berhenti",
+  "维修": "Perbaikan",
+  "闲置": "Tidak Dipakai",
+  "报废": "Dihapuskan",
+  "台设备": "unit peralatan",
+  "搜索位号、名称、型号、功率（如 132KW）…": "Cari nomor tag, nama, model, daya (mis. 132KW)…",
+  "搜索位号、设备名…": "Cari nomor tag atau nama peralatan…",
+  "设置": "Pengaturan",
+  "设置密码": "Atur Kata Sandi",
+  "设置 / 修改密码": "Atur / Ubah Kata Sandi",
+  "本车间账号管理": "Manajemen Akun Bengkel Ini",
+  "切换车间": "Ganti Bengkel",
+  "点此切换车间": "Ganti bengkel",
+  "关于本系统": "Tentang Sistem",
+  "数据导出": "Ekspor Data",
+  "退出登录": "Keluar",
+  "姓名": "Nama",
+  "角色": "Peran",
+  "添加账号": "Tambah Akun",
+  "+ 添加账号": "+ Tambah Akun",
+  "搜索姓名、工号、角色…": "Cari nama, nomor karyawan, peran…",
+  "系统至少需保留 1 个管理员": "Sistem harus memiliki minimal 1 administrator",
+  "无权管理该账号": "Tidak berwenang mengelola akun ini",
+  "高压酸浸": "HPAL",
+  "中和": "Netralisasi",
+  "产品": "Produk",
+  "制酸": "Pabrik Asam",
+  "石灰石": "Batu Kapur",
+  "高压酸浸车间": "Bengkel HPAL",
+  "中和车间": "Bengkel Netralisasi",
+  "产品车间": "Bengkel Produk",
+  "制酸车间": "Bengkel Pabrik Asam",
+  "石灰石车间": "Bengkel Batu Kapur"
+});
+
+
+Object.assign(I18N_ID, /* 点检 · 方法/部位/分组/模板名（术语取自车间中印双语点检表）*/ {
+  "目测": "Pemeriksaan visual",
+  "目视": "Pemeriksaan visual",
+  "耳听": "Mendengar dengan telinga",
+  "听": "Mendengar",
+  "听针": "Stetoskop mekanik",
+  "测振仪": "Vibrometer",
+  "测温枪": "Pistol pengukur suhu",
+  "分贝仪": "Desibel meter",
+  "压力表": "Manometer",
+  "读表": "Baca meter",
+  "钳形表": "Clamp meter (tang ampere)",
+  "在线仪表": "Instrumen online",
+  "就地仪表": "Instrumen lokal",
+  "手动核查": "Pemeriksaan manual",
+  "现场测试": "Uji di lapangan",
+  "目测、耳听": "Pemeriksaan visual, mendengar dengan telinga",
+  "目视、耳听": "Pemeriksaan visual, mendengar dengan telinga",
+  "耳听、目测": "Mendengar dengan telinga, pemeriksaan visual",
+  "目测、听针": "Pemeriksaan visual, stetoskop mekanik",
+  "目测 听针": "Pemeriksaan visual, stetoskop mekanik",
+  "听针、目测": "Stetoskop mekanik, pemeriksaan visual",
+  "目测、测振仪": "Pemeriksaan visual, vibrometer",
+  "目测、分贝仪": "Pemeriksaan visual, desibel meter",
+  "分贝仪、听针": "Desibel meter, stetoskop mekanik",
+  "测振仪、测温枪、听针": "Vibrometer, pistol suhu, stetoskop mekanik",
+  "闻、目测": "Pemeriksaan dengan penciuman, pemeriksaan visual",
+  "6S管理要求": "Persyaratan 6S",
+  "工作状态": "Kondisi kerja",
+  "驱动端": "Ujung Penggerak (Drive End)",
+  "非驱动端": "Sisi Yang Tidak Digerakkan",
+  "传动端": "Ujung transmisi",
+  "联轴器端": "Sisi kopling",
+  "非联轴器端": "Sisi bukan kopling",
+  "叶轮端": "Sisi impeller",
+  "油泵端": "Sisi pompa oli",
+  "尾端": "Ujung belakang",
+  "前端轴承": "Bantalan ujung depan",
+  "尾端轴承": "Bantalan ujung belakang",
+  "尾端轴承座": "Dudukan bantalan ujung belakang",
+  "首端轴承座": "Dudukan bantalan ujung depan",
+  "前主轴轴承": "Bantalan poros utama depan",
+  "后主轴轴承": "Bantalan poros utama belakang",
+  "输入端": "Sisi input",
+  "输出端": "Sisi output",
+  "输入轴端": "Sisi poros input",
+  "输出轴端": "Sisi poros output",
+  "输入轴轴承": "Bantalan poros input",
+  "输出轴轴承": "Bantalan poros output",
+  "左电机": "Motor kiri",
+  "右电机": "Motor kanan",
+  "定子": "Stator",
+  "大齿轮": "Roda gigi besar",
+  "机箱体": "Badan casing",
+  "隔膜腔": "Ruang membran",
+  "出口单向阀": "Katup satu arah outlet",
+  "进口单向阀": "Katup satu arah inlet",
+  "1#驱动装置": "Unit penggerak 1#",
+  "2#驱动装置": "Unit penggerak 2#",
+  "3#驱动装置": "Unit penggerak 3#",
+  "4#驱动装置": "Unit penggerak 4#",
+  "5#驱动装置": "Unit penggerak 5#",
+  "6#驱动装置": "Unit penggerak 6#",
+  "7#驱动装置": "Unit penggerak 7#",
+  "8#驱动装置": "Unit penggerak 8#",
+  "电机": "Motor",
+  "主电机": "Motor utama",
+  "减速机": "Gearbox (reducer)",
+  "驱动减速机": "Gearbox penggerak",
+  "联轴器": "Kopling",
+  "齿式联轴器": "Kopling gigi",
+  "耦合器": "Kopling hidrolik",
+  "齿轮": "Roda gigi",
+  "大小齿轮": "Roda gigi besar & kecil",
+  "机械密封": "Mechanical seal",
+  "填料密封": "Packing seal",
+  "填料/机械密封": "Packing / mechanical seal",
+  "密封液": "Cairan penyegel",
+  "轴承箱": "Kotak bantalan",
+  "轴瓦": "Bantalan luncur",
+  "轴承": "Bantalan",
+  "泵": "Pompa",
+  "泵体": "Badan pompa",
+  "泵头": "Kepala pompa",
+  "泵体轴承箱": "Kotak bantalan badan pompa",
+  "泵头/曲轴箱": "Kepala pompa / crankcase",
+  "曲轴箱": "Crankcase",
+  "曲轴箱油循环系统": "Sistem sirkulasi oli crankcase",
+  "液力端": "Liquid end (ujung hidrolik)",
+  "机架": "Rangka mesin",
+  "机体": "Badan mesin",
+  "壳体": "Casing",
+  "主体": "Badan utama",
+  "设备主体": "Badan utama peralatan",
+  "整机": "Seluruh mesin",
+  "整机运转情况": "Kondisi operasi seluruh mesin",
+  "主要零部件": "Komponen utama",
+  "筒体": "Badan silinder",
+  "转笼": "Keranjang putar",
+  "滚筒": "Drum",
+  "搅拌轴": "Poros pengaduk",
+  "搅拌紧固件": "Pengencang pengaduk",
+  "润滑": "Pelumasan",
+  "润滑油": "Oli pelumas",
+  "润滑情况": "Kondisi pelumasan",
+  "润滑油泵": "Pompa oli pelumas",
+  "润滑油箱": "Tangki oli pelumas",
+  "润滑与密封": "Pelumasan dan penyegelan",
+  "润滑与运行": "Pelumasan dan operasi",
+  "油站": "Stasiun oli",
+  "油压站": "Stasiun tekanan oli",
+  "油水分离系统": "Sistem pemisah oli-air",
+  "冷却系统": "Sistem pendingin",
+  "液压系统": "Sistem hidrolik",
+  "液压油箱": "Tangki oli hidrolik",
+  "液压油泵电机": "Motor pompa oli hidrolik",
+  "液压油泵主电机": "Motor utama pompa oli hidrolik",
+  "液压马达+减速机": "Motor hidrolik + gearbox",
+  "提升油泵·提升装置": "Pompa oli pengangkat · perangkat pengangkat",
+  "推进液系统": "Sistem cairan pendorong",
+  "推进液循环系统": "Sistem sirkulasi cairan pendorong",
+  "补液站": "Stasiun pengisian cairan",
+  "管路": "Pipa/Saluran",
+  "管路及阀门": "Pipa dan katup",
+  "管路及阀门、紧固件": "Pipa, katup, dan baut pengencang",
+  "结构件": "Komponen struktur",
+  "结构件和材料": "Komponen struktur dan material",
+  "防护罩": "Penutup pelindung",
+  "安全": "Keselamatan",
+  "安全阀": "Katup pengaman",
+  "安全保护装置": "Perangkat perlindungan keselamatan",
+  "安全保护和防护装置": "Perlindungan keselamatan dan perangkat pelindung",
+  "急停装置": "Alat berhenti darurat",
+  "电气设备": "Peralatan listrik",
+  "电气设备元件": "Komponen peralatan listrik",
+  "电控系统及线路": "Sistem kontrol listrik dan kabel",
+  "仪表显示": "Tampilan instrumen",
+  "储气罐仪表": "Instrumen tangki udara",
+  "运行参数": "Parameter operasi",
+  "外观检查": "Pemeriksaan tampilan luar",
+  "异音": "Suara abnormal",
+  "跑冒滴漏": "Kebocoran / rembesan / tetesan",
+  "压缩机": "Kompresor",
+  "风机": "Kipas / blower",
+  "风筒": "Saluran udara",
+  "变速箱": "Kotak transmisi",
+  "三角带": "Sabuk V (V-belt)",
+  "皮带/联轴器": "Sabuk / kopling",
+  "输送带": "Sabuk konveyor",
+  "输送机主轴承": "Bantalan utama konveyor",
+  "托辊": "Roller penyangga",
+  "托辊架": "Rangka penyangga roller",
+  "托辊轴承座": "Dudukan bantalan roller",
+  "托轮": "Roda penyangga",
+  "挡轮": "Roda penahan",
+  "链条": "Rantai",
+  "刮料板": "Pelat pengikis",
+  "锤头": "Palu (hammer)",
+  "螺旋本体": "Badan sekrup",
+  "激振器": "Exciter (vibrator)",
+  "筛网": "Ayakan (screen)",
+  "滤板系统": "Sistem pelat filtrasi",
+  "拉板装置": "Perangkat penarik plat",
+  "扭矩传感器": "Sensor torsi",
+  "下料口": "Corong keluaran material",
+  "进出料口": "Corong masuk & keluar material",
+  "离心泵": "Pompa sentrifugal",
+  "离心泵·机封": "Pompa sentrifugal · mechanical seal",
+  "离心泵·机封+冷却水": "Pompa sentrifugal · mech. seal + air pendingin",
+  "离心泵·填料+冷却水": "Pompa sentrifugal · packing + air pendingin",
+  "中开双吸泵": "Pompa hisap ganda (double suction)",
+  "地坑泵": "Pompa sumur (pit pump)",
+  "螺杆泵": "Pompa sekrup (screw pump)",
+  "隔膜泵": "Pompa diafragma",
+  "隔膜泵·浓硫酸": "Pompa diafragma · asam sulfat pekat",
+  "柱塞泵": "Pompa plunger",
+  "加药泵": "Pompa dosing",
+  "搅拌器": "Pengaduk (agitator)",
+  "搅拌器·敞口": "Pengaduk · terbuka",
+  "搅拌器·机封": "Pengaduk · mechanical seal",
+  "加药搅拌": "Pengaduk dosing",
+  "污水坑搅拌": "Pengaduk bak air limbah",
+  "浓密机": "Thickener (tangki pengental)",
+  "浓密机·电驱": "Thickener · penggerak listrik",
+  "空压机": "Kompresor udara",
+  "空压机·给料泵用": "Kompresor udara · untuk pompa umpan",
+  "液压设备": "Peralatan hidrolik",
+  "密封液系统": "Sistem cairan penyegel",
+  "起重机": "Crane (alat angkat)",
+  "给料器": "Feeder (pengumpan)",
+  "贮槽": "Tangki penyimpanan",
+  "压力容器": "Bejana tekan",
+  "压力容器·简化": "Bejana tekan · sederhana",
+  "压力容器·高压釜": "Bejana tekan · autoclave",
+  "非标静设备": "Peralatan statis non-standar",
+  "尾气净化装置": "Unit pemurnian gas buang",
+  "成套设备": "Unit paket (package unit)"
+});
+
+Object.assign(I18N_ID, /* 点检 · 测点名 */ {
+  "6S管理": "Manajemen 6S",
+  "一级压缩温度": "Suhu kompresi tingkat 1",
+  "二级压缩温度": "Suhu kompresi tingkat 2",
+  "三级压缩温度": "Suhu kompresi tingkat 3",
+  "中间吊轴承": "Bantalan gantung tengah",
+  "主梁/端梁金属结构": "Struktur logam girder utama / girder ujung",
+  "主梁、端梁等金属结构状况": "Kondisi struktur logam girder utama, girder ujung, dll",
+  "主梁下挠": "Lendutan girder utama",
+  "主梁下挠程度": "Tingkat lendutan girder utama",
+  "主风机转速": "Kecepatan putar blower utama",
+  "传动端润滑": "Pelumasan ujung transmisi",
+  "非驱动端润滑": "Pelumasan sisi tidak digerakkan",
+  "储气罐压力表": "Manometer tangki udara",
+  "空滤压差表": "Indikator beda tekanan filter udara",
+  "冷却水": "Air pendingin",
+  "机封冷却水": "Air pendingin mechanical seal",
+  "减速器、制动器、钢丝绳": "Reducer, rem, kawat baja",
+  "出口压力": "Tekanan outlet",
+  "进口压力": "Tekanan inlet",
+  "出料口": "Corong keluar material",
+  "进料口": "Corong masuk material",
+  "出料端圆筒筛网": "Ayakan silinder sisi keluaran",
+  "制动器": "Rem (brake)",
+  "前轴": "Poros depan",
+  "后轴": "Poros belakang",
+  "单向阀": "Katup satu arah",
+  "卸料情况": "Kondisi pelepasan material",
+  "压力": "Tekanan",
+  "压力表": "Manometer",
+  "温度表": "Termometer",
+  "各固定件、弹簧、衬垫": "Semua komponen pengikat, pegas, dan liner",
+  "吊具（吊钩、起重磁铁、抓斗、横梁等吊具）": "Alat angkat (hook, magnet angkat, grab, spreader beam, dll.)",
+  "吊具（吊钩等）": "Alat angkat (hook, dll.)",
+  "喷嘴及出液": "Nozzle dan keluaran cairan",
+  "回水温度": "Suhu air balik",
+  "回油温度": "Suhu oli balik",
+  "进水温度": "Suhu air masuk",
+  "进油温度": "Suhu oli masuk",
+  "垂直振动": "Getaran vertikal",
+  "水平振动": "Getaran horizontal",
+  "轴向振动": "Getaran aksial",
+  "径向振动": "Getaran radial",
+  "振动": "Getaran",
+  "振动·垂直": "Getaran · vertikal",
+  "振动·水平": "Getaran · horizontal",
+  "壳体振动": "Getaran casing",
+  "轴承座振动": "Getaran dudukan bantalan",
+  "轴承座温度": "Suhu dudukan bantalan",
+  "轴承温度": "Suhu bantalan",
+  "轴承异响": "Suara abnormal bantalan",
+  "外观": "Tampilan luar",
+  "外观状态": "Kondisi tampilan luar",
+  "安全/限位开关": "Saklar pengaman / batas",
+  "限位开关": "Limit switch (saklar batas)",
+  "安全保护开关和限位开关": "Saklar pengaman dan saklar batas",
+  "急停开关": "Saklar darurat",
+  "急停按钮": "Tombol darurat",
+  "密封": "Segel",
+  "密封性": "Kerapatan segel",
+  "密封情况": "Kondisi penyegelan",
+  "密封液压力": "Tekanan cairan penyegel",
+  "水封": "Segel air",
+  "导电滑触线的安全防护": "Pelindung keselamatan rel konduktor",
+  "滑触线安全防护": "Pelindung keselamatan rel konduktor",
+  "导轨": "Rel pemandu",
+  "导轨螺栓": "Baut rel pemandu",
+  "带面磨损": "Keausan permukaan belt",
+  "带面磨损情况": "Kondisi keausan permukaan belt",
+  "异响": "Suara abnormal",
+  "设备异音": "Suara abnormal peralatan",
+  "设备有无异音": "Ada tidaknya suara abnormal pada peralatan",
+  "电机运转声音": "Suara operasi motor",
+  "泵腔噪音": "Kebisingan ruang pompa",
+  "箱体噪音": "Kebisingan kotak",
+  "齿轮噪音": "Kebisingan roda gigi",
+  "拉板小车": "Troli penarik plat",
+  "挡板": "Pelat pembatas",
+  "排气压力": "Tekanan keluaran",
+  "排气温度": "Suhu gas buang",
+  "改向滚筒温度": "Suhu drum pembelok",
+  "驱动滚筒温度": "Suhu drum penggerak",
+  "配重滚筒温度": "Suhu drum pemberat",
+  "料斗、连接件": "Hopper dan komponen sambungan",
+  "无跑冒滴漏": "Tidak ada kebocoran, rembesan, maupun tetesan",
+  "跑冒滴漏情况": "Kondisi kebocoran / rembesan / tetesan",
+  "有无磨损、变形": "Ada tidaknya keausan atau deformasi",
+  "磨损情况": "Kondisi keausan",
+  "松紧度": "Tingkat kekencangan",
+  "松紧度、磨损": "Kekencangan dan keausan",
+  "松紧度、磨损情况": "Kondisi kekencangan dan keausan",
+  "槽体": "Badan tangki",
+  "气动离合器": "Kopling pneumatik",
+  "油位": "Level oli",
+  "油位、油质": "Level oli / kualitas oli",
+  "油位油质": "Level dan kualitas oli",
+  "油压": "Tekanan oli",
+  "油温": "Suhu oli",
+  "油泵": "Pompa oli",
+  "油泵电机温度": "Suhu motor pompa oli",
+  "油箱油位": "Level oli pada tangki",
+  "系统油压": "Tekanan oli sistem",
+  "补油阀": "Katup pengisi oli",
+  "补液罐液位": "Level tangki pengisi cairan",
+  "齿轮油温度": "Suhu oli gear",
+  "润滑油油位、油质（减速机+电机+斗提）": "Level & kualitas oli pelumas (gearbox + motor + bucket elevator)",
+  "泄漏": "Kebocoran",
+  "泄漏情况": "Kondisi kebocoran",
+  "漏点": "Titik kebocoran",
+  "泵壳": "Casing pompa",
+  "温度": "Suhu",
+  "电流": "Arus listrik",
+  "稳定性": "Kestabilan",
+  "滑轮": "Katrol (pulley)",
+  "滤布状态": "Kondisi kain filter",
+  "滤板密封面": "Permukaan seal pelat filtrasi",
+  "滤板排列": "Susunan pelat filtrasi",
+  "激振器油位、油质": "Level dan kualitas oli exciter",
+  "激振器温度": "Suhu exciter",
+  "电气元件": "Komponen listrik",
+  "电缆及接口": "Kabel dan konektor",
+  "盖板": "Pelat penutup",
+  "盖板螺栓": "Baut pelat penutup",
+  "磨机筒体": "Badan silinder mill",
+  "筒体螺栓": "Baut badan silinder",
+  "管路各部件": "Setiap komponen pipa",
+  "管路接头": "Sambungan pipa",
+  "管路连接": "Koneksi pipa",
+  "管路阀门": "Katup pipa",
+  "管道及阀门": "Pipa dan katup",
+  "紧固件": "Baut pengencang",
+  "螺栓": "Baut",
+  "连接螺栓": "Baut penghubung",
+  "自动喷油系统": "Sistem penyemprotan oli otomatis",
+  "螺旋叶片": "Bilah sekrup",
+  "行车灯和警告装置": "Lampu crane dan perangkat peringatan",
+  "起重量限制器": "Pembatas beban angkat",
+  "超载保护": "Proteksi beban lebih",
+  "运行行程限位器": "Pembatas perjalanan operasi",
+  "轨道端部止挡": "Penahan ujung rel",
+  "跑偏情况": "Kondisi penyimpangan",
+  "转动情况": "Kondisi putaran",
+  "运行状态": "Kondisi operasi",
+  "运转情况": "Kondisi operasi",
+  "输送带、链条": "Sabuk konveyor dan rantai",
+  "过滤器": "Filter",
+  "金属结构的连接": "Koneksi sambungan struktur logam",
+  "金属结构连接": "Koneksi struktur logam",
+  "钢丝绳": "Kawat baja (wire rope)",
+  "链条/链轮": "Rantai / sproket",
+  "链条与链轮": "Rantai dan sproket",
+  "门、梯子、走台、栏杆": "Pintu, tangga, platform kerja, pagar pengaman",
+  "门、梯子、走台和栏杆": "Pintu, tangga, platform kerja, dan pagar pengaman",
+  "风机电流606II001": "Arus blower 606II001",
+  "飘水": "Percikan air (drift)",
+  "定子温度606TI11": "Suhu stator 606TI11",
+  "定子温度606TI14": "Suhu stator 606TI14",
+  "密封气压力606PI03": "Tekanan gas segel 606PI03",
+  "润滑油压606PI02": "Tekanan oli pelumas 606PI02",
+  "润滑油温606TI18": "Suhu oli pelumas 606TI18",
+  "轴承振动606VI01A": "Getaran bantalan 606VI01A",
+  "轴承振动606VI01B": "Getaran bantalan 606VI01B",
+  "轴承振动606VI04": "Getaran bantalan 606VI04",
+  "轴承振动606VI05": "Getaran bantalan 606VI05",
+  "轴承温度606TI01": "Suhu bantalan 606TI01",
+  "轴承温度606TI02": "Suhu bantalan 606TI02",
+  "轴承温度606TI10": "Suhu bantalan 606TI10",
+  "轴承温度606TI13": "Suhu bantalan 606TI13",
+  "振动ⅠA": "Getaran ⅠA",
+  "振动ⅠB": "Getaran ⅠB",
+  "振动Ⅰa": "Getaran Ⅰa",
+  "振动Ⅰb": "Getaran Ⅰb",
+  "振动ⅡA": "Getaran ⅡA",
+  "振动ⅡB": "Getaran ⅡB",
+  "主要部件外观": "Tampilan komponen utama",
+  "减速机温度": "Suhu gearbox",
+  "压力表/温度计": "Manometer / termometer",
+  "外观腐蚀": "Korosi tampilan luar",
+  "安全阀状态": "Kondisi katup pengaman",
+  "异常报警": "Alarm abnormal",
+  "振动 / 异响": "Getaran / suara abnormal",
+  "震动/异响": "Getaran / suara abnormal",
+  "接管/法兰漏点": "Kebocoran sambungan pipa / flensa",
+  "接管漏点": "Kebocoran sambungan pipa",
+  "整体运行状态": "Kondisi operasi keseluruhan",
+  "电机温度": "Suhu motor",
+  "设备停机未运行": "Peralatan berhenti, tidak beroperasi"
+});
+
+Object.assign(I18N_ID, /* 点检 · 标准值（判定依据，措辞对齐纸质表）*/ {
+  "水平≤3.5mm/s": "Horizontal ≤ 3,5 mm/s",
+  "水平≤4.5mm/s": "Horizontal ≤ 4,5 mm/s",
+  "垂直≤3.5mm/s": "Vertikal ≤ 3,5 mm/s",
+  "垂直≤4.5mm/s": "Vertikal ≤ 4,5 mm/s",
+  "轴向≤3.5mm/s": "Aksial ≤ 3,5 mm/s",
+  "轴向≤4.5mm/s": "Aksial ≤ 4,5 mm/s",
+  "径向≤4.5mm/s": "Radial ≤ 4,5 mm/s",
+  "振动≤4.5": "Getaran ≤ 4,5",
+  "振动≤4.5㎜/s": "Getaran ≤ 4,5 mm/s",
+  "振动值≤3.5mm/s": "Nilai getaran ≤ 3,5 mm/s",
+  "温度≤60℃": "Suhu ≤ 60℃",
+  "温度＜35℃": "Suhu ＜35℃",
+  "温度＜70℃": "Suhu ＜70℃",
+  "温度＜75℃": "Suhu ＜75℃",
+  "轴承温度＜70℃": "Suhu bantalan ＜70℃",
+  "轴承温度＜70℃、振动值≤3.5mm/s、无异响": "Suhu bantalan ＜70℃, nilai getaran ≤ 3,5 mm/s, tidak ada suara abnormal",
+  "齿轮油温度＜70℃": "Suhu oli gear ＜70℃",
+  "回水温度＜50℃": "Suhu air balik ＜50℃",
+  "回油温度＜35℃": "Suhu oli balik ＜35℃",
+  "进水温度＜35℃": "Suhu air masuk ＜35℃",
+  "进油温度＜50℃": "Suhu oli masuk ＜50℃",
+  "改向滚筒温度＜70℃": "Suhu drum pembelok ＜70℃",
+  "驱动滚筒温度＜70℃": "Suhu drum penggerak ＜70℃",
+  "配重滚筒温度＜70℃": "Suhu drum pemberat ＜70℃",
+  "厚度＞15mm": "Ketebalan ＞15mm",
+  "油压≥0.4MPa": "Tekanan oli ≥ 0,4 MPa",
+  "油位正常": "Level oli normal",
+  "油位正常、油质合格": "Level oli normal, kualitas oli memenuhi standar",
+  "油位正常、油质合格、无泄漏": "Level oli normal, kualitas oli memenuhi standar, tidak ada kebocoran",
+  "油位正常、油质合格，无泄漏": "Level oli normal, kualitas oli memenuhi standar, tidak ada kebocoran",
+  "油质合格、无泄漏": "Kualitas oli memenuhi standar, tidak ada kebocoran",
+  "1/2-2/3，油质合格": "Level oli 1/2–2/3, kualitas oli memenuhi standar",
+  "油位在1/2～2/3之间，油质合格": "Level oli antara 1/2–2/3, kualitas oli memenuhi standar",
+  "油位在1/2～2/3刻度线范围内，油质合格": "Level oli pada rentang garis skala 1/2–2/3, kualitas oli memenuhi standar",
+  "油位在油镜 1/2～3/4 区域、油质合格": "Level oli pada area 1/2–3/4 kaca pengintai, kualitas oli memenuhi standar",
+  "油位在油镜要求区域、油质合格": "Level oli pada area kaca pengintai yang disyaratkan, kualitas oli memenuhi standar",
+  "油杯/视镜1/2~2/3": "Mangkuk oli / kaca pengintai 1/2–2/3",
+  "轴承箱油位在要求区域、油质合格": "Level oli kotak bantalan pada area yang disyaratkan, kualitas oli memenuhi standar",
+  "在油箱要求刻度": "Pada garis skala tangki yang disyaratkan",
+  "液位正常": "Level cairan normal",
+  "液位在正常范围": "Level cairan dalam rentang normal",
+  "润滑良好，无异响": "Pelumasan baik, tidak ada suara abnormal",
+  "润滑正常、无异常响声": "Pelumasan normal, tidak ada suara abnormal",
+  "各润滑部位润滑情况良好、油位正常、油质良好": "Semua titik pelumasan baik, level oli normal, kualitas oli baik",
+  "减速器、制动器、钢丝绳润滑良好、油位正常": "Reducer, rem, dan kawat baja terlumasi baik, level oli normal",
+  "喷油正常，油管无堵塞": "Penyemprotan oli normal, pipa oli tidak tersumbat",
+  "润滑油油位、油质（减速机+电机+斗提）": "Level & kualitas oli pelumas (gearbox + motor + bucket elevator)",
+  "无异响": "Tidak ada suara abnormal",
+  "无异音": "Tidak ada suara abnormal",
+  "无异常噪音": "Tidak ada kebisingan abnormal",
+  "无异响、无卡滞": "Tidak ada suara abnormal, tidak macet",
+  "无异响、无松动": "Tidak ada suara abnormal, tidak longgar",
+  "无异响、运行平稳": "Tidak ada suara abnormal, operasi berjalan stabil",
+  "无泄漏": "Tidak ada kebocoran",
+  "无泄露": "Tidak ada kebocoran",
+  "无泄漏、压力正常": "Tidak ada kebocoran, tekanan normal",
+  "无泄漏、无异响": "Tidak ada kebocoran, tidak ada suara abnormal",
+  "无泄漏、松动": "Tidak ada kebocoran atau kelonggaran",
+  "无泄漏、变形、松动": "Tidak ada kebocoran, deformasi, atau kelonggaran",
+  "无泄露、变形、松动": "Tidak ada kebocoran, deformasi, atau kelonggaran",
+  "无泄漏、无变形、无松动": "Tidak ada kebocoran, deformasi, atau kelonggaran",
+  "无泄漏、无变形、无松动、无龟裂": "Tidak ada kebocoran, deformasi, kelonggaran, atau retakan",
+  "无泄漏、松动、脱落、变形": "Tidak ada kebocoran, kendor, lepas, atau deformasi",
+  "无泄露、无变形、无锈蚀": "Tidak ada kebocoran, deformasi, atau karat",
+  "无泄露，无变形、无锈蚀": "Tidak ada kebocoran, deformasi, atau karat",
+  "无渗漏，垫铁无开焊": "Tidak ada rembesan, pelat landasan tidak lepas las",
+  "无跑偏": "Tidak terjadi deviasi",
+  "无堵塞": "Tidak tersumbat",
+  "无堵料、无积料": "Tidak ada penyumbatan maupun penumpukan material",
+  "无漏料、无粉尘外溢": "Tidak ada kebocoran material maupun debu keluar",
+  "无漏油、开裂，螺栓紧固": "Tidak ada kebocoran oli, tidak retak, baut terpasang kencang",
+  "无漏灰、开裂，螺栓紧固": "Tidak ada kebocoran abu, tidak retak, baut terpasang kencang",
+  "无漏油，压力正在，开关正常": "Tidak ada kebocoran oli, tekanan normal, saklar berfungsi",
+  "无污染": "Tidak ada kontaminasi",
+  "无漂水现象": "Tidak ada percikan air keluar",
+  "无打滑、无漏气、无异响": "Tidak selip, tidak bocor udara, tidak ada suara abnormal",
+  "无破损、无异响": "Tidak rusak, tidak ada suara abnormal",
+  "无破损、无褶皱、无堵塞、张紧适度": "Tidak rusak, tidak berkerut, tidak tersumbat, ketegangan sesuai",
+  "无损伤、无磨损、无漏料": "Tidak ada kerusakan, keausan, maupun kebocoran material",
+  "无磨损、损坏": "Tidak ada keausan atau kerusakan",
+  "无磨损，轴承无卡顿": "Tidak ada keausan, bantalan tidak macet",
+  "无裂纹、无振动": "Tidak ada retak maupun getaran",
+  "无锈蚀、无堵塞、无泄漏": "Tidak ada karat, tidak tersumbat, tidak ada kebocoran",
+  "无残留滤饼和杂物": "Tidak ada sisa filter cake dan kotoran",
+  "无需人工、无卡板": "Tidak perlu bantuan manual, tidak ada pelat yang macet",
+  "无焦味、无缺失、损坏，接口牢固": "Tidak ada bau terbakar, tidak ada bagian hilang atau rusak, sambungan kuat",
+  "无变形、破损": "Tidak ada deformasi atau kerusakan",
+  "无变形、摩擦，破损": "Tidak ada deformasi, gesekan, atau kerusakan",
+  "无变形、无严重磨损": "Tidak ada deformasi maupun keausan berat",
+  "无变形、松动、缺失": "Tidak ada deformasi, kelonggaran, atau bagian yang hilang",
+  "无变形、无松动、无缺失": "Tidak ada deformasi, kelonggaran, atau bagian yang hilang",
+  "无变形、无松动、无振动": "Tidak ada deformasi, kelonggaran, maupun getaran",
+  "无变形、磨损、异常杂音或振动": "Tidak ada deformasi, keausan, suara abnormal, atau getaran",
+  "无变形、开裂、磨损、松动、脱落": "Tidak ada deformasi, retak, keausan, kelonggaran, atau bagian terlepas",
+  "无开裂、变形、松动": "Tidak ada retak, deformasi, atau kelonggaran",
+  "无开裂、无变形、无松动、无漏料": "Tidak ada retak, deformasi, kelonggaran, atau kebocoran material",
+  "无断裂、松动、缺失": "Tidak ada patah, kelonggaran, atau bagian yang hilang",
+  "无松动、缺失": "Tidak ada kelonggaran atau bagian yang hilang",
+  "无松动、无丢失": "Tidak ada kelonggaran atau bagian yang hilang",
+  "无松动、无断裂、无缺失": "Tidak ada kelonggaran, patah, atau bagian yang hilang",
+  "无杂音，螺栓无松动、缺失": "Tidak ada suara abnormal, baut tidak longgar maupun hilang",
+  "无杂音，螺栓无松动，缺失": "Tidak ada suara abnormal, baut tidak longgar maupun hilang",
+  "无摆偏、缺失": "Tidak ada penyimpangan atau bagian yang hilang",
+  "无摆偏，无异响": "Tidak ada penyimpangan, tidak ada suara abnormal",
+  "无摆偏，无异响、缺失": "Tidak ada penyimpangan, suara abnormal, maupun bagian yang hilang",
+  "无摆偏，无磨损、缺失": "Tidak ada penyimpangan, keausan, maupun bagian yang hilang",
+  "无摆偏，无磨损、缺失，老化": "Tidak ada penyimpangan, keausan, bagian hilang, maupun penuaan",
+  "无失稳、严重锈蚀、塑性变形和裂纹": "Tidak ada ketidakstabilan, korosi parah, deformasi plastis, atau retak",
+  "无整体失稳、严重锈蚀、塑性变形和裂纹现象": "Tidak ada ketidakstabilan struktural, korosi parah, deformasi plastis, atau retak",
+  "无爬坡困难和自行溜车现象": "Tidak ada kesulitan menanjak maupun meluncur sendiri",
+  "不能出现爬坡困难和自行溜车等现象": "Tidak boleh terjadi kesulitan menanjak atau meluncur sendiri",
+  "不漏风": "Tidak ada kebocoran udara",
+  "运行正常": "Beroperasi normal",
+  "运行正常、无异响": "Beroperasi normal, tidak ada suara abnormal",
+  "运行无异音": "Beroperasi tanpa suara abnormal",
+  "运转平稳、无异常": "Operasi berjalan stabil, tidak ada kelainan",
+  "平稳，无异响": "Operasi stabil, tidak ada suara abnormal",
+  "平稳运行、无异响": "Operasi stabil, tidak ada suara abnormal",
+  "平稳运行无异响": "Operasi stabil, tidak ada suara abnormal",
+  "运转应正常，无卡塞、阻滞、异声和异常发热现象": "Operasi normal, tidak macet, tidak tersendat, tidak ada suara abnormal maupun panas berlebih",
+  "运转正常，无卡塞、阻滞、异声和异常发热": "Operasi normal, tidak macet, tidak tersendat, tidak ada suara abnormal maupun panas berlebih",
+  "转动灵活、无卡停、无异响、无磨损": "Putaran lancar, tidak macet, tidak ada suara abnormal, tidak aus",
+  "转动灵活，无卡停、异响、磨损": "Putaran lancar, tidak macet, tidak ada suara abnormal, tidak aus",
+  "转动灵活、无裂纹、无异常磨损": "Putaran lancar, tidak retak, tidak ada keausan abnormal",
+  "状态正常、无泄漏": "Kondisi normal, tidak ada kebocoran",
+  "外观无异常、无异响": "Tampilan normal, tidak ada suara abnormal",
+  "数值在标准范围内、指针稳定": "Nilai dalam rentang standar, jarum stabil",
+  "数值在标准范围内、指针稳定＜1.0MPa": "Nilai dalam rentang standar, jarum stabil ＜1,0 MPa",
+  "数值在标准范围内、指针稳定＜75℃": "Nilai dalam rentang standar, jarum stabil ＜75℃",
+  "按实际记录看趋势": "Catat nilai aktual untuk melihat tren",
+  "记录看趋势": "Catat untuk melihat tren",
+  "按设定值，记录看趋势": "Sesuai nilai setelan, catat untuk melihat tren",
+  "按该系统设定值，记录看趋势": "Sesuai nilai setelan sistem, catat untuk melihat tren",
+  "冷却水通畅、流量正常": "Air pendingin lancar, aliran normal",
+  "下料通畅、无堵塞": "Aliran material lancar, tidak tersumbat",
+  "滴漏在允许范围内、无喷漏": "Tetesan dalam batas yang diizinkan, tidak menyemprot",
+  "排列整齐、无错位": "Tersusun rapi, tidak ada pergeseran",
+  "松紧合适": "Kekencangan sesuai",
+  "带面无损伤": "Permukaan belt tidak rusak",
+  "皮带无裂纹、松紧合适/联轴器无松动": "Belt tidak retak, kekencangan sesuai / kopling tidak longgar",
+  "输送带无跑偏、损伤；链条无锈蚀、卡滞": "Belt konveyor tidak menyimpang maupun rusak; rantai tidak berkarat dan tidak macet",
+  "啮合正确，无卡阻和冲击": "Pertautan benar, tidak macet dan tidak ada benturan",
+  "啮合面无磨损、矿浆，润滑良好": "Permukaan pertautan tidak aus, tidak ada slurry, pelumasan baik",
+  "表面清洁、无滤饼杂物堆积": "Permukaan bersih, tidak ada penumpukan filter cake dan kotoran",
+  "密封面干净、无残留滤饼和杂物": "Permukaan seal bersih, tidak ada sisa filter cake dan kotoran",
+  "现场整洁、无杂物堆放": "Area bersih, tidak ada penumpukan barang",
+  "轴承无异响": "Bantalan tidak ada suara abnormal",
+  "联轴器无松动，无异响": "Kopling tidak longgar, tidak ada suara abnormal",
+  "盖板完好，无缺失": "Pelat penutup dalam kondisi baik, tidak ada yang hilang",
+  "紧固无松动、无缺失": "Terikat kencang, tidak longgar, tidak ada yang hilang",
+  "固定螺栓不松动": "Baut pengikat tidak longgar",
+  "应牢固可靠": "Harus kuat dan andal",
+  "牢固可靠": "Kuat dan andal",
+  "灵敏可靠": "Responsif dan andal",
+  "完好有效": "Dalam kondisi baik dan berfungsi",
+  "完整、安装可靠": "Lengkap dan terpasang andal",
+  "完好无损，方便到达": "Dalam kondisi baik dan utuh, mudah diakses",
+  "完好无焊缝开裂": "Kondisi baik, tidak ada retakan pada sambungan las",
+  "齐全、无松动": "Lengkap dan tidak longgar",
+  "齐全、固定牢固": "Lengkap dan terpasang kuat",
+  "齐全完整、固定牢固、绝缘良好、无接触不良": "Lengkap, terpasang kuat, isolasi baik, tidak ada kontak buruk",
+  "功能正常": "Fungsi normal",
+  "功能正常，能立即切断电源": "Fungsi normal, dapat memutus listrik seketika",
+  "安装牢固、动作灵敏可靠": "Terpasang kuat, gerakan responsif dan andal",
+  "定位准确、工作灵活可靠": "Posisi tepat, bekerja lancar dan andal",
+  "定位准确、工作灵活可靠，上升限位可靠": "Posisi tepat, bekerja lancar dan andal, batas naik berfungsi andal",
+  "装置有效，报警功能正常": "Perangkat berfungsi, alarm normal",
+  "能停止向不安全方向的动作": "Dapat menghentikan gerakan ke arah tidak aman",
+  "能够停止向不安全方向的动作": "Dapat menghentikan gerakan ke arah tidak aman",
+  "极限位置时能自动切断前进方向": "Pada posisi batas dapat memutus arah maju secara otomatis",
+  "极限位置能自动切断前进方向": "Pada posisi batas dapat memutus arah maju secara otomatis",
+  "顺畅无卡滞、无异响、挂钩灵活可靠": "Berjalan lancar tanpa macet, tidak ada suara abnormal, pengait berfungsi andal",
+  "各运动部件防护罩完好": "Pelindung semua bagian bergerak dalam kondisi baik",
+  "传动部件均装设防护罩/栏": "Semua komponen transmisi dilengkapi pelindung/pagar",
+  "隔离措施完整，无破损、夹缝": "Isolasi lengkap, tidak rusak, tidak ada celah",
+  "隔离措施完整，无破损、无夹缝": "Isolasi lengkap, tidak rusak, tidak ada celah",
+  "焊缝无缺陷；螺栓/铆钉无松动、缺件": "Las tanpa cacat; baut/paku keling tidak longgar maupun hilang",
+  "零件无裂纹、过度磨损；推动器无漏油": "Komponen tidak retak maupun aus berlebihan; aktuator pendorong tidak bocor oli",
+  "悬挂牢固；防脱钩保险装置有效；吊钩无焊补": "Gantungan kuat; pengaman anti-lepas pada hook berfungsi; hook tanpa perbaikan las",
+  "啮合正确，无卡阻和冲击现象，钢丝绳与滑轮和卷筒匹配": "Pertautan benar, tidak macet dan tidak ada benturan, kawat baja sesuai dengan pulley dan drum",
+  "壳体各结合面、轴封无渗漏现象": "Semua permukaan sambungan casing dan segel poros tidak merembes"
+});
+
+
+/* 拼接文案：界面上很多字符串是「固定词 + 数据」拼出来的（区域 202、共 5 台…），
+   整段匹配盖不住，这里按模式翻译。仅在字典未命中时才尝试，顺序即优先级。*/
+Object.assign(I18N_ID, /* 扫漏补充：段标题 · 点检模块 · 设备卡 · 顶栏 */ {
+  "Equipment · 设备台账": "Equipment · Daftar Peralatan",
+  "Inspection · 设备点检": "Inspection · Inspeksi Peralatan",
+  "Maintenance Log · 检修记录": "Maintenance Log · Catatan Perbaikan",
+  "Second Stock · 二级库": "Second Stock · Gudang Lapangan",
+  "Lubrication · 润滑管理": "Lubrication · Manajemen Pelumasan",
+  "Profile · 我的": "Profile · Akun Saya",
+  "Users · 用户管理": "Users · Manajemen Pengguna",
+  "Key Equipment · 重点设备看板": "Key Equipment · Papan Peralatan Utama",
+  "Employee number · 工号": "Employee number · Nomor Karyawan",
+  "Password · 密码": "Password · Kata Sandi",
+  "首次登录": "Login pertama kali",
+  "：该账号尚未设置密码，点击下方按钮可直接进入。进入系统后可在\"我的 → 设置密码\"中添加密码保护。": ": Akun ini belum memiliki kata sandi, tekan tombol di bawah untuk langsung masuk. Setelah masuk, kata sandi dapat diatur di \"Akun → Atur Kata Sandi\".",
+  "👈 点此切换车间": "👈 Ganti bengkel",
+  "👀 参观中·只读 点此切回": "👀 Mode lihat saja · kembali",
+  "👀 参观中·借用设备可点检 点此切回": "👀 Tamu · alat pinjaman bisa diperiksa",
+  "上次：从未点检": "Terakhir: belum pernah diperiksa",
+  "从未点检": "Belum pernah diperiksa",
+  "未初始点检": "Belum ada inspeksi awal",
+  "📈 趋势": "📈 Tren",
+  "趋势": "Tren",
+  "📋 待点检": "📋 Perlu Diperiksa",
+  "待点检": "Perlu diperiksa",
+  "⚠️ 异常": "⚠️ Abnormal",
+  "📜 历史": "📜 Riwayat",
+  "异常": "Abnormal",
+  "历史": "Riwayat",
+  "正常": "Normal",
+  "完成点检": "Selesaikan Inspeksi",
+  "点检人": "Petugas Inspeksi",
+  "点检日期": "Tanggal Inspeksi",
+  "点检项目": "Item Pemeriksaan",
+  "标准值": "Nilai Acuan",
+  "点检方法": "Metode Pemeriksaan",
+  "超限": "Melebihi batas",
+  "本月": "Bulan ini",
+  "上月": "Bulan lalu",
+  "到期": "Jatuh tempo",
+  "逾期": "Terlambat",
+  "即将": "Segera",
+  "已点检": "Sudah diperiksa",
+  "未点检": "Belum diperiksa",
+  "规格": "Spesifikasi",
+  "型号": "Model",
+  "序列号": "Nomor Seri",
+  "A 类": "Kelas A",
+  "B 类": "Kelas B",
+  "C 类": "Kelas C",
+  "A类·核心": "Kelas A · Inti",
+  "B类·重要": "Kelas B · Penting",
+  "C类·一般": "Kelas C · Umum",
+  "停机直接停产": "Berhenti = produksi berhenti",
+  "有备用/短时可撑": "Ada cadangan / tahan sementara",
+  "停机不影响生产": "Berhenti tidak mempengaruhi produksi",
+  "运行中": "Beroperasi",
+  "维修中": "Dalam perbaikan",
+  "变容积泵": "Pompa perpindahan positif",
+  "密封系统": "Sistem penyegelan",
+  "起重设备": "Peralatan angkat",
+  "其他": "Lainnya",
+  "返回检修列表": "Kembali ke daftar perbaikan",
+  "返回润滑列表": "Kembali ke daftar pelumasan",
+  "返回二级库列表": "Kembali ke daftar gudang",
+  "登记检修": "Catat Perbaikan",
+  "登记润滑执行": "Catat Pelaksanaan Pelumasan",
+  "新增二级库": "Tambah Item Gudang",
+  "润滑历史": "Riwayat Pelumasan",
+  "出入库历史": "Riwayat Masuk/Keluar",
+  "出库": "Keluar Barang",
+  "入库": "Masuk Barang",
+  "领用": "Pengambilan",
+  "加载更多 ↓": "Muat lebih banyak ↓",
+  "导出 Excel": "Ekspor Excel",
+  "故障抢修": "Perbaikan darurat",
+  "计划检修": "Perbaikan terencana",
+  "预防性维护": "Perawatan preventif",
+  "消息通知": "Notifikasi",
+  "企业微信手机号": "Nomor HP WeCom"
+});
+
+Object.assign(I18N_ID, /* 点检执行页补充 */ {
+  "✅ 正常": "✅ Normal",
+  "⚠️ 异常": "⚠️ Abnormal",
+  "设备停机未运行？": "Peralatan berhenti, tidak beroperasi?",
+  "是 · 设备停机未运行": "Ya · peralatan berhenti",
+  "✓ 是 · 设备停机（其他项可跳过）": "✓ Ya · berhenti (item lain bisa dilewati)",
+  "✓ 是 · 设备停机（免检，直接提交）": "✓ Ya · berhenti (tanpa inspeksi, langsung kirim)",
+  "模板": "Template",
+  "当前": "Saat ini",
+  "模板：": "Template: ",
+  "上次点检：": "Inspeksi terakhir: ",
+  "周期": "Siklus",
+  "上次点检": "Inspeksi terakhir",
+  "实测值": "Nilai terukur",
+  "超限说明（必填）...": "Keterangan melebihi batas (wajib)...",
+  "异常说明（必填）...": "Keterangan abnormal (wajib)...",
+  "← 返回": "← Kembali",
+  "未来": "Akan datang",
+  "昨天": "Kemarin",
+  "机架轴承": "Bantalan rangka"
+});
+
+Object.assign(I18N_ID, /* 概览卡 · 计数 */ {
+  "全部待点检": "Semua perlu diperiksa",
+  "未初始": "Belum diinisialisasi",
+  "未初始润滑": "Belum ada pelumasan awal",
+  "全部正常": "Semua normal",
+  "📈 点检数据": "📈 Data inspeksi",
+  "提报": "Diajukan",
+  "审批": "Disetujui",
+  "历史记录": "Riwayat",
+  "近 30 天异常": "Abnormal 30 hari terakhir",
+  "暂无记录": "Belum ada catatan",
+  "暂无异常": "Tidak ada abnormal",
+  "暂无历史记录": "Belum ada riwayat"
+});
+
+Object.assign(I18N_ID, /* 操作提示（showToast）*/ {
+  "无操作权限": "Tidak ada izin operasi",
+  "无权限": "Tidak ada izin",
+  "无权删除": "Tidak berwenang menghapus",
+  "无权编辑": "Tidak berwenang mengubah",
+  "无权限（仅本车间设备管理人员可登记检修）": "Tidak ada izin (hanya staf peralatan bengkel ini yang boleh mencatat perbaikan)",
+  "无权限（账号管理需在本车间）": "Tidak ada izin (manajemen akun harus di bengkel sendiri)",
+  "参观其他车间时只能查看，不能登记": "Saat mengunjungi bengkel lain hanya bisa melihat, tidak bisa mencatat",
+  "这台设备不归你们车间，参观时只能查看": "Peralatan ini bukan milik bengkel Anda, saat berkunjung hanya bisa melihat",
+  "只有管理员可以删除点检记录": "Hanya administrator yang boleh menghapus catatan inspeksi",
+  "只有管理员能创建管理员": "Hanya administrator yang boleh membuat administrator",
+  "只有管理员能授予管理员": "Hanya administrator yang boleh memberi hak administrator",
+  "硬删除仅总管理员本人可操作": "Hapus permanen hanya boleh oleh administrator utama",
+  "没有改时间的权限": "Tidak ada izin mengubah waktu",
+  "不能修改自己的角色": "Tidak dapat mengubah peran sendiri",
+  "不能删除自己": "Tidak dapat menghapus diri sendiri",
+  "已记录·设备停机未运行": "Tercatat · peralatan berhenti, tidak beroperasi",
+  "该设备类型暂无点检模板": "Jenis peralatan ini belum punya template inspeksi",
+  "该设备不是数值点检设备": "Peralatan ini bukan inspeksi numerik",
+  "该模板没有数值测点": "Template ini tidak punya titik ukur numerik",
+  "本月还没有数值点检数据": "Bulan ini belum ada data inspeksi numerik",
+  "该设备近两个月没有数值点检数据": "Peralatan ini tidak punya data inspeksi numerik dalam 2 bulan terakhir",
+  "名称不能为空": "Nama tidak boleh kosong",
+  "请填写姓名": "Isi nama",
+  "请填写设备名称": "Isi nama peralatan",
+  "请填写设备位号": "Isi nomor tag peralatan",
+  "请选择设备": "Pilih peralatan",
+  "请选择日期": "Pilih tanggal",
+  "请选择检修类别": "Pilih kategori perbaikan",
+  "请填写检修日期": "Isi tanggal perbaikan",
+  "请填写事项名称": "Isi nama tugas",
+  "请填写备件名称": "Isi nama suku cadang",
+  "请填写实际油号": "Isi jenis oli yang dipakai",
+  "请填写有效的实际用量": "Isi jumlah pemakaian yang valid",
+  "请填写用途（领去用在哪）": "Isi keperluan (dipakai untuk apa)",
+  "请输入手机号": "Masukkan nomor HP",
+  "数量必须大于 0": "Jumlah harus lebih dari 0",
+  "日期格式不对": "Format tanggal salah",
+  "不能选未来的日期": "Tidak boleh memilih tanggal yang akan datang",
+  "两次输入不一致": "Dua input tidak sama",
+  "当前密码错误": "Kata sandi saat ini salah",
+  "新密码至少 6 位": "Kata sandi baru minimal 6 karakter",
+  "工号应为 4-15 位数字": "Nomor karyawan harus 4-15 digit angka",
+  "手机号应为 11 位数字": "Nomor HP harus 11 digit angka",
+  "企业微信手机号应为 11 位数字": "Nomor HP WeCom harus 11 digit angka",
+  "该工号已存在": "Nomor karyawan ini sudah ada",
+  "该位号已存在": "Nomor tag ini sudah ada",
+  "已保存": "Tersimpan",
+  "已删除": "Terhapus",
+  "已恢复": "Dipulihkan",
+  "已撤销": "Dibatalkan",
+  "密码已保存": "Kata sandi tersimpan",
+  "账号已更新": "Akun diperbarui",
+  "账号已删除": "Akun dihapus",
+  "润滑已登记": "Pelumasan tercatat",
+  "已标记为「已办」": "Ditandai sebagai「Selesai」",
+  "已标记为「不办了」": "Ditandai sebagai「Dibatalkan」",
+  "已添加，保存记录时将从二级库扣减": "Ditambahkan, stok gudang akan dikurangi saat catatan disimpan",
+  "已导出设备润滑五定表": "Tabel pelumasan berhasil diekspor",
+  "正在加载全部历史…": "Memuat seluruh riwayat…",
+  "正在加载全部润滑历史…": "Memuat seluruh riwayat pelumasan…",
+  "暂无设备数据": "Belum ada data peralatan",
+  "暂无润滑数据": "Belum ada data pelumasan",
+  "暂无润滑点数据": "Belum ada data titik pelumasan",
+  "当前筛选没有记录": "Tidak ada data pada filter saat ini",
+  "没有可导入的行": "Tidak ada baris yang bisa diimpor",
+  "记录不存在": "Catatan tidak ditemukan",
+  "润滑点不存在": "Titik pelumasan tidak ditemukan",
+  "设备已删除": "Peralatan telah dihapus",
+  "该设备点位均为免维护，无需登记": "Semua titik peralatan ini bebas perawatan, tidak perlu dicatat",
+  "对应检修记录不存在（可能已被彻底删除）": "Catatan perbaikan terkait tidak ada (mungkin sudah dihapus permanen)",
+  "出库数量超过结存": "Jumlah keluar melebihi sisa stok",
+  "撤销会导致结存为负，已阻止": "Pembatalan akan membuat stok minus, dicegah",
+  "结存为 0 时才能删除（请先领用清空）": "Hanya bisa dihapus saat stok 0 (kosongkan dulu)",
+  "这笔由检修记录自动生成，请到对应检修记录里修改备件（库存会自动同步）": "Data ini dibuat otomatis dari catatan perbaikan, ubah suku cadang di catatan perbaikan tersebut (stok tersinkron otomatis)",
+  "这笔由检修记录自动生成，请到对应检修记录里改检修日期": "Data ini dibuat otomatis dari catatan perbaikan, ubah tanggal di catatan perbaikan tersebut",
+  "该功能将在后续阶段开发": "Fitur ini akan dikembangkan pada tahap berikutnya"
+});
+
+Object.assign(I18N_ID, /* 收尾：点检备注 + 其余模块标题 */ {
+  "总体备注（可选）": "Keterangan umum (opsional)",
+  "补充说明...": "Keterangan tambahan...",
+  "补充说明…": "Keterangan tambahan…",
+  "备件消耗": "Konsumsi Suku Cadang",
+  "备件消耗汇总": "Rekap Konsumsi Suku Cadang",
+  "📋 记录": "📋 Catatan",
+  "🗒️ 当个事儿办": "🗒️ Daftar Tugas",
+  "故障部位 · 原因 · 措施 · 备件": "Bagian rusak · Penyebab · Tindakan · Suku cadang",
+  "批量导入": "Impor Massal",
+  "导出五定表": "Ekspor Tabel Pelumasan",
+  "完成润滑": "Selesaikan Pelumasan",
+  "添加账号 · 分配角色 · 查看列表": "Tambah akun · Atur peran · Lihat daftar",
+  "现场库存台账": "Buku Stok Lapangan",
+  "高压釜给料泵 · 高压釜搅拌器 重点零件": "Pompa umpan autoclave · Pengaduk autoclave — komponen utama",
+  "🛢️ 脂润滑": "🛢️ Gemuk (grease)",
+  "⛽ 油润滑": "⛽ Oli",
+  "📝 待补充油号": "📝 Jenis oli belum diisi",
+  "脂润滑": "Pelumasan gemuk",
+  "油润滑": "Pelumasan oli",
+  "脂": "Gemuk",
+  "油": "Oli",
+  "下次润滑": "Pelumasan berikutnya",
+  "实际油号": "Jenis oli aktual",
+  "当前结存": "Sisa stok",
+  "检修日期": "Tanggal perbaikan",
+  "检修人": "Petugas perbaikan",
+  "故障部位": "Bagian rusak",
+  "已办": "Selesai",
+  "已做好准备": "Siap dikerjakan",
+  "不办了": "Dibatalkan",
+  "标记已办": "Tandai selesai",
+  "物料名称(含规格)": "Nama material (dengan spesifikasi)",
+  "物料代码": "Kode material",
+  "来源单号": "Nomor dokumen asal",
+  "使用部位": "Bagian penggunaan",
+  "申请数量": "Jumlah permintaan",
+  "实发入库": "Jumlah masuk aktual",
+  "申报人": "Pemohon",
+  "结存": "Sisa",
+  "备件名称": "Nama suku cadang",
+  "操作人": "Operator",
+  "免维护": "Bebas perawatan",
+  "免维护轴承": "Bantalan bebas perawatan",
+  "个润滑点": "titik pelumasan",
+  "个点位": "titik",
+  "搜索位号、设备、故障部位、检修人…": "Cari nomor tag, peralatan, bagian rusak, petugas…",
+  "搜索名称、型号、单号、库位、申报人…": "Cari nama, model, nomor dokumen, lokasi, pemohon…",
+  "搜索位号、设备名或润滑点…": "Cari nomor tag, nama peralatan, atau titik pelumasan…",
+  "🔬 预览模式 · 本地 SEED 覆盖了 10 台设备的字段（不影响云端真实数据）": "🔬 Mode pratinjau · data lokal menimpa 10 unit (tidak mempengaruhi data server)"
+});
+
+Object.assign(I18N_ID, /* 设备详情 / 编辑页 */ {
+  "名称": "Nama",
+  "关键性等级": "Tingkat Kritis",
+  "关键性等级（按停机影响）": "Tingkat kritis (berdasarkan dampak berhenti)",
+  "设备规格": "Spesifikasi Peralatan",
+  "设备规格 / 其他": "Spesifikasi peralatan / lainnya",
+  "未分类": "Belum diklasifikasi",
+  "① 基础信息": "① Informasi Dasar",
+  "② 位置与状态": "② Lokasi dan Status",
+  "③ 技术参数（选填）": "③ Parameter Teknis (opsional)",
+  "④ 供应与备注": "④ Pemasok dan Keterangan",
+  "删除此设备": "Hapus peralatan ini",
+  "相关记录即将上线": "Catatan terkait segera hadir",
+  "将展示与本设备相关的": "Akan menampilkan yang terkait peralatan ini",
+  "维修记录（阶段 2）": "Catatan perbaikan (tahap 2)",
+  "润滑记录（阶段 5）": "Catatan pelumasan (tahap 5)",
+  "备件消耗明细（阶段 5）": "Rincian konsumsi suku cadang (tahap 5)",
+  "暂无检修记录": "Belum ada catatan perbaikan",
+  "暂无润滑点": "Belum ada titik pelumasan",
+  "电机前轴承": "Bantalan depan motor",
+  "电机后轴承": "Bantalan belakang motor",
+  "机架上轴承": "Bantalan atas rangka",
+  "机架下轴承": "Bantalan bawah rangka",
+  "轴承室": "Ruang bantalan",
+  "曲轴箱": "Crankcase",
+  "推进液箱": "Tangki cairan pendorong",
+  "如 原矿浓密机给料槽搅拌": "mis. Pengaduk tangki umpan thickener bijih",
+  "如 HWY6200": "mis. HWY6200",
+  "如 郝行龙": "mis. nama penanggung jawab",
+  "尺寸、转速、流量等": "Ukuran, kecepatan putar, aliran, dll.",
+  "任何补充信息": "Informasi tambahan apa pun"
+});
+
+const I18N_PATTERNS = [
+  [/^区域\s*(.+)$/,            'Area $1'],
+  [/^([A-C])\s*类$/,            'Kelas $1'],
+  [/^([A-C])类·(.+)$/,          'Kelas $1'],
+  [/^共\s*(\d+)\s*台$/,         'Total $1 unit'],
+  [/^共\s*(\d+)\s*条$/,         'Total $1 data'],
+  [/^共\s*(\d+)\s*个$/,         'Total $1'],
+  [/^(\d+)\s*台设备$/,          '$1 unit peralatan'],
+  [/^(\d+)\s*个点位$/,          '$1 titik'],
+  [/^(\d+)\s*个润滑点$/,        '$1 titik pelumasan'],
+  [/^上次：(.*)$/,              'Terakhir: $1'],
+  [/^剩\s*(\d+)\s*天$/,         'Sisa $1 hari'],
+  [/^逾期\s*(\d+)\s*天$/,       'Terlambat $1 hari'],
+  [/^(\d+)\s*天后$/,            '$1 hari lagi'],
+  [/^(\d+)\s*天前$/,            '$1 hari lalu'],
+  [/^今天\s*(.*)$/,             'Hari ini $1'],
+  [/^(\d+)\s*月前$/,            '$1 bulan lalu'],
+  [/^(\d+)\s*年前$/,            '$1 tahun lalu'],
+  [/^点检项（共\s*(\d+)\s*项\s*·\s*其中数值\s*(\d+)\s*项）$/, 'Item inspeksi (total $1 · numerik $2)'],
+  [/^共\s*(\d+)\s*项$/,          'Total $1 item'],
+  [/^(\d+)\s*项$/,              '$1 item'],
+  [/^共\s*(\d+)\s*台设备$/,      'Total $1 unit peralatan'],
+  [/^历史记录\s*(\d+)\s*条$/,    'Riwayat $1 data'],
+  [/^近\s*(\d+)\s*天异常\s*(\d+)\s*条$/, 'Abnormal $1 hari terakhir: $2 data'],
+  [/^异常\s*(\d+)\s*项$/,        '$1 item abnormal'],
+  [/^(\d+)\s*台$/,              '$1 unit'],
+  [/^(\d+)\s*条$/,              '$1 data'],
+  [/^Terakhir:\s*(.+)$/,        'Terakhir: $1'],
+  [/^保存失败：(.*)$/,           'Gagal menyimpan: $1'],
+  [/^删除失败：(.*)$/,           'Gagal menghapus: $1'],
+  [/^操作失败：(.*)$/,           'Operasi gagal: $1'],
+  [/^同步失败：(.*)$/,           'Gagal sinkronisasi: $1'],
+  [/^认证失败：(.*)$/,           'Autentikasi gagal: $1'],
+  [/^已创建：(.*)$/,             'Dibuat: $1'],
+  [/^已登记\s*(\d+)\s*个点位$/,   'Tercatat $1 titik'],
+  [/^有\s*(\d+)\s*项异常未填说明$/, 'Ada $1 item abnormal tanpa keterangan'],
+  [/^有\s*(\d+)\s*项异常\/超限未填说明：(.*)$/, 'Ada $1 item abnormal/melebihi batas tanpa keterangan: $2'],
+  [/^还有\s*(\d+)\s*项未判定：(.*)$/, 'Masih ada $1 item belum dinilai: $2'],
+  [/^还有\s*(\d+)\s*个数值未填（或不是数字）：(.*)$/, 'Masih ada $1 nilai belum diisi (atau bukan angka): $2'],
+  [/^还有\s*(\d+)\s*项未打钩$/,  'Masih ada $1 item belum dicentang'],
+  [/^加载更多\s*\(还有\s*(\d+)\s*台\)\s*↓$/, 'Muat lebih banyak ($1 lagi) ↓'],
+  [/^加载更多\s*（还有\s*(\d+)\s*台）\s*↓$/, 'Muat lebih banyak ($1 lagi) ↓'],
+  [/^(\d+)\s*台设备\s*·\s*(\d+)\s*个点位$/, '$1 unit · $2 titik'],
+  [/^(\d+(?:\.\d+)?)(g|kg|L|ml)\s*·\s*(\d+)\s*天$/, '$1$2 · $3 hari'],
+  [/^共\s*(\d+)\s*个润滑点$/, 'Total $1 titik pelumasan']
+];
+function i18nPattern(str, depth) {
+  for (const [re, rep] of I18N_PATTERNS) {
+    if (!re.test(str)) continue;
+    return str.replace(re, (...args) => {
+      const groups = args.slice(1, -2);
+      return rep.replace(/\$(\d)/g, (_, i) => {
+        const g = (groups[i - 1] == null ? '' : String(groups[i - 1])).trim();
+        if (!g || !I18N_CN_RE.test(g)) return g;
+        // 捕获组里还有中文就再翻一层（如「上次：11 天前」里的「11 天前」），
+        // 只递归一层，避免模式互相套住死循环
+        const hit = I18N_ID[g];
+        if (hit) return hit;
+        return (depth ? null : i18nPattern(g, 1)) || g;
+      });
+    });
+  }
+  return null;
+}
+
+const I18N_CN_RE = /[\u4e00-\u9fff]/;
+
+/* t(中文) → 当前语言。查不到就原样返回，调用处永远拿得到可显示的字符串 */
+function t(str) {
+  if (currentLang === 'zh' || str == null) return str;
+  const s = String(str);
+  const hit = I18N_ID[s];
+  if (hit) return hit;
+  const k = s.trim();
+  if (k !== s) {
+    const hit2 = I18N_ID[k];
+    if (hit2) return s.replace(k, hit2);
+  }
+  const pat = i18nPattern(k);
+  if (pat) return k === s ? pat : s.replace(k, pat);
+  return str;
+}
+
+const I18N_ATTRS = ['placeholder', 'title'];
+let i18nBusy = false;   // 防止自己改 DOM 又触发 observer 造成重入
+
+function i18nTextNode(node) {
+  const raw = node.nodeValue;
+  if (!raw || !I18N_CN_RE.test(raw)) return;
+  const key = raw.trim();
+  if (!key) return;
+  const hit = I18N_ID[key] || i18nPattern(key);
+  if (!hit || hit === key) return;
+  node.nodeValue = raw.replace(key, hit);   // 保留原有的前后空白/缩进
+}
+
+function i18nAttrs(el) {
+  if (!el || el.nodeType !== 1 || !el.getAttribute) return;
+  for (const a of I18N_ATTRS) {
+    const v = el.getAttribute(a);
+    if (!v || !I18N_CN_RE.test(v)) continue;
+    const hit = I18N_ID[v.trim()];
+    if (hit) el.setAttribute(a, hit);
+  }
+}
+
+/* 翻译一棵子树（元素或文本节点都能传） */
+function i18nApply(root) {
+  if (currentLang === 'zh' || !root) return;
+  i18nBusy = true;
+  try {
+    if (root.nodeType === 3) { i18nTextNode(root); return; }
+    if (root.nodeType !== 1) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        const p = n.parentNode;
+        if (p && (p.nodeName === 'SCRIPT' || p.nodeName === 'STYLE')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const texts = [];
+    let n; while ((n = walker.nextNode())) texts.push(n);
+    texts.forEach(i18nTextNode);
+    i18nAttrs(root);
+    root.querySelectorAll('[placeholder],[title]').forEach(i18nAttrs);
+  } finally { i18nBusy = false; }
+}
+
+let i18nObserver = null;
+function startI18n() {
+  if (currentLang === 'zh' || i18nObserver || !document.body) return;
+  i18nApply(document.body);
+  i18nObserver = new MutationObserver(muts => {
+    if (i18nBusy) return;
+    for (const m of muts) {
+      if (m.type === 'childList') {
+        for (const nd of m.addedNodes) i18nApply(nd);
+      } else if (m.type === 'characterData') {
+        i18nBusy = true; try { i18nTextNode(m.target); } finally { i18nBusy = false; }
+      } else if (m.type === 'attributes') {
+        i18nBusy = true; try { i18nAttrs(m.target); } finally { i18nBusy = false; }
+      }
+    }
+  });
+  i18nObserver.observe(document.body, {
+    childList: true, subtree: true, characterData: true,
+    attributes: true, attributeFilter: I18N_ATTRS
+  });
+}
+
+/* 切换语言：跟切换车间同一套路 —— 写 localStorage 后整页重载，
+   避免半翻译状态（已渲染的旧 DOM 与新语言混在一起）*/
+function setLang(lang) {
+  if (!LANGS[lang] || lang === currentLang) return;
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  location.reload();
+}
+
+/* 原生弹窗也过一遍字典（项目里只剩 18 处，其余都走 showToast / showSheet）*/
+const _nativeAlert = window.alert.bind(window);
+const _nativeConfirm = window.confirm.bind(window);
+window.alert = m => _nativeAlert(t(m));
+window.confirm = m => _nativeConfirm(t(m));
+
+window.t = t;
+window.I18N_ID = I18N_ID;   // 便于排查漏翻（控制台可直接查表）
+window.setLang = setLang;
+window.toggleLang = toggleLang;
+window.currentLangGet = () => currentLang;
+
+/* module 脚本默认 defer，执行时 DOM 已解析完；仍留一道保险 */
+function markLangButtons() {
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lang') === currentLang);
+  });
+}
+
+/* 顶栏语言胶囊：显示【当前】语言（与车间徽章同口径），点一下切到另一种。
+   文案是运行时写的，且「🇨🇳 中」「🇮🇩 ID」不在字典里，不会被 DOM 翻译动到。*/
+function updateLangBadge() {
+  const el = document.getElementById('topbar-lang');
+  if (!el) return;
+  const L = LANGS[currentLang];
+  el.textContent = L.flag + ' ' + L.short;
+  el.setAttribute('title', currentLang === 'zh' ? '切换为 Bahasa Indonesia' : 'Ganti ke 中文');
+}
+function toggleLang() { setLang(currentLang === 'zh' ? 'id' : 'zh'); }
+
+function bootI18n() { startI18n(); markLangButtons(); updateLangBadge(); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootI18n);
+else bootI18n();
 
 // 您的 Firebase 项目配置
 const firebaseConfig = {
@@ -5282,7 +6538,13 @@ function renderMenu(user) {
       <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG.factory||''}</svg>
       <span class="menu-item-name">切换车间</span><span style="font-size:13px;color:var(--muted);margin-right:6px;">${PLANTS[currentPlant].short}</span><span class="menu-item-arrow">›</span>
     </div>`;
-  document.getElementById('menu-list').innerHTML = plantItem + (MENU_BY_ROLE[user.role]||[]).map(item=>`
+  // 「语言」所有角色可见（2026-09-07 印尼语支持）
+  const langItem = `
+    <div class="menu-item" onclick="handleMenuAction('switchLang')">
+      <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span class="menu-item-name">语言 · Bahasa</span><span style="font-size:13px;color:var(--muted);margin-right:6px;">${LANGS[currentLang].label}</span><span class="menu-item-arrow">›</span>
+    </div>`;
+  document.getElementById('menu-list').innerHTML = langItem + plantItem + (MENU_BY_ROLE[user.role]||[]).map(item=>`
     <div class="menu-item" onclick="handleMenuAction('${item.action}')">
       <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG[item.icon]||''}</svg>
       <span class="menu-item-name">${item.name}</span><span class="menu-item-arrow">›</span>
@@ -5290,6 +6552,7 @@ function renderMenu(user) {
 }
 function handleMenuAction(action) {
   if (action==='switchPlant') { showSheet('plantSwitch'); return; }
+  if (action==='switchLang') { showSheet('langSwitch'); return; }
   if (action==='goto:users') {
     if (!canManageUsers(getCurrentUser())) { showToast('无权限（账号管理需在本车间）'); return; }
     switchModule('users'); renderUserListAdmin();
@@ -6173,10 +7436,20 @@ function showSheet(type, arg) {
     // 切换车间（2026-08-07 多车间）：选完写 localStorage 并整页刷新
     const opts = Object.keys(PLANTS).map(k => {
       const cur = k === currentPlant;
-      return `<button class="sheet-btn${cur?' primary':''}" onclick="switchPlant('${k}')">${PLANTS[k].name}${cur?' · 当前':''}</button>`;
+      return `<button class="sheet-btn${cur?' primary':''}" onclick="switchPlant('${k}')">${PLANTS[k].name}${cur?' · <span>当前</span>':''}</button>`;
     }).join('');
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">切换车间</div>
       <div class="sheet-sub">当前在「${PLANTS[currentPlant].name}」· 切换后页面会自动刷新，两个车间的数据互相独立</div>
+      ${opts}
+      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
+  } else if (type==='langSwitch') {
+    // 切换语言（2026-09-07）：与切换车间同一套路，写 localStorage 后整页刷新
+    const opts = Object.keys(LANGS).map(k => {
+      const cur = k === currentLang;
+      return `<button class="sheet-btn${cur?' primary':''}" onclick="setLang('${k}')">${LANGS[k].flag} ${LANGS[k].label}${cur?' · <span>当前</span>':''}</button>`;
+    }).join('');
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">语言 · Bahasa</div>
+      <div class="sheet-sub">切换后页面会自动刷新。只改显示语言，数据不受影响 · Setelah diganti halaman akan dimuat ulang. Hanya mengubah tampilan, data tidak berubah.</div>
       ${opts}
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='about') {
@@ -9793,8 +11066,8 @@ function renderInspectDetail() {
       <div onclick="cancelInspect()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
       <div class="lube-detail-hero-tag">${eq.tag}</div>
       <h2 class="lube-detail-hero-name">${eq.name || ''}</h2>
-      <div class="lube-detail-hero-point">${eq.type || ''} · 模板：${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · 周期 ${getInspectCycleDays(eq, tpl)} 天</div>
-      ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);">上次点检：${formatRelTime(last.inspectAt)} · ${last.inspectorName || ''}</div>` : ''}
+      <div class="lube-detail-hero-point"><span>${eq.type || ''}</span> · <span>模板：</span><span>${tpl.name}</span>${eq.abcClass ? ` · <span>${eq.abcClass} 类</span>` : ''} · <span>周期</span> ${getInspectCycleDays(eq, tpl)} <span>天</span></div>
+      ${last ? `<div style="font-size:12px;color:var(--subtle);font-family:var(--font-mono);"><span>上次点检：</span><span>${formatRelTime(last.inspectAt)}</span> · <span>${last.inspectorName || ''}</span></div>` : ''}
     `;
   }
 
@@ -9890,7 +11163,8 @@ function renderInspectV2Body() {
 function renderInsMetricRow(idx) {
   const r = inspectExecBuffer.rows[idx];
   const dis = inspectExecBuffer.stopped ? 'disabled' : '';
-  const stdLine = `<span class="ins-m-std">${r.std || ''}${r.mth ? ' · ' + r.mth : ''}</span>`;
+  // 标准值与检测方法各自独立成节点，多语言下才能分别翻译（2026-09-07）
+  const stdLine = `<span class="ins-m-std">${r.std ? `<span>${r.std}</span>` : ''}${r.mth ? ` · <span>${r.mth}</span>` : ''}</span>`;
   if (r.t === 'num') {
     const bad = metricOutOfRange(r, r.val);
     return `
