@@ -68,9 +68,10 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 .topbar-lang { font-size:11px; font-family:var(--font-mono); color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:999px; padding:2px 9px; white-space:nowrap; cursor:pointer; display:flex; align-items:center; gap:4px; transition:background .15s, border-color .15s, color .15s; }
 .topbar-lang:active { background:var(--g-mist); border-color:var(--g-primary); color:var(--g-deep); }
 .topbar-plant-hint { font-size:10px; color:var(--muted); white-space:nowrap; cursor:pointer; letter-spacing:.02em; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-/* 顶栏加了语言胶囊后，窄屏优先保住 车间徽章 + 语言 + 用户；提示可被压缩/截断 */
+/* 顶栏加了语言胶囊后空间紧张：自己车间时提示为空不占位；
+   参观别的车间时提示较长，靠 min-width:0 + ellipsis 收缩截断，不撑破顶栏 */
 .topbar-brand { min-width:0; }
-@media (max-width: 400px) { .topbar-plant-hint { display:none; } }
+.topbar-plant-hint:empty { display:none; }
 /* 窄屏放不下「日期 + 切换提示」两样，让位给提示（手机上时间随处可见，日期最不要紧） */
 @media (max-width: 560px) { .topbar-date { display:none; } }
 .topbar-right { display:flex; align-items:center; gap:12px; }
@@ -2929,7 +2930,7 @@ html,body { height:100%; overflow:hidden; background:var(--paper); color:var(--i
 <div id="app">
   <div class="app-main">
   <header class="topbar" id="topbar-main">
-    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div><div class="topbar-plant-hint" onclick="showSheet('plantSwitch')">👈 点此切换车间</div></div>
+    <div class="topbar-brand"><div class="topbar-dot"></div><div class="topbar-name">Nickel</div><div class="topbar-plant" id="topbar-plant" onclick="showSheet('plantSwitch')">高压酸浸</div><div class="topbar-plant-hint" onclick="showSheet('plantSwitch')"></div></div>
     <div class="topbar-right">
       <div class="topbar-lang" id="topbar-lang" onclick="toggleLang()">🇨🇳 中</div>
       <div class="topbar-date" id="topbar-date">—</div>
@@ -3560,7 +3561,6 @@ Object.assign(I18N_ID, /* 界面框架 · 登录 · 设备台账 · 我的 */ {
   "设置 / 修改密码": "Atur / Ubah Kata Sandi",
   "本车间账号管理": "Manajemen Akun Bengkel Ini",
   "切换车间": "Ganti Bengkel",
-  "点此切换车间": "Ganti bengkel",
   "关于本系统": "Tentang Sistem",
   "数据导出": "Ekspor Data",
   "退出登录": "Keluar",
@@ -4172,9 +4172,10 @@ Object.assign(I18N_ID, /* 扫漏补充：段标题 · 点检模块 · 设备卡 
   "Password · 密码": "Password · Kata Sandi",
   "首次登录": "Login pertama kali",
   "：该账号尚未设置密码，点击下方按钮可直接进入。进入系统后可在\"我的 → 设置密码\"中添加密码保护。": ": Akun ini belum memiliki kata sandi, tekan tombol di bawah untuk langsung masuk. Setelah masuk, kata sandi dapat diatur di \"Akun → Atur Kata Sandi\".",
-  "👈 点此切换车间": "👈 Ganti bengkel",
-  "👀 参观中·只读 点此切回": "👀 Mode lihat saja · kembali",
-  "👀 参观中·借用设备可点检 点此切回": "👀 Tamu · alat pinjaman bisa diperiksa",
+  "👀 只读": "👀 Lihat saja",
+  "👀 可点检": "👀 Bisa cek",
+  "正在参观其他车间：只能查看，不能登记。点此切回自己车间": "Sedang mengunjungi bengkel lain: hanya bisa melihat, tidak bisa mencatat. Ketuk untuk kembali ke bengkel sendiri",
+  "正在参观其他车间：借给本车间的设备可以点检，其余只能查看。点此切回自己车间": "Sedang mengunjungi bengkel lain: peralatan yang dipinjamkan ke bengkel Anda bisa diperiksa, sisanya hanya bisa dilihat. Ketuk untuk kembali",
   "上次：从未点检": "Terakhir: belum pernah diperiksa",
   "从未点检": "Belum pernah diperiksa",
   "未初始点检": "Belum ada inspeksi awal",
@@ -6281,8 +6282,15 @@ function updatePlantHint() {
   if (!el) return;
   const u = getCurrentUser();
   if (!u) return;
-  el.textContent = inHomePlant(u) ? '👈 点此切换车间'
-    : (hasBorrowedHere(u) ? '👀 参观中·借用设备可点检 点此切回' : '👀 参观中·只读 点此切回');
+  // 自己车间不再显示引导文字（2026-09-07 用户决定：手机顶栏放不下，
+  // 车间徽章本身就是可点的胶囊）；只有参观别的车间时才显示状态提示
+  // 顶栏空间有限（语言胶囊之后只剩 ~60px），提示用短标签，
+  // 完整说明放 title；长按/悬停可见
+  const home = inHomePlant(u), borrowed = home ? false : hasBorrowedHere(u);
+  el.textContent = home ? '' : (borrowed ? '👀 可点检' : '👀 只读');
+  el.setAttribute('title', home ? ''
+    : (borrowed ? '正在参观其他车间：借给本车间的设备可以点检，其余只能查看。点此切回自己车间'
+                : '正在参观其他车间：只能查看，不能登记。点此切回自己车间'));
 }
 // 硬删历史：仅郝行龙本人（李宁翔同为总管理员但不可硬删，2026-08-07 用户指定）
 const HARD_DELETE_EMPNO = '6725102247';
