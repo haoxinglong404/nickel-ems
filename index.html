@@ -5315,6 +5315,38 @@ Object.assign(I18N_ID, /* 角色 · 二级库表头 · 常见故障部位 */ {
   "液压站冷却风机": "Kipas pendingin stasiun hidrolik"
 });
 
+Object.assign(I18N_ID, /* 点检趋势页 */ {
+  "点检趋势": "Tren Inspeksi",
+  "近两个月": "2 bulan terakhir",
+  "↓ 导出本台设备月度点检表（Excel）": "↓ Ekspor tabel inspeksi bulanan unit ini (Excel)",
+  "最新": "Terbaru",
+  "均值": "Rata-rata",
+  "每格一天": "1 kotak = 1 hari",
+  "全部正常": "Semua normal",
+  "暂无数据": "Belum ada data",
+  "正常": "Normal",
+  "异常": "Abnormal"
+});
+
+Object.assign(I18N_ID, /* 润滑历史 / 出入库历史 */ {
+  "近7天": "7 hari terakhir",
+  "近30天": "30 hari terakhir",
+  "加脂": "Isi gemuk",
+  "换油": "Ganti oli",
+  "涉及": "Melibatkan",
+  "笔": "transaksi",
+  "设备": "peralatan",
+  "备件": "suku cadang",
+  "暂无润滑记录": "Belum ada catatan pelumasan",
+  "暂无出库记录": "Belum ada catatan pengeluaran",
+  "暂无入库记录": "Belum ada catatan penerimaan",
+  "今天暂无出库记录": "Hari ini belum ada catatan pengeluaran",
+  "今天暂无润滑记录": "Hari ini belum ada catatan pelumasan",
+  "History · 出入库历史": "History · Riwayat Masuk/Keluar",
+  "History · 润滑历史": "History · Riwayat Pelumasan",
+  "包": "pak"
+});
+
 const I18N_PATTERNS = [
   [/^区域\s*(.+)$/,            'Area $1'],
   [/^([A-C])\s*类$/,            'Kelas $1'],
@@ -5330,7 +5362,7 @@ const I18N_PATTERNS = [
   [/^逾期\s*(\d+)\s*天$/,       'Terlambat $1 hari'],
   [/^(\d+)\s*天后$/,            '$1 hari lagi'],
   [/^(\d+)\s*天前$/,            '$1 hari lalu'],
-  [/^今天\s*(.*)$/,             'Hari ini $1'],
+
   [/^(\d+)\s*月前$/,            '$1 bulan lalu'],
   [/^(\d+)\s*年前$/,            '$1 tahun lalu'],
   [/^点检项（共\s*(\d+)\s*项\s*·\s*其中数值\s*(\d+)\s*项）$/, 'Item inspeksi (total $1 · numerik $2)'],
@@ -5378,7 +5410,20 @@ const I18N_PATTERNS = [
   [/^(\d+)\s*个$/,               '$1'],
   [/^(\d+)\s*·\s*共\s*(\d+)$/,  '$1 · total $2'],
   [/^(\d+)\s*种$/,               '$1 jenis'],
-  [/^(\d+)\s*条$/,               '$1 data']
+  [/^(\d+)\s*条$/,               '$1 data'],
+  [/^(\d+)\s*个测点$/,            '$1 titik ukur'],
+  [/^数值\s*(\d+)$/,              'numerik $1'],
+  [/^勾选\s*(\d+)$/,              'centang $1'],
+  [/^检查\s*(\d+)\s*次$/,         'Diperiksa $1 kali'],
+  [/^异常\s*(\d+)\s*次$/,         'Abnormal $1 kali'],
+  [/^超限\s*(\d+)\s*次$/,         'Melebihi batas $1 kali'],
+  [/^上限\s+([\d.]+)$/,            'Batas atas $1'],
+  [/^高\s+([\d.]+)$/,              'Tinggi $1'],
+  [/^低\s+([\d.]+)$/,              'Rendah $1'],
+  [/^(\d+)\s*笔$/,               '$1 transaksi'],
+  [/^(\d+)\s*件$/,               '$1 pcs'],
+  [/^加载更多（还有\s*(\d+)\s*种）↓$/, 'Muat lebih banyak ($1 lagi) ↓'],
+  [/^加载更多（还有\s*(\d+)\s*台）↓$/, 'Muat lebih banyak ($1 lagi) ↓']
 ];
 function i18nPattern(str, depth) {
   for (const [re, rep] of I18N_PATTERNS) {
@@ -11432,11 +11477,11 @@ function renderLubeHistoryPage() {
   const oilR = records.filter(h => !lubeHistIsGrease(h));
   let sumHtml;
   if (lubeHistKind === 'grease') {
-    sumHtml = `${rangeLabel}加脂 <strong>${greaseR.length} 笔</strong> · 合计 <strong>${sumOf(greaseR)} g</strong> · 涉及 <strong>${devCount(greaseR)} 台</strong>设备`;
+    sumHtml = `${rangeLabel} <span>加脂</span> <strong>${greaseR.length} <span>笔</span></strong> · <span>合计</span> <strong>${sumOf(greaseR)} g</strong> · <span>涉及</span> <strong>${devCount(greaseR)} <span>台</span></strong> <span>设备</span>`;
   } else if (lubeHistKind === 'oil') {
-    sumHtml = `${rangeLabel}换油 <strong>${oilR.length} 笔</strong> · 合计 <strong>${sumOf(oilR)} L</strong> · 涉及 <strong>${devCount(oilR)} 台</strong>设备`;
+    sumHtml = `${rangeLabel} <span>换油</span> <strong>${oilR.length} <span>笔</span></strong> · <span>合计</span> <strong>${sumOf(oilR)} L</strong> · <span>涉及</span> <strong>${devCount(oilR)} <span>台</span></strong> <span>设备</span>`;
   } else {
-    sumHtml = `${rangeLabel}润滑 <strong>${records.length} 笔</strong> · 加脂 <strong>${sumOf(greaseR)} g</strong>（${greaseR.length} 笔）· 换油 <strong>${sumOf(oilR)} L</strong>（${oilR.length} 笔）· 涉及 <strong>${devCount(records)} 台</strong>设备`;
+    sumHtml = `${rangeLabel} <span>润滑</span> <strong>${records.length} <span>笔</span></strong> · <span>加脂</span> <strong>${sumOf(greaseR)} g</strong>（${greaseR.length} <span>笔</span>）· <span>换油</span> <strong>${sumOf(oilR)} L</strong>（${oilR.length} <span>笔</span>）· <span>涉及</span> <strong>${devCount(records)} <span>台</span></strong> <span>设备</span>`;
   }
 
   const tabsHtml = `
@@ -12428,8 +12473,8 @@ function renderInspectTrend() {
     hero.innerHTML = `
       <div onclick="closeInspectTrend()" style="cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:10px;">← 返回</div>
       <div class="lube-detail-hero-tag">${eq.tag}</div>
-      <h2 class="lube-detail-hero-name">${eq.name || ''} · 点检趋势</h2>
-      <div class="lube-detail-hero-point">${tpl.name}${eq.abcClass ? ' · ' + eq.abcClass + ' 类' : ''} · ${allMetrics.length} 个测点（数值 ${numCount} + 勾选 ${allMetrics.length - numCount}）· 近两个月</div>`;
+      <h2 class="lube-detail-hero-name"><span>${eq.name || ''}</span> · <span>点检趋势</span></h2>
+      <div class="lube-detail-hero-point"><span>${tpl.name}</span>${eq.abcClass ? ` · <span>${eq.abcClass} 类</span>` : ''} · <span>${allMetrics.length} 个测点</span>（<span>数值 ${numCount}</span> + <span>勾选 ${allMetrics.length - numCount}</span>）· <span>近两个月</span></div>`;
   }
   const body = document.getElementById('inspect-trend-body');
   if (!body) return;
@@ -12457,7 +12502,7 @@ function renderInspectTrend() {
         const avg = pts.length ? Math.round(pts.reduce((sum, p) => sum + p.v, 0) / pts.length * 10) / 10 : null;
         const lastV = pts.length ? pts[pts.length - 1].v : null;
         statTxt = pts.length
-          ? `最新 <b style="color:${abnCount && pts[pts.length - 1].abn ? '#B85C5C' : 'var(--g-deep)'};">${lastV}</b>${m.u ? m.u : ''} · 均值 ${avg}${abnCount > 0 ? ` · <span style="color:#B85C5C;">超限 ${abnCount} 次</span>` : ''}`
+          ? `<span>最新</span> <b style="color:${abnCount && pts[pts.length - 1].abn ? '#B85C5C' : 'var(--g-deep)'};">${lastV}</b>${m.u ? m.u : ''} · <span>均值</span> ${avg}${abnCount > 0 ? ` · <span style="color:#B85C5C;">超限 ${abnCount} 次</span>` : ''}`
           : '暂无数据';
         if (pts.length) chartHtml = renderTrendChartSVG(pts, m, 150, 'tc' + (chartSeq++));
       } else {
@@ -12466,20 +12511,20 @@ function renderInspectTrend() {
         if (pts.length) anyData = true;
         const abnCount = pts.filter(p => !p.ok).length;
         statTxt = pts.length
-          ? (abnCount ? `检查 ${pts.length} 次 · <span style="color:#B85C5C;">异常 ${abnCount} 次</span>` : `检查 ${pts.length} 次 · 全部正常`)
+          ? (abnCount ? `<span>检查 ${pts.length} 次</span> · <span style="color:#B85C5C;">异常 ${abnCount} 次</span>` : `<span>检查 ${pts.length} 次</span> · <span>全部正常</span>`)
           : '暂无数据';
         if (pts.length) {
           const dots = pts.map(p => {
             const tip = fmtD(p.t) + (p.ok ? ' 正常' : ' 异常') + (p.note ? '：' + p.note : '');
             return `<span class="d${p.ok ? '' : ' abn'}" title="${escapeAttr(tip)}" onclick="showToast('${escapeAttr(tip)}')"></span>`;
           }).join('');
-          chartHtml = `<div class="ins-chk-strip">${dots}</div><div class="ins-chk-range">${fmtD(pts[0].t)} → ${fmtD(pts[pts.length - 1].t)} · 每格一天</div>`;
+          chartHtml = `<div class="ins-chk-strip">${dots}</div><div class="ins-chk-range">${fmtD(pts[0].t)} → ${fmtD(pts[pts.length - 1].t)} · <span>每格一天</span></div>`;
         }
       }
       html += `
         <div class="ins-trend-card">
           <div class="ins-trend-head">
-            <span class="ins-trend-name">${m.p ? m.p + ' · ' : ''}${m.n}</span>
+            <span class="ins-trend-name">${m.p ? `<span>${m.p}</span> · ` : ''}<span>${m.n}</span></span>
             <span class="ins-trend-stat">${statTxt}</span>
           </div>
           ${chartHtml}
@@ -13359,10 +13404,10 @@ function renderSSHistoryPage() {
   let sumHtml;
   if (ssHistType === 'out') {
     const kinds = new Set(outR.map(h => h.itemId)).size;
-    sumHtml = `${rangeLabel}出库 <strong>${outR.length} 笔</strong> · 合计 <strong>${sumOf(outR)} 件</strong> · 涉及 <strong>${kinds} 种</strong>备件`;
+    sumHtml = `${rangeLabel} <span>出库</span> <strong>${outR.length} <span>笔</span></strong> · <span>合计</span> <strong>${sumOf(outR)} <span>件</span></strong> · <span>涉及</span> <strong>${kinds} <span>种</span></strong> <span>备件</span>`;
   } else if (ssHistType === 'in') {
     const kinds = new Set(inR.map(h => h.itemId)).size;
-    sumHtml = `${rangeLabel}入库 <strong>${inR.length} 笔</strong> · 合计 <strong>${sumOf(inR)} 件</strong> · 涉及 <strong>${kinds} 种</strong>备件`;
+    sumHtml = `${rangeLabel} <span>入库</span> <strong>${inR.length} <span>笔</span></strong> · <span>合计</span> <strong>${sumOf(inR)} <span>件</span></strong> · <span>涉及</span> <strong>${kinds} <span>种</span></strong> <span>备件</span>`;
   } else {
     sumHtml = `${rangeLabel}共 <strong>${valid.length} 笔</strong> · 出库 <strong>${sumOf(outR)} 件</strong>（${outR.length} 笔）· 入库 <strong>${sumOf(inR)} 件</strong>（${inR.length} 笔）`;
   }
