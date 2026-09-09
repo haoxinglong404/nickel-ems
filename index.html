@@ -5832,10 +5832,10 @@ function switchPlant(p) {
   location.reload();
 }
 
-/* ========== 车间模块开放范围（2026-08-17 用户拍板）==========
+/* ========== 车间模块开放范围（2026-08-17 定）==========
    只有高压酸浸上了全套模块；中和/产品/制酸暂时只用「设备台账 + 点检」，
    重点设备看板 / 检修（含当个事儿办）/ 二级库 / 润滑 四块整体隐藏。
-   **按当前车间一刀切，不看角色** —— 管理员/经理切到那些车间同样看不到（用户明确要求）。
+   **按当前车间一刀切，不看角色** —— 管理员/经理切到那些车间同样看不到（这是有意为之，不是疏漏）。
    要给某个车间放开：把它的 key 加进 FULL_MODULE_PLANTS，其余全自动（导航项、
    设备详情的两个 tab、以及所有跳转守卫都读这一个开关）。 */
 const FULL_MODULE_PLANTS = ['hpal'];
@@ -5937,7 +5937,7 @@ async function backfillPlantIfNeeded() {
 
 /* ========== 巡检模板 (2026-07-04 v2 数值点检) ==========
    v2 模板：v:2 + groups[{g:部件, pts:[{p:测点, ms:[指标]}]}]，指标 t:'num'(填数值,自动判超限)/'chk'(正常/异常)
-   源头：纸质《设备日常点检记录表》(机修) 逐张转录 + 6 类自设计(2026-07-04 用户已审)
+   源头：纸质《设备日常点检记录表》(机修) 逐张转录 + 6 类自设计(2026-07-04 已审)
    v1 模板：items 字符串数组(勾选式)，静设备 + 暂缓设备(潜水泵/成套/给料器)继续用
    key 字段用作 Firestore doc id（id="tpl_<key>"）*/
 const _num = (n, u, std, mth, max, min) => ({ n, t: 'num', u, std, mth, max: max == null ? null : max, min: min == null ? null : min });
@@ -5992,7 +5992,7 @@ const SEED_INSPECTION_TEMPLATES = [
     _sealMech(), _coupling(),
   ]},
   /* 地坑泵=立式液下污水泵：现场无填料/机械密封；轴承打润滑脂、无油窗，不看油位油质
-     （2026-07-05 用户核实，201/202/203/316-1/923 一样） */
+     （2026-07-05 现场核实，201/202/203/316-1/923 一样） */
   {key:'pit_pump', name:'地坑泵', cycleDays:7, v:2, groups:[
     {g:'电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'驱动端', ms:_vib4(4.5)}]},
     {g:'轴承箱', pts:[{p:'输入端', ms:_vib4(4.5)}, {p:'输出端', ms:_vib5(4.5)}]},
@@ -6022,7 +6022,7 @@ const SEED_INSPECTION_TEMPLATES = [
     {g:'筒体', pts:[{p:'', ms:[_chk('筒体','无泄露、无变形、无锈蚀','目测'), _chk('搅拌紧固件','无松动、缺失','目测')]}]},
     _sealMech(), _coupling(),
   ]},
-  /* 污水坑搅拌：现场有一个机架轴承（2026-07-05 用户核实，201/202/203 一样） */
+  /* 污水坑搅拌：现场有一个机架轴承（2026-07-05 现场核实，201/202/203 一样） */
   {key:'pit_agitator', name:'污水坑搅拌', cycleDays:7, v:2, groups:[
     {g:'电机', pts:[{p:'非驱动端', ms:_vib4(4.5)}, {p:'驱动端', ms:_vib4(4.5)}]},
     {g:'减速机', pts:[{p:'输入端', ms:_vib5(4.5)}, {p:'输出端', ms:_vib5(4.5)}, {p:'', ms:[_oilChk(), _chk('运行状态','无杂音，螺栓无松动、缺失','耳听、目测')]}]},
@@ -6144,7 +6144,7 @@ const SEED_INSPECTION_TEMPLATES = [
       _chk('润滑情况','减速器、制动器、钢丝绳润滑良好、油位正常','目测'),
       _chk('设备异音','运行无异音','耳听')]}]},
   ]},
-  /* —— 中和车间模板（2026-08-08 按中和车间《日常点检记录表》xlsx 逐张转录，key 前缀 zh_，用户拍板"全部按他们的点检表来"）——
+  /* —— 中和车间模板（2026-08-08 按中和车间《日常点检记录表》xlsx 逐张转录，key 前缀 zh_，定的口径：全部按他们的点检表来）——
      浓密机=中心传动电驱，低转速振动限值 ≤8.0mm/s；浸出/预中和/除铁铝搅拌带润滑油泵+机封水封（按中和表，替代 08-07 的敞口口径）；
      凉水塔风机振动限值 ≤6.5、温度 ≤80；稀释装置/熟化槽搅拌暂无匹配设备，模板先建好备用 */
   {key:'zh_thickener_ed', name:'浓密机·电驱', cycleDays:7, v:2, groups:[
@@ -6356,8 +6356,8 @@ const SEED_INSPECTION_TEMPLATES = [
       _chk('6S管理','现场整洁、无杂物堆放','目测'),
       _chk('工作状态','运行正常','目测')]}]},
   ]},
-  /* —— v1 勾选模板：静设备 + 暂缓做数值点检的设备(2026-07-04/05 用户决定；潜水泵/起重机整体不做点检)
-     静设备(压力容器/贮槽/非标)不设"设备停机未运行"项——静设备谈不上停机(2026-07-05 用户定)；
+  /* —— v1 勾选模板：静设备 + 暂缓做数值点检的设备(2026-07-04/05 定；潜水泵/起重机整体不做点检)
+     静设备(压力容器/贮槽/非标)不设"设备停机未运行"项——静设备谈不上停机(2026-07-05 定)；
      给料器/成套(刮泥机)是转动设备，保留停机项 —— */
   {key:'feeder',           name:'给料器',     cycleDays:7,  items:['设备停机未运行','电机温度','减速机温度','振动 / 异响']},
   {key:'pressure_vessel',  name:'压力容器',   cycleDays:30, items:['外观腐蚀','接管/法兰漏点','安全阀状态','压力表/温度计']},
@@ -6381,7 +6381,7 @@ const INSPECT_TYPE_TO_TPL = {
 };
 /* 设备 → 模板 key：优先设备级 inspectTplKey 字段(预留)，再按 type+设备名分流细分模板。
    返回 null = 该设备不做点检（不进巡检列表）。
-   分流规则 2026-07-05 按用户现场逐条核实（有啥看啥，没有的部件不出现在表里）。 */
+   分流规则 2026-07-05 现场逐条核实（有啥看啥，没有的部件不出现在表里）。 */
 function getInspectTplKeyForEq(eq) {
   if (!eq) return null;
   if (eq.inspectTplKey) return eq.inspectTplKey;
@@ -6389,7 +6389,7 @@ function getInspectTplKeyForEq(eq) {
   const nm = eq.name || '';
   const t = eq.type || '';
   // —— 不做点检 ——
-  if (t === '压力容器' || t === '贮槽' || t === '非标静设备') return null;  // 静设备全部不做（2026-07-06 用户定：设备太多工作量太大）
+  if (t === '压力容器' || t === '贮槽' || t === '非标静设备') return null;  // 静设备全部不做（2026-07-06 定：设备太多工作量太大）
   if (t === '起重机') return null;                                        // 电动单梁/旋转吊臂/316-1/218 全部暂不做
   if (/潜水搅拌/.test(nm)) return null;                                   // 218 潜水搅拌
   if (/排泥泵|污水池潜水泵|集水坑潜水泵/.test(nm)) return null;            // 潜水泵不做
@@ -6406,7 +6406,7 @@ function getInspectTplKeyForEq(eq) {
   if (t === '搅拌器') {
     if (/污水坑搅拌/.test(nm)) return 'pit_agitator';
     if (/PAM ?搅拌|PAC ?搅拌/i.test(nm)) return 'chem_agitator';
-    if (/给料槽搅拌|絮凝剂搅拌/.test(nm)) return 'agitator_open';  // 敞口无机封无密封液（2026-07-05 用户核实絮凝剂搅拌器同给料槽）
+    if (/给料槽搅拌|絮凝剂搅拌/.test(nm)) return 'agitator_open';  // 敞口无机封无密封液（2026-07-05 现场核实絮凝剂搅拌器同给料槽）
     if (/闪蒸密封槽搅拌/.test(nm)) return 'agitator_mech';
     return 'agitator';           // 默认：机封+密封液（高压釜隔室搅拌 21 台）
   }
@@ -6520,7 +6520,7 @@ function subscribeUsers() {
 /* ========== 预览模式（?preview=1，本地 HTTP 服务器用）==========
    - 用本地 SEED_EQUIPMENTS 里 tag 匹配的数据覆盖云端字段
    - 仅影响当前浏览器的显示，不改云端真实数据
-   - 用户用它在 push 前先看"改完会长什么样" */
+   - 在 push 前先看"改完会长什么样" */
 const PREVIEW_MODE = (() => {
   try { return new URLSearchParams(location.search).get('preview') === '1'; }
   catch(e) { return false; }
@@ -6964,7 +6964,7 @@ async function fixOrphanLubeV6IfNeeded() {
 }
 
 /* ========== V7 补 202-PE-PP-005 高压水泵·电机润滑点 (2026-04-23) ==========
-   标准油号 / 周期暂留空，待用户后续补充。会自动归到"待补充油号"tab。 */
+   标准油号 / 周期暂留空，待后续补充。会自动归到"待补充油号"tab。 */
 const V7_LP_NEW = [{
   id: 'lp_v7_001',
   tag: '202-PE-PP-005',
@@ -7148,7 +7148,7 @@ function userPlant(u) { return (u && u.plant) || 'hpal'; }
 function inHomePlant(u) { return !!u && (userPlant(u) === 'all' || userPlant(u) === currentPlant); }
 function isEquipStaff(u) { return hasRole(u, 'admin', 'equip-engineer', 'equip-tech'); }
 // 业务管理：检修记录 / 二级库 / 当个事儿办
-// 工程师/技术员限自家车间；经理跨全部车间（2026-08-07 用户定：经理=跨车间二把手，仅少硬删和管管理员账号）
+// 工程师/技术员限自家车间；经理跨全部车间（2026-08-07 定：经理=跨车间二把手，仅少硬删和管管理员账号）
 function canManage(u) { return (isEquipStaff(u) && inHomePlant(u)) || isManager(u); }
 // 设备台账编辑：工程师=技术员（仅职级名不同）；经理跨车间
 function canEditEquipment(u) { return canManage(u); }
@@ -7189,7 +7189,7 @@ function updatePlantHint() {
   if (!el) return;
   const u = getCurrentUser();
   if (!u) return;
-  // 自己车间不再显示引导文字（2026-09-07 用户决定：手机顶栏放不下，
+  // 自己车间不再显示引导文字（2026-09-07 定：手机顶栏放不下，
   // 车间徽章本身就是可点的胶囊）；只有参观别的车间时才显示状态提示
   // 顶栏空间有限（语言胶囊之后只剩 ~60px），提示用短标签，
   // 完整说明放 title；长按/悬停可见
@@ -7199,7 +7199,7 @@ function updatePlantHint() {
     : (borrowed ? '正在参观其他车间：借给本车间的设备可以点检，其余只能查看。点此切回自己车间'
                 : '正在参观其他车间：只能查看，不能登记。点此切回自己车间'));
 }
-// 硬删历史：仅郝行龙本人（李宁翔同为总管理员但不可硬删，2026-08-07 用户指定）
+// 硬删历史：仅郝行龙本人（李宁翔同为总管理员但不可硬删，2026-08-07 指定）
 const HARD_DELETE_EMPNO = '6725102247';
 function canHardDelete(u) { return isAdmin(u) && String(u.empno) === HARD_DELETE_EMPNO; }
 // 角色显示：非 all 账号带车间前缀，如「酸浸·生产员工」「中和·设备工程师」
@@ -7209,7 +7209,7 @@ function roleLabel(u) {
   const prefix = p === 'all' ? '' : ((PLANTS[p] && PLANTS[p].tag) || '') + '·';
   return prefix + ROLES[u.role].label;
 }
-// 二级库出入库「改时间/补登日期」权限：只给郝行龙本人（2026-08-06 用户指定，不给其他 admin）
+// 二级库出入库「改时间/补登日期」权限：只给郝行龙本人（2026-08-06 指定，不给其他 admin）
 const SS_TIME_EDITOR_EMPNO = '6725102247';
 function canEditSSTime(u) { return !!u && String(u.empno) === SS_TIME_EDITOR_EMPNO; }
 const STATUS_MAP = {
@@ -8962,7 +8962,7 @@ function getInspectCycleDays(eq, tpl) {
   return byTpl;
 }
 
-/* 工具：计算下次巡检时间 —— 按自然日 + 早上 6 点更新（2026-07-07 用户定）
+/* 工具：计算下次巡检时间 —— 按自然日 + 早上 6 点更新（2026-07-07 定）
    例：A 类今天任何时间巡检 → 明天 06:00 重新出现在待巡检；C 类 → 7 天后 06:00 */
 function calcNextInspectAt(lastInspectAt, cycleDays) {
   if (!lastInspectAt) return 0; // 0 = 未初始巡检
@@ -9014,7 +9014,7 @@ let mlDetailFrom = '';       // 检修详情返回目标：'' = 检修列表 / '
 const ML_KEY_EQ_GROUPS = [
   // 2026-07-10 改名后兼容："N系列-高压釜给料泵-A泵"；「-」紧跟泵字，排除"高压釜给料泵区污水泵/用空压机"
   // parts 顺序 = 备件名归属优先级（先命中先得）：O形圈这类通用名放在靠后的零件兜底
-  // 隔热组件构成（2026-07-23 用户确认）：导杆、衬套（导套）、活塞、分离盘、隔热段盲板O形圈
+  // 隔热组件构成（2026-07-23 现场确认）：导杆、衬套（导套）、活塞、分离盘、隔热段盲板O形圈
   // 2026-08-15 隔膜/隔热组件按腔室拆分（一台泵 3 个腔室各一套，独立磨损要分开算寿命）：
   // fam = 零件族（备件名归属/消耗合计按族，寿命按腔室各算各的）；hidden = 不出现在登记表单标签里，
   // 只用来接住老记录的笼统「隔膜」「隔热组件」标签（有这种记录时展开卡/档案页显示「未注明腔室」行）
@@ -9275,7 +9275,7 @@ function renderMlPartTimeline(recs, p) {
   const items = full.map(m => {
     const note = m.faultCause || m.measures || '';
     if (m.noReplace) {
-      // 维修/调整节点：挂在时间线上但不计寿命（2026-08-15 用户要求）；用到的备件（垫片等）照常列出
+      // 维修/调整节点：挂在时间线上但不计寿命（2026-08-15 定）；用到的备件（垫片等）照常列出
       const used = (m.spareParts || []).map(x =>
         '<span class="ml-part-chip">' + escapeHtml(mlSpName(x)) + ' ×' + (x.qty || 1) + escapeHtml(x.unit || '') + '</span>').join('');
       return '<div class="ml-tl-item norepl"><div class="ml-tl-dot"></div>' +
@@ -9357,7 +9357,7 @@ let mlBoardSeries = '1';      // '1' / '2' / '3'（只看单个系列，避免�
 let mlBoardOpenTag = '';      // 方框网格里当前展开的设备 tag（'' = 都收起，2026-08-15）
 let mlEqlogFrom = '';         // 'board' = 从看板进的单台档案，返回时回看板
 
-/* 各系列投料（投产）日期（2026-09-01 用户提供）：从没换过的重点零件按此算「在用 N 天」——
+/* 各系列投料（投产）日期（2026-09-01 现场提供）：从没换过的重点零件按此算「在用 N 天」——
    没换过 = 还是投产时的原装件。1 系列日期未知，留空则其原装件仍显示「暂无记录」 */
 const MLB_SERIES_ONSTREAM = { '1': '', '2': '2026-08-08', '3': '2026-07-08' };
 
@@ -9438,7 +9438,7 @@ function mlbEqGridHtml(cur) {
     };
     let body;
     if (g.key === 'preheater') {
-      // warman / 五二五 两个厂家分开排（2026-08-15 用户要求），方框名去掉厂家后缀
+      // warman / 五二五 两个厂家分开排（2026-08-15 定），方框名去掉厂家后缀
       body = ['warman', '五二五'].map(brand => {
         const list = units.filter(u => u.short.endsWith('·' + brand));
         if (!list.length) return '';
@@ -9457,7 +9457,7 @@ function mlbEqGridHtml(cur) {
 }
 /* 某次检修里归属某零件的「主备件」（一条）：按关键词精确归属优先；没归上且该次只修了
    这一个重点零件时兜底取全部备件（同单台档案页口径）；多条时按零件 kw 顺序挑名称先命中的
-   （「单向阀组件」优先于按「阀盖」归进来的 O 形圈附件）—— 2026-08-15 用户要求附件不展示。
+   （「单向阀组件」优先于按「阀盖」归进来的 O 形圈附件）—— 2026-08-15 定的口径：附件不展示。
    展开卡「在用」显示它的名字（mlSpName = 二级库现名，带规格/厂家），零件消耗表统计它的数量 */
 function mlbPartMainSpare(m, g, pkey) {
   if (!m) return null;
@@ -9606,7 +9606,7 @@ function mlbBrandStats(allStats, gkey, pkey) {
     const list = (s.parts[pkey] || {}).records || [];   // 已按日期倒序（最新在前）
     list.forEach((m, i) => {
       // 厂家/规格只认名字带零件关键词的主备件（如「机械密封」「单向阀」）；
-      // 该次只登记了垫片/O形圈这类附件的归「未登记」，垫片名不单独成行（2026-08-15 用户要求）
+      // 该次只登记了垫片/O形圈这类附件的归「未登记」，垫片名不单独成行（2026-08-15 定）
       const main = mlbPartMainSpare(m, g, pkey);
       const okName = main && kws.some(k => mlSpName(main).includes(k));
       const name = okName ? mlSpName(main).trim() : '未登记厂家/规格';
@@ -9659,7 +9659,7 @@ function renderMlBoard() {
   const cur = all.filter(s => s.series === mlBoardSeries);
   const pills = [{ k: '1', l: '1系列' }, { k: '2', l: '2系列' }, { k: '3', l: '3系列' }].map(t =>
     '<div class="ml-filter-pill' + (mlBoardSeries === t.k ? ' active' : '') + '" onclick="setMlBoardSeries(\'' + t.k + '\')">' + t.l + '</div>').join('');
-  // 2026-08-15 用户要求：原统计图表（概览卡/超寿命预警卡/环形图/各台条形图/月度趋势）撤掉，
+  // 2026-08-15 定：原统计图表（概览卡/超寿命预警卡/环形图/各台条形图/月度趋势）撤掉，
   // 换成零件消耗表；超寿命信息方框上的 ⚠ 已经带了。厂家寿命对比两张卡保留。
   bv.innerHTML = '<div class="ml-filter-bar">' + pills + '</div>' + mlbEqGridHtml(cur) +
     '<div class="mlb-eq-divider">📊 零件消耗</div>' +
@@ -11832,7 +11832,7 @@ function renderInspectHistCard(h) {
   const delBtn = !h._v2 && canHardDelete(user)
     ? `<button onclick="event.stopPropagation();hardDeleteInspectHistory('${h.id}')" style="margin-top:6px;background:white;color:#C77700;border:1px solid #E4E0D8;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">删除</button>`
     : '';
-  // 点卡片进该设备的点检数据/趋势页（2026-07-06 用户反馈：巡检完就从待巡检消失，趋势入口跟着丢了）
+  // 点卡片进该设备的点检数据/趋势页（2026-07-06 现场反馈：巡检完就从待巡检消失，趋势入口跟着丢了）
   const clickAttr = h.equipmentId ? ` onclick="openInspectTrend('${h.equipmentId}')" style="cursor:pointer;"` : '';
   const trendHint = h.equipmentId ? `<span style="font-size:11px;color:var(--g-deep);margin-top:6px;">📈 点检数据</span>` : '';
   return `
@@ -12354,7 +12354,7 @@ function renderTrendChartSVG(pts, metric, height, chartId) {
     s += `<line x1="${L}" y1="${ym.toFixed(1)}" x2="${W - R}" y2="${ym.toFixed(1)}" stroke="#C77700" stroke-width="1" stroke-dasharray="5 4"/>`;
     s += `<text x="${W - R}" y="${(ym - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#C77700">下限 ${metric.min}</text>`;
   }
-  // 平滑曲线（Catmull-Rom → 三次贝塞尔，2026-07-05 用户要求圆滑样式）
+  // 平滑曲线（Catmull-Rom → 三次贝塞尔，2026-07-05 改为圆滑样式）
   if (xs.length > 1) {
     let d = 'M' + xs[0] + ',' + ys[0];
     for (let i = 0; i < xs.length - 1; i++) {
@@ -12393,7 +12393,7 @@ function renderInspectTrend() {
   if (!eq) return;
   const tpl = getInspectTemplateForEquipment(eq);
   if (!tpl || tpl.v !== 2) return;
-  const allMetrics = tplFlatMetrics(tpl);   // 数值 + 勾选全显示（2026-07-06 用户要求）
+  const allMetrics = tplFlatMetrics(tpl);   // 数值 + 勾选全显示（2026-07-06 定）
   const numCount = allMetrics.filter(m => m.t === 'num').length;
   const hero = document.getElementById('inspect-trend-hero');
   if (hero) {
@@ -12405,7 +12405,7 @@ function renderInspectTrend() {
   }
   const body = document.getElementById('inspect-trend-body');
   if (!body) return;
-  // 全部测点按 部件 分组卡平铺，点数据点可看当天数值，图上标最高/最低（2026-07-05 用户要求）
+  // 全部测点按 部件 分组卡平铺，点数据点可看当天数值，图上标最高/最低（2026-07-05 定）
   _trendPtsReg = {};
   let html = `<button class="edit-btn edit-btn-save export-btn" style="width:100%;margin-bottom:14px;" onclick="exportInspectDeviceMonth()">↓ 导出本台设备月度点检表（Excel）</button>`;
   let anyData = false;
@@ -12918,7 +12918,7 @@ function renderSecondStockDetail(it) {
         const typeLabel = h.type === 'in' ? '入库' : '领用';
         const isReverted = h.reverted;
         const isCounter = h.isCounter;
-        // 检修联动记录（带 mlId）不许撤销/删除，唯一入口是改检修记录（2026-07-08 用户定）
+        // 检修联动记录（带 mlId）不许撤销/删除，唯一入口是改检修记录（2026-07-08 定）
         const canRevert = canManage(user) && !isReverted && !isCounter && !h.mlId;
         const canDelete = canHardDelete(user) && !h.mlId;
         const canTime = canEditSSTime(user) && !h.mlId;   // 改时间：只郝行龙 + 非检修投影笔
@@ -14196,9 +14196,9 @@ async function init() {
     await fixEquipmentTagsV2IfNeeded();
     // 2026-04-22 补：应用 Excel 位号补全（TBD → 正式位号）
     await applyTagFixesV3IfNeeded();
-    // 2026-04-22 铭牌补全 V4（57 台负责人 + 2 台罗茨风机完整规格） · 手机会话
+    // 2026-04-22 铭牌补全 V4（57 台负责人 + 2 台罗茨风机完整规格）
     await applyTagFixesV4IfNeeded();
-    // 2026-04-22 铭牌补全 V5（3 反洗泵 + 4 回用水泵 完整规格） · 手机会话
+    // 2026-04-22 铭牌补全 V5（3 反洗泵 + 4 回用水泵 完整规格）
     await applyTagFixesV5IfNeeded();
     // 2026-04-23 修 10 个孤立润滑点 + 设备位号修正 + 设备/润滑点补全
     await fixOrphanLubeV6IfNeeded();
