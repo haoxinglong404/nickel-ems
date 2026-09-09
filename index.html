@@ -4237,8 +4237,7 @@ Object.assign(I18N_ID, /* 扫漏补充：段标题 · 点检模块 · 设备卡 
   "故障抢修": "Perbaikan darurat",
   "计划检修": "Perbaikan terencana",
   "预防性维护": "Perawatan preventif",
-  "消息通知": "Notifikasi",
-  "企业微信手机号": "Nomor HP WeCom"
+  "消息通知": "Notifikasi"
 });
 
 Object.assign(I18N_ID, /* 点检执行页补充 */ {
@@ -4313,7 +4312,6 @@ Object.assign(I18N_ID, /* 操作提示（showToast）*/ {
   "请填写实际油号": "Isi jenis oli yang dipakai",
   "请填写有效的实际用量": "Isi jumlah pemakaian yang valid",
   "请填写用途（领去用在哪）": "Isi keperluan (dipakai untuk apa)",
-  "请输入手机号": "Masukkan nomor HP",
   "数量必须大于 0": "Jumlah harus lebih dari 0",
   "日期格式不对": "Format tanggal salah",
   "不能选未来的日期": "Tidak boleh memilih tanggal yang akan datang",
@@ -4321,8 +4319,6 @@ Object.assign(I18N_ID, /* 操作提示（showToast）*/ {
   "当前密码错误": "Kata sandi saat ini salah",
   "新密码至少 6 位": "Kata sandi baru minimal 6 karakter",
   "工号应为 4-15 位数字": "Nomor karyawan harus 4-15 digit angka",
-  "手机号应为 11 位数字": "Nomor HP harus 11 digit angka",
-  "企业微信手机号应为 11 位数字": "Nomor HP WeCom harus 11 digit angka",
   "该工号已存在": "Nomor karyawan ini sudah ada",
   "该位号已存在": "Nomor tag ini sudah ada",
   "已保存": "Tersimpan",
@@ -6632,46 +6628,6 @@ function mlSortKey(m) {
   return (isNaN(d) ? 0 : d) * 1e6 + (m && m.createdAt ? (m.createdAt % 1e6) : 0);
 }
 
-/* ========== 企业微信通知 ========== */
-const WECHAT_NOTIFY_URL = 'https://ems-notify.haoxinglong404.workers.dev';
-const WECHAT_NOTIFY_TOKEN = 'ems-2026-nickel-secret-x9k2';
-
-async function notifyWeChat(content, mentionMobiles = []) {
-  if (!content) return;
-  // 静默失败 — 通知失败不阻塞工单流程
-  try {
-    await fetch(WECHAT_NOTIFY_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Auth-Token': WECHAT_NOTIFY_TOKEN,
-      },
-      body: JSON.stringify({
-        msgtype: 'text',
-        text: {
-          content,
-          mentioned_mobile_list: mentionMobiles.filter(Boolean),
-        },
-      }),
-    });
-  } catch (e) {
-    console.warn('[notifyWeChat] failed', e);
-  }
-}
-
-// 找特定角色用户的企业微信手机号
-function getMobilesByRole(role) {
-  return loadUsers()
-    .filter(u => u.role === role && u.wechatMobile)
-    .map(u => u.wechatMobile);
-}
-
-// 找特定 empno 用户的手机号
-function getMobileByEmpno(empno) {
-  const u = loadUsers().find(x => x.empno === empno);
-  return u && u.wechatMobile ? u.wechatMobile : null;
-}
-
 async function cloudSaveMaintenance(ml) {
   setCloudStatus('syncing', '保存中...');
   try {
@@ -7254,7 +7210,6 @@ const EQ_TYPES = ['离心泵','变容积泵','搅拌器','密封系统','压力�
 
 const COMMON_MENU = [
   {icon:'bell',name:'消息通知',action:'todo'},
-  {icon:'phone',name:'企业微信手机号',action:'setMobile'},
   {icon:'lock',name:'设置 / 修改密码',action:'setPassword'},
   {icon:'info',name:'关于本系统',action:'about'},
 ];
@@ -7271,7 +7226,6 @@ const MENU_BY_ROLE = {
     {icon:'users',name:'用户与权限管理',action:'goto:users'},
     {icon:'shield',name:'审批链配置',action:'todo'},
     {icon:'database',name:'基础数据导入导出',action:'todo'},
-    {icon:'phone',name:'企业微信手机号',action:'setMobile'},
     {icon:'lock',name:'设置 / 修改密码',action:'setPassword'},
     {icon:'info',name:'关于本系统',action:'about'},
   ],
@@ -7504,7 +7458,6 @@ function handleMenuAction(action) {
     switchModule('users'); renderUserListAdmin();
   }
   else if (action==='setPassword') showSheet('setPassword');
-  else if (action==='setMobile') showSheet('setMobile');
   else if (action==='about') showSheet('about');
   else if (action==='todo') showToast('该功能将在后续阶段开发');
 }
@@ -8269,7 +8222,6 @@ function showSheet(type, arg) {
       <div class="sheet-form-group"><div class="sheet-form-label">工号</div><input class="sheet-input" id="add-empno" type="tel" inputmode="numeric" placeholder="数字工号" maxlength="15"></div>
       ${plantGroup}
       <div class="sheet-form-group"><div class="sheet-form-label">初始角色</div><div class="role-picker" id="role-picker">${rolePickerHtml('production-worker', isAdmin(creator))}</div></div>
-      <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="add-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20"></div>
       <button class="sheet-btn primary" onclick="confirmAddUser()">创建账号</button><button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='editUser') {
     const user = findUser(arg); if (!user) return;
@@ -8284,11 +8236,9 @@ function showSheet(type, arg) {
       : '';
     content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${user.name}</div><div class="sheet-sub">工号 ${user.empno} · ${roleLabel(user)}</div>
       ${user.role!=='admin'?`${plantGroup}<div class="sheet-form-group"><div class="sheet-form-label">修改角色</div><div class="role-picker" id="role-picker">${rolePickerHtml(user.role, isAdmin(editor))}</div></div>
-      <div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="edit-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20" value="${user.wechatMobile || ''}"></div>
       <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>
       ${!isSelf?`<button class="sheet-btn danger" onclick="confirmDeleteUser('${user.empno}')">删除账号</button>`:''}`:
-      `<div class="sheet-form-group"><div class="sheet-form-label">企业微信手机号（用于通知 @）</div><input class="sheet-input" id="edit-wechat-mobile" type="tel" inputmode="numeric" placeholder="选填，例如 13800138000" maxlength="20" value="${user.wechatMobile || ''}"></div>
-      <button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>`}
+      `<button class="sheet-btn primary" onclick="confirmEditUser('${user.empno}')">保存更改</button>`}
       <button class="sheet-btn" onclick="hideSheet()">${user.role==='admin'?'关闭':'取消'}</button>`;
   } else if (type==='setPassword') {
     const user = findUser(localStorage.getItem(SESSION_KEY));
@@ -8298,18 +8248,6 @@ function showSheet(type, arg) {
       <div class="sheet-form-group"><div class="sheet-form-label">新密码</div><input class="sheet-input" id="new-pw" type="password" placeholder="至少 6 位"></div>
       <div class="sheet-form-group"><div class="sheet-form-label">确认新密码</div><input class="sheet-input" id="confirm-pw" type="password" placeholder="再输一遍"></div>
       <button class="sheet-btn primary" onclick="confirmSetPassword()">${hasPwd?'修改':'设置'}密码</button>
-      <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
-  } else if (type==='setMobile') {
-    const user = findUser(localStorage.getItem(SESSION_KEY));
-    if (!user) { hideSheet(); return; }
-    const hasMobile = user.wechatMobile;
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${hasMobile?'修改企业微信手机号':'设置企业微信手机号'}</div>
-      <div class="sheet-sub">用于消息通知时 @ 你（11 位企业微信绑定的手机号）</div>
-      <div class="sheet-form-group"><div class="sheet-form-label">手机号</div>
-        <input class="sheet-input" id="self-wechat-mobile" type="tel" inputmode="numeric" placeholder="例如 13800138000" maxlength="11" value="${user.wechatMobile||''}">
-      </div>
-      <button class="sheet-btn primary" onclick="confirmSetMobile()">${hasMobile?'保存修改':'设置'}</button>
-      ${hasMobile?`<button class="sheet-btn danger" onclick="confirmSetMobile(true)">清除手机号（不再被 @）</button>`:''}
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='pickEquipment') {
     // 选择设备 sheet：检修表单单选；当个事儿办表单多选（点选/取消，选完点完成）2026-07-29
@@ -8422,18 +8360,16 @@ function pickRole(role) {
 async function confirmAddUser() {
   const name = document.getElementById('add-name').value.trim();
   const empno = document.getElementById('add-empno').value.trim();
-  const wechatMobile = (document.getElementById('add-wechat-mobile').value || '').trim();
   if (!name) { showToast('请填写姓名'); return; }
   if (!empno || !/^\d{4,15}$/.test(empno)) { showToast('工号应为 4-15 位数字'); return; }
   if (findUser(empno)) { showToast('该工号已存在'); return; }
-  if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
   const creator = getCurrentUser();
   if (!canManageUsers(creator)) { showToast('无权限'); return; }
   if (!isAdmin(creator) && selectedRole === 'admin') { showToast('只有管理员能创建管理员'); return; }
   let plant = canPickPlant(creator) ? selectedUserPlant : userPlant(creator);
   if (!PLANTS[plant] && plant !== 'all') plant = 'hpal';
   try {
-    await cloudSaveUser({ empno, name, role:selectedRole, plant, password:null, wechatMobile: wechatMobile || '', createdAt:Date.now() });
+    await cloudSaveUser({ empno, name, role:selectedRole, plant, password:null, createdAt:Date.now() });
     hideSheet();
     showToast(`已创建：${name}（${empno}）`);
   } catch (err) {
@@ -8457,19 +8393,15 @@ async function confirmEditUser(empno) {
       return;
     }
   }
-  // 企业微信手机号（选填）
-  const mobileEl = document.getElementById('edit-wechat-mobile');
-  const wechatMobile = mobileEl ? (mobileEl.value || '').trim() : (user.wechatMobile || '');
-  if (wechatMobile && !/^\d{11}$/.test(wechatMobile)) { showToast('企业微信手机号应为 11 位数字'); return; }
   if (!canManageUsers(currentUser)) { showToast('无权限'); return; }
   if (!canTouchUser(currentUser, user)) { showToast('无权管理该账号'); return; }
   if (!isAdmin(currentUser) && selectedRole === 'admin') { showToast('只有管理员能授予管理员'); return; }
   try {
-    // admin 角色不允许通过编辑改动 role，但仍可改 wechatMobile
+    // admin 角色不允许通过编辑改动 role
     const newRole = (user.role === 'admin') ? 'admin' : selectedRole;
     // 车间归属：管理员/经理可改，工程师/技术员保持原值
     const newPlant = canPickPlant(currentUser) ? ((PLANTS[selectedUserPlant] || selectedUserPlant === 'all') ? selectedUserPlant : userPlant(user)) : (user.plant || 'hpal');
-    await cloudSaveUser({ ...user, role: newRole, plant: newPlant, wechatMobile });
+    await cloudSaveUser({ ...user, role: newRole, plant: newPlant });
     hideSheet();
     showToast('账号已更新');
   } catch (err) {
@@ -8522,24 +8454,6 @@ async function confirmSetPassword() {
   }
 }
 
-async function confirmSetMobile(clear) {
-  const session = localStorage.getItem(SESSION_KEY);
-  const user = findUser(session);
-  if (!user) return;
-  let mobile = '';
-  if (!clear) {
-    mobile = (document.getElementById('self-wechat-mobile').value || '').trim();
-    if (!mobile) { showToast('请输入手机号'); return; }
-    if (!/^\d{11}$/.test(mobile)) { showToast('手机号应为 11 位数字'); return; }
-  }
-  try {
-    await cloudSaveUser({ ...user, wechatMobile: mobile });
-    hideSheet();
-    showToast(clear ? '已清除手机号' : '手机号已保存');
-  } catch (err) {
-    showToast('保存失败：' + err.message);
-  }
-}
 function logout() {
   _welcomeShownThisSession = false;
   localStorage.removeItem(SESSION_KEY);
@@ -14108,7 +14022,6 @@ window.confirmAddUser = confirmAddUser;
 window.confirmEditUser = confirmEditUser;
 window.confirmDeleteUser = confirmDeleteUser;
 window.confirmSetPassword = confirmSetPassword;
-window.confirmSetMobile = confirmSetMobile;
 window.handleMenuAction = handleMenuAction;
 // 检修记录相关
 window.setMlFilter = setMlFilter;

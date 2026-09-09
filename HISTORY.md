@@ -5,6 +5,17 @@
 > 已废弃模块（工单/旧备件/工器具）的字段约定、旧 5 角色矩阵等更早内容未搬入本文件，需要时在 git 历史（2026-07-22 之前的 CLAUDE.md）中考古。
 
 **最近做的改动**（按时间倒序）：
+1. **删掉企业微信通知死代码（离职交接清理第一刀）**（2026-09-09，纯代码·无云端/rules/迁移变更）：
+   - **背景**：郝行龙即将从 FMI 离职，系统要移交给公司。交接方案要求清掉个人账号痕迹与无用代码。企业微信通知自 2026-07-01 工单模块删除后就是死代码（原 5 个调用点全在工单里），且 `WECHAT_NOTIFY_URL` 写着个人 Cloudflare 子域名 `ems-notify.haoxinglong404.workers.dev`、`WECHAT_NOTIFY_TOKEN` 写着明文 token——两样都不应留在交付给公司的代码里。用户指示"可整块删的函数就删了吧"。
+   - **删前核实**：`grep -n "notifyWeChat(|getMobilesByRole(|getMobileByEmpno("` 只命中定义行本身，**0 个调用方**。
+   - **删除清单（16 处，逐处 assert 命中数）**：① i18n 字典 4 条（`企业微信手机号` / `手机号应为 11 位数字` / `企业微信手机号应为 11 位数字` / `请输入手机号`）；② `/* ===== 企业微信通知 ===== */` 整块 1038 字符（两常量 + `notifyWeChat` + `getMobilesByRole` + `getMobileByEmpno`）；③ `COMMON_MENU` 与 admin 菜单各一条入口；④ `handleMenuAction` 的 `setMobile` 分支；⑤ 添加账号弹层手机号输入框；⑥ 编辑账号弹层手机号输入框 ×2（非 admin / admin 两个分支）；⑦ `showSheet` 的 `setMobile` 整个分支；⑧ `confirmAddUser` 的读取与校验两行 + payload 字段；⑨ `confirmEditUser` 的读取三行 + 校验 + payload 字段 + 一条过时注释；⑩ `confirmSetMobile()` 函数；⑪ `window.confirmSetMobile` 暴露。
+   - **踩坑 1**：菜单条目字符串在 `COMMON_MENU`（2 空格缩进）与 admin 菜单（4 空格）里内容相同，**2 空格版是 4 空格版的子串**，直接 `count(old)==1` 会报 2 处 —— 改用前置换行 `\n  ` / `\n    ` 锚定。
+   - **踩坑 2**：编辑账号弹层的 admin 分支里，手机号 div 紧跟在**反引号开头**的模板串里，不能整行删（会把模板串的开头一起删掉）。先换反引号那处（`` `<div...>\n      <button `` → `` `<button ``），再删普通那处。
+   - **踩坑 3**：Python 里写 emoji 要用 `\U0001f4dd`，写代理对 `\ud83d\udcdd` 在 Py3 里是两个孤立代理项，永远匹配不到（改 CLAUDE.md 待办行时撞到）。
+   - **数据处理**：云端 `users` 里已有的 `wechatMobile` 旧值**不清** —— `confirmEditUser` 的 `{...user, ...}` 展开会原样带回，不报错也不丢其他字段；新建账号不再写该字段。rules 无需变更。
+   - **验证**：① esprima `parseModule` 通过（`??`→`||` 后）；② 预览页 `localhost:8000/?preview=1` 实登 admin，控制台 **0 报错**；③ `typeof window.confirmSetMobile === "undefined"`，而 `confirmAddUser`/`confirmEditUser`/`confirmSetPassword`/`handleMenuAction` 仍为 function；④「我的」菜单中文与印尼语两种语言下都已无该条，其余 6 条完好；⑤ `showSheet("addUser")` 只剩 `add-name`/`add-empno` 两个 input，按钮正常；⑥ `showSheet("editUser", 非admin工号)` → 保存更改/删除账号/取消 三按钮正常、无 input；⑦ `showSheet("editUser","6725102247")`（admin 自己，即反引号那处）→ 标题/副标题/保存更改/关闭 渲染完整。行尾终符保持 LF 未变（`git diff --stat` = 5 insertions / 92 deletions，非全文件重写）。
+   - **收尾（同日）**：**Cloudflare Worker `ems-notify` 已由郝行龙在个人 Cloudflare 账号里删除** —— 删前控制台 Worker invocations = 0 / No data，印证它自 2026-07-01 起确实零调用。至此代码侧与外部服务侧全部闭环，企业微信群机器人失去唯一调用方（机器人本身若要清干净，在企业微信群设置里删）。Cloudflare 账号本身保留自用，不随 EMS 交接给公司。另：删除过程中顺带核实云端 `users` 已涨到 **78 个账号**（CLAUDE.md 里记的 43/49 均为旧快照）。
+
 1. **印尼语补漏：点检趋势页 + 两个历史页，并修掉一个过宽正则造成的误翻**（2026-09-08，纯代码·无云端变更）：
 
    **① 用户发现点检趋势页整页还是中文**（截图）。原因：之前扫漏只扫了 `inspect` / `inspect-detail`，**漏了 `inspect-trend` 这个三级页**。该页几乎全是拼接串，拆了 6 处：标题 `${eq.name} · 点检趋势`（**设备名跟「· 点检趋势」粘在同一个文本节点里，所以连设备名都没被翻**）、副标题（模板名/等级/测点数/近两个月）、测点标题 `${m.p} · ${m.n}`、数值统计行「最新 X · 均值 Y · 超限 N 次」、勾选统计行「检查 N 次 · 全部正常」、勾选条日期范围「8-5 → 8-27 · 每格一天」。补 10 条词条 + 10 个模式后该页 **0 行中文**（SVG 图表里的「上限/高/低」也一并翻到）。
