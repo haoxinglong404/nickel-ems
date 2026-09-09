@@ -7057,8 +7057,12 @@ async function seedIfEmpty() {
   // 检查用户集合（2026-08-11：limit(1) —— 只需知道空不空，原来整集合拉下来纯属白读）
   const usersSnap = await getDocs(query(collection(db, 'users'), limit(1)));
   if (usersSnap.empty) {
-    console.log('[Seed] 云端 users 为空，上传管理员账号');
-    const adminUser = { empno:'6725102247', name:'郝行龙', role:'admin', password:'15086370152hxl', createdAt: Date.now() };
+    // 灾备路径：只有云端 users 集合被清空时才会跑到这里。
+    // 重建一个中性的管理员账号入口，**不带密码**（password:null = 登录只需工号），
+    // 首次登录后请立即到「我的 → 设置 / 修改密码」设上密码。
+    // 切勿在此处写回任何明文密码 —— 本文件是公开可读的前端代码。
+    console.log('[Seed] 云端 users 为空，重建管理员账号 10000000（无密码）');
+    const adminUser = { empno:'10000000', name:'系统管理员', role:'admin', plant:'hpal', password:null, createdAt: Date.now() };
     await setDoc(doc(db, 'users', adminUser.empno), adminUser);
   }
 
