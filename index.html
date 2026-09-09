@@ -6,6 +6,14 @@
 <meta name="theme-color" content="#FAFAF7">
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>EMS · 湿法冶镍设备管理系统</title>
+<!--
+  EMS · 湿法冶镍设备管理系统
+  设计与开发：郝行龙（工号 6725102247）· 2026
+
+  单文件架构：HTML + CSS + JS 全部在本文件内，无构建步骤、无依赖安装，
+  浏览器直接打开即可运行；后端为 Firebase Firestore。
+  修改前请先读 README.md，尤其是「技术约定」一节。
+-->
 <!-- 站点图标：内联 SVG（不新增文件，避免浏览器每次请求 favicon.ico 报 404）·配色取自 --g-deep / --g-primary -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233A5424'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='20' fill='%2397C459'%3EN%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7057,12 +7065,13 @@ async function seedIfEmpty() {
   // 检查用户集合（2026-08-11：limit(1) —— 只需知道空不空，原来整集合拉下来纯属白读）
   const usersSnap = await getDocs(query(collection(db, 'users'), limit(1)));
   if (usersSnap.empty) {
-    // 灾备路径：只有云端 users 集合被清空时才会跑到这里。
-    // 重建一个中性的管理员账号入口，**不带密码**（password:null = 登录只需工号），
-    // 首次登录后请立即到「我的 → 设置 / 修改密码」设上密码。
+    // 灾备路径：只有云端 users 集合被清空时才会跑到这里，
+    // 重建系统建设者的管理员账号作为入口。
+    // **不带密码**（password:null = 登录只需填工号），进去后请立即到
+    // 「我的 → 设置 / 修改密码」设上密码。
     // 切勿在此处写回任何明文密码 —— 本文件是公开可读的前端代码。
-    console.log('[Seed] 云端 users 为空，重建管理员账号 10000000（无密码）');
-    const adminUser = { empno:'10000000', name:'系统管理员', role:'admin', plant:'hpal', password:null, createdAt: Date.now() };
+    console.log('[Seed] 云端 users 为空，重建管理员账号（无密码）');
+    const adminUser = { empno:'6725102247', name:'郝行龙', role:'admin', plant:'hpal', password:null, createdAt: Date.now() };
     await setDoc(doc(db, 'users', adminUser.empno), adminUser);
   }
 
@@ -8341,16 +8350,16 @@ function showSheet(type, arg) {
       ${opts}
       <button class="sheet-btn" onclick="hideSheet()">取消</button>`;
   } else if (type==='about') {
-    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.6</div>
-      <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        <strong style="color:var(--ink);">✓ 设备 + 点检 + 检修 + 润滑 + 二级库</strong><br>
-        5 大模块齐备 · 云端同步 · 完整审计追踪。<br><br>
-        <strong style="color:var(--ink);">开发路线：</strong><br>
-        · <strong style="color:#3A5424;">阶段 2-5：5 大模块 ✓</strong><br>
-        · <strong style="color:#3A5424;">备件撤销/硬删除 ✓</strong> · <em>双轨制：员工撤销 + 管理员删除</em><br>
-        · 阶段 5-3：数据导出、图片上传<br>
-        · 阶段 6：消息通知、数据看板<br>
-        · 阶段 7：PWA、宽屏适配
+    content.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">关于本系统</div><div class="sheet-sub">EMS · 湿法冶镍设备管理系统 · v0.28</div>
+      <div style="padding:16px;background:var(--surface);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px;">
+        <strong style="color:var(--ink);">重点设备看板 · 设备台账 · 点检 · 检修 · 二级库 · 润滑</strong><br>
+        5 个车间 · 989 台设备 · 79 个点检模板<br>
+        云端实时同步 · 完整审计追踪 · 中文／印尼语双语
+      </div>
+      <div style="padding:14px 16px;background:var(--g-mist);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
+        <strong style="color:var(--g-forest);">设计与开发</strong><br>
+        郝行龙 · 工号 6725102247<br>
+        <span style="font-size:12px;color:var(--subtle);">2026 · 从需求到上线独立完成</span>
       </div>
       <button class="sheet-btn" onclick="hideSheet()">关闭</button>`;
   }
