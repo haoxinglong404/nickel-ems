@@ -40,7 +40,9 @@ except KeyboardInterrupt:
     sys.exit(0)
 except OSError as e:
     if 'Address already in use' in str(e) or '10048' in str(e):
-        print(f'\n❌ 端口 {PORT} 已被占用。请先关掉旧的预览窗口，或修改 preview.py 里的 PORT。')
+        print(f'\n❌ 端口 {PORT} 已被占用。请先关掉旧的预览窗口再试。')
+        print('   注意：端口必须是 8000，不能改 —— Firebase 的域名白名单精确到含端口的地址，'
+              '换成其他端口会直接被云端拒给。')
         input('按回车退出...')
         sys.exit(1)
     raise

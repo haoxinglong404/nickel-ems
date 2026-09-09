@@ -5861,7 +5861,7 @@ function applyPlantModuleUI() {
      lubepoints  1818 → 酸浸 891 / 中和 486 / 产品 441
    拦路的是：**Firestore 查不了"某字段不存在"**，而酸浸老数据按当年约定没写 plant 字段
    （docPlant() 靠 `|| 'hpal'` 兜底）。所以必须先跑一次性迁移把这个隐含缺省写成显式字段。
-   ⚠️ 这与 CLAUDE.md 原来"老数据勿补写 plant"的约定相反，是用户 2026-08-11 明确拍板的。
+   ⚠️ 这与建库时"老数据勿补写 plant"的旧约定相反，是为了降读取量有意为之，仅限这两个集合。
    语义完全等价：补写的值就是 docPlant() 现在返回的值，任何一条记录的归属都不会变。 */
 const PLANT_BACKFILL_MARKER = 'plant_backfill_v24_20260811';
 const PLANT_FILTER_COLS = ['equipments', 'lubepoints'];
