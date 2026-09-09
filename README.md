@@ -4,7 +4,9 @@
 >
 > **主管理员账号：郝行龙（工号 6725102247）** —— 涵盖需求、数据建模、界面设计到上线运维，服务五个车间、989 台设备的日常生产。
 
-**线上地址**：`_______________________`（部署后填写，见下方「部署」）
+**线上地址**：https://nickelmhp.github.io/ems/
+
+**仓库**：`nickelmhp/ems`（GitHub Pages 从 `main` 分支根目录发布） · **Firebase 项目**：`nickel-ems`
 
 ---
 
@@ -246,7 +248,7 @@ Firebase 的 API Key 域名白名单里如果没有新地址，**新站点会打
 
 1. 打开 Google Cloud Console → APIs & Services → Credentials
 2. 找到这个项目的浏览器 API Key
-3. 在 **HTTP referrers（网站）** 限制列表里加上新的站点地址，例如 `https://<账号>.github.io/*`
+3. 在 **HTTP referrers（网站）** 限制列表里加上新的站点地址，本系统当前填的是 `https://nickelmhp.github.io/*`
 4. 保存，等一两分钟生效
 
 > 免费个人 GitHub 账号的 Pages 只能从**公开仓库**发布。私有仓库发 Pages 需要付费方案。若继续用公开仓库，站点即为公网可访问，包含设备台账与点检数据。
